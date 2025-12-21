@@ -1,0 +1,119 @@
+// 导入基础文件
+@import './variables.less';
+@import './mixins.less';
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: @font-family;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: @text-primary;
+  background-color: @background-color-base;
+  line-height: 1.5;
+}
+
+/* Element Plus 自定义样式 */
+.el-button {
+  border-radius: @border-radius-base;
+  transition: all @animation-duration-fast;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  border-radius: @border-radius-base;
+  transition: border-color @animation-duration-fast;
+}
+
+.el-card {
+  border-radius: @border-radius-base * 2;
+  box-shadow: @box-shadow-base;
+  transition: box-shadow @animation-duration;
+}
+
+.el-table {
+  border-radius: @border-radius-base * 2;
+  overflow: hidden;
+
+  th, td {
+    border-bottom-color: @border-color-lighter;
+  }
+}
+
+.el-dialog {
+  border-radius: @border-radius-base * 3;
+}
+
+.el-message {
+  border-radius: @border-radius-base;
+}
+
+/* 自定义工具类 */
+.text-primary { color: @primary-color; }
+.text-success { color: @success-color; }
+.text-warning { color: @warning-color; }
+.text-danger { color: @danger-color; }
+.text-info { color: @info-color; }
+
+.text-regular { color: @text-regular; }
+.text-secondary { color: @text-secondary; }
+
+.bg-primary { background-color: @primary-color; }
+.bg-success { background-color: @success-color; }
+.bg-warning { background-color: @warning-color; }
+.bg-danger { background-color: @danger-color; }
+.bg-info { background-color: @info-color; }
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .el-main {
+    padding: 10px;
+  }
+
+  .el-card {
+    margin-bottom: 10px;
+  }
+}
+
+/* 加载动画 */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
