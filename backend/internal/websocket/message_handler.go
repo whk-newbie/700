@@ -19,15 +19,32 @@ type MessageHandler struct {
 	db              *gorm.DB
 	groupService    *services.GroupService
 	lineAccountService *services.LineAccountService
+	incomingService *services.IncomingService
 	manager         *Manager
 }
 
 // NewMessageHandler 创建消息处理器
 func NewMessageHandler(manager *Manager) *MessageHandler {
+	// 创建进线更新回调函数
+	updateCallback := func(groupID uint, lineAccountID uint, incomingLineID string, isDuplicate bool) {
+		hub := GetHub()
+		if hub != nil {
+			updateData := map[string]interface{}{
+				"group_id":        groupID,
+				"line_account_id": lineAccountID,
+				"incoming_line_id": incomingLineID,
+				"is_duplicate":    isDuplicate,
+				"timestamp":       time.Now().Unix(),
+			}
+			hub.BroadcastToGroup(groupID, "incoming_update", updateData)
+		}
+	}
+	
 	return &MessageHandler{
 		db:               database.GetDB(),
 		groupService:     services.NewGroupService(),
 		lineAccountService: services.NewLineAccountService(),
+		incomingService:  services.NewIncomingService(updateCallback),
 		manager:          manager,
 	}
 }
@@ -230,10 +247,21 @@ func (h *MessageHandler) handleIncoming(client *Client, message []byte) error {
 		return fmt.Errorf("Line账号不存在: %w", err)
 	}
 
-	// TODO: 这里应该调用进线处理服务（第6周实现）
-	// 目前先记录日志
-	logger.Infof("收到进线数据: GroupID=%d, LineAccountID=%d, IncomingLineID=%s", 
-		group.ID, lineAccount.ID, incomingMsg.Data.IncomingLineID)
+	// 转换数据格式（从websocket.IncomingData转换为services.IncomingData）
+	incomingData := services.IncomingData{
+		LineAccountID:  incomingMsg.Data.LineAccountID,
+		IncomingLineID: incomingMsg.Data.IncomingLineID,
+		Timestamp:      incomingMsg.Data.Timestamp,
+		DisplayName:    incomingMsg.Data.DisplayName,
+		AvatarURL:      incomingMsg.Data.AvatarURL,
+		PhoneNumber:    incomingMsg.Data.PhoneNumber,
+	}
+	
+	// 调用进线处理服务
+	if err := h.incomingService.ProcessIncoming(&incomingData, lineAccount.ID, group.ID, group.DedupScope); err != nil {
+		logger.Errorf("处理进线数据失败: %v", err)
+		return fmt.Errorf("处理进线数据失败: %w", err)
+	}
 
 	// 发送确认消息
 	response := Message{
@@ -241,7 +269,7 @@ func (h *MessageHandler) handleIncoming(client *Client, message []byte) error {
 		Data: map[string]interface{}{
 			"line_account_id": incomingMsg.Data.LineAccountID,
 			"incoming_line_id": incomingMsg.Data.IncomingLineID,
-			"status": "received",
+			"status": "processed",
 		},
 	}
 	return h.sendMessage(client, response)

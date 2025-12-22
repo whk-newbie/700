@@ -1,0 +1,172 @@
+package services
+
+import (
+	"time"
+
+	"line-management/internal/models"
+	"line-management/pkg/database"
+	"line-management/pkg/logger"
+
+	"gorm.io/gorm"
+)
+
+// IncomingData 进线数据（从websocket包复制，避免循环依赖）
+type IncomingData struct {
+	LineAccountID  string `json:"line_account_id"`  // Line账号的line_id
+	IncomingLineID string `json:"incoming_line_id"` // 进线客户的Line User ID
+	Timestamp      string `json:"timestamp"`
+	DisplayName    string `json:"display_name,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	PhoneNumber    string `json:"phone_number,omitempty"`
+}
+
+// IncomingUpdateCallback 进线更新回调函数类型
+type IncomingUpdateCallback func(groupID uint, lineAccountID uint, incomingLineID string, isDuplicate bool)
+
+// IncomingService 进线处理服务
+type IncomingService struct {
+	db          *gorm.DB
+	dedupService *DedupService
+	updateCallback IncomingUpdateCallback
+}
+
+// NewIncomingService 创建进线处理服务实例
+func NewIncomingService(updateCallback IncomingUpdateCallback) *IncomingService {
+	return &IncomingService{
+		db:          database.GetDB(),
+		dedupService: NewDedupService(),
+		updateCallback: updateCallback,
+	}
+}
+
+// ProcessIncoming 处理进线数据
+// 1. 去重判断
+// 2. 记录incoming_logs
+// 3. 增量更新统计表
+// 4. 添加到底库（如果不重复）
+func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint, groupID uint, dedupScope string) error {
+	// 使用事务处理
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// 1. 去重判断
+		isDuplicate, duplicateScope, err := s.dedupService.CheckDuplicate(groupID, data.IncomingLineID, dedupScope)
+		if err != nil {
+			logger.Errorf("去重检查失败: %v", err)
+			return err
+		}
+
+		// 2. 记录进线日志
+		incomingLog := models.IncomingLog{
+			LineAccountID:  lineAccountID,
+			GroupID:        groupID,
+			IncomingLineID: data.IncomingLineID,
+			IncomingTime:    time.Now(),
+			DisplayName:    data.DisplayName,
+			AvatarURL:      data.AvatarURL,
+			PhoneNumber:    data.PhoneNumber,
+			IsDuplicate:    isDuplicate,
+			DuplicateScope: duplicateScope,
+		}
+
+		// 保存原始数据
+		if data.Timestamp != "" || data.DisplayName != "" || data.AvatarURL != "" || data.PhoneNumber != "" {
+			rawData := make(map[string]interface{})
+			if data.Timestamp != "" {
+				rawData["timestamp"] = data.Timestamp
+			}
+			if data.DisplayName != "" {
+				rawData["display_name"] = data.DisplayName
+			}
+			if data.AvatarURL != "" {
+				rawData["avatar_url"] = data.AvatarURL
+			}
+			if data.PhoneNumber != "" {
+				rawData["phone_number"] = data.PhoneNumber
+			}
+			incomingLog.RawData = models.JSONB(rawData)
+		}
+
+		if err := tx.Create(&incomingLog).Error; err != nil {
+			logger.Errorf("记录进线日志失败: %v", err)
+			return err
+		}
+
+		// 3. 增量更新账号统计
+		updates := map[string]interface{}{
+			"total_incoming": gorm.Expr("total_incoming + ?", 1),
+			"today_incoming": gorm.Expr("today_incoming + ?", 1),
+		}
+		if isDuplicate {
+			updates["duplicate_incoming"] = gorm.Expr("duplicate_incoming + ?", 1)
+			updates["today_duplicate"] = gorm.Expr("today_duplicate + ?", 1)
+		}
+
+		if err := tx.Model(&models.LineAccountStats{}).
+			Where("line_account_id = ?", lineAccountID).
+			Updates(updates).Error; err != nil {
+			logger.Errorf("更新账号统计失败: %v", err)
+			return err
+		}
+
+		// 4. 增量更新分组统计
+		if err := tx.Model(&models.GroupStats{}).
+			Where("group_id = ?", groupID).
+			Updates(updates).Error; err != nil {
+			logger.Errorf("更新分组统计失败: %v", err)
+			return err
+		}
+
+		// 5. 添加到底库（如果不重复）
+		if !isDuplicate {
+			// 获取Line账号信息以确定platform_type
+			var lineAccount models.LineAccount
+			if err := tx.Where("id = ?", lineAccountID).First(&lineAccount).Error; err != nil {
+				logger.Errorf("获取Line账号信息失败: %v", err)
+				// 不返回错误，继续处理
+			} else {
+				// 检查底库中是否已存在
+				exists, err := s.dedupService.CheckContactPoolDuplicate(data.IncomingLineID, lineAccount.PlatformType)
+				if err != nil {
+					logger.Errorf("检查底库重复失败: %v", err)
+					// 不返回错误，继续处理
+				} else if !exists {
+					// 获取分组信息
+					var group models.Group
+					if err := tx.Where("id = ?", groupID).First(&group).Error; err != nil {
+						logger.Errorf("获取分组信息失败: %v", err)
+					} else {
+						contact := models.ContactPool{
+							SourceType:     "platform",
+							GroupID:        groupID,
+							ActivationCode: group.ActivationCode,
+							LineAccountID:  &lineAccountID,
+							PlatformType:   lineAccount.PlatformType,
+							LineID:         data.IncomingLineID,
+							DisplayName:    data.DisplayName,
+							PhoneNumber:    data.PhoneNumber,
+							AvatarURL:      data.AvatarURL,
+							DedupScope:     dedupScope,
+							FirstSeenAt:    &incomingLog.IncomingTime,
+						}
+
+						if err := tx.Create(&contact).Error; err != nil {
+							logger.Errorf("添加到底库失败: %v", err)
+							// 不返回错误，继续处理
+						}
+					}
+				}
+			}
+		}
+
+		// 6. 推送实时更新到前端看板
+		if s.updateCallback != nil {
+			s.updateCallback(groupID, lineAccountID, data.IncomingLineID, isDuplicate)
+		}
+
+		logger.Infof("进线数据处理完成: GroupID=%d, LineAccountID=%d, IncomingLineID=%s, IsDuplicate=%v",
+			groupID, lineAccountID, data.IncomingLineID, isDuplicate)
+
+		return nil
+	})
+}
+
+
