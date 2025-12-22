@@ -83,3 +83,11 @@ type BatchOperationResponse struct {
 	FailedIDs    []uint `json:"failed_ids,omitempty"`
 }
 
+// GroupInfo 分组信息（用于响应中的简化分组信息）
+type GroupInfo struct {
+	ID             uint   `json:"id" example:"1"`
+	ActivationCode string `json:"activation_code" example:"ABC123"`
+	Category       string `json:"category,omitempty" example:"default"`
+	Remark         string `json:"remark,omitempty" example:"测试分组"`
+}
+

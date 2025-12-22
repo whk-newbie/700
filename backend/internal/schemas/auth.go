@@ -29,13 +29,6 @@ type UserInfo struct {
 	Role     string `json:"role" example:"admin"`
 }
 
-// GroupInfo 分组信息（子账号登录时返回）
-type GroupInfo struct {
-	ID            uint   `json:"id" example:"1"`
-	ActivationCode string `json:"activation_code" example:"ABC123"`
-	Category      string `json:"category" example:"default"`
-}
-
 // RefreshTokenRequest 刷新Token请求
 type RefreshTokenRequest struct {
 	Token string `json:"token" binding:"required"`

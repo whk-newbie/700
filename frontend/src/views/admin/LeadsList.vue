@@ -318,7 +318,7 @@ const showGroupColumn = computed(() => {
 // 获取分组列表
 const fetchGroups = async () => {
   try {
-    const res = await getGroups({ page: 1, page_size: 1000 })
+    const res = await getGroups({ page: 1, page_size: 100 })
     if (res.code === 1000 && res.data) {
       groupList.value = res.data.list || res.data.data || []
     }

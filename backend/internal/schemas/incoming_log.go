@@ -38,10 +38,3 @@ type LineAccountInfo struct {
 	PlatformType string `json:"platform_type" example:"line"`
 }
 
-// GroupInfo 分组信息
-type GroupInfo struct {
-	ID            uint   `json:"id" example:"1"`
-	ActivationCode string `json:"activation_code" example:"ABC123"`
-	Remark        string `json:"remark" example:"测试分组"`
-}
-
