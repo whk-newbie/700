@@ -18,7 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
         password
       })
       
-      if (res.code === 200 && res.data) {
+      // 检查业务状态码1000（成功）
+      if (res.code === 1000 && res.data) {
         token.value = res.data.token
         user.value = res.data.user || res.data // 兼容不同的响应格式
         
@@ -42,7 +43,8 @@ export const useAuthStore = defineStore('auth', () => {
         password
       })
       
-      if (res.code === 200 && res.data) {
+      // 检查业务状态码1000（成功）
+      if (res.code === 1000 && res.data) {
         token.value = res.data.token
         // 子账号登录返回的是group信息，需要转换为user格式
         if (res.data.group) {
@@ -80,7 +82,8 @@ export const useAuthStore = defineStore('auth', () => {
   const fetchUserInfo = async () => {
     try {
       const res = await request.get('/auth/me')
-      if (res.code === 200) {
+      // 检查业务状态码1000（成功）
+      if (res.code === 1000 && res.data) {
         user.value = res.data
         localStorage.setItem('user', JSON.stringify(res.data))
       }

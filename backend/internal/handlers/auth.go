@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"net/http"
 	"strings"
 
 	"line-management/internal/schemas"
@@ -97,11 +96,7 @@ func Logout(c *gin.Context) {
 	// 从上下文获取claims
 	claims, exists := c.Get("claims")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: "未授权",
-			Error:   "unauthorized",
-		})
+		utils.ErrorWithErrorCode(c, 2001, "未授权", "unauthorized")
 		return
 	}
 
@@ -146,11 +141,7 @@ func GetMe(c *gin.Context) {
 	// 从上下文获取用户信息（由中间件设置）
 	claims, exists := c.Get("claims")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: "未授权",
-			Error:   "unauthorized",
-		})
+		utils.ErrorWithErrorCode(c, 2001, "未授权", "unauthorized")
 		return
 	}
 

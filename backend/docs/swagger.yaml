@@ -1,0 +1,746 @@
+basePath: /api/v1
+definitions:
+  schemas.BatchDeleteGroupsRequest:
+    properties:
+      ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  schemas.BatchOperationResponse:
+    properties:
+      fail_count:
+        example: 0
+        type: integer
+      failed_ids:
+        items:
+          type: integer
+        type: array
+      success_count:
+        example: 3
+        type: integer
+    type: object
+  schemas.BatchUpdateGroupsRequest:
+    properties:
+      category:
+        example: default
+        type: string
+      dedup_scope:
+        enum:
+        - current
+        - global
+        example: current
+        type: string
+      ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      is_active:
+        example: true
+        type: boolean
+    required:
+    - ids
+    type: object
+  schemas.CreateGroupRequest:
+    properties:
+      account_limit:
+        example: 10
+        type: integer
+      category:
+        example: default
+        type: string
+      dedup_scope:
+        enum:
+        - current
+        - global
+        example: current
+        type: string
+      description:
+        example: 这是一个测试分组
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      login_password:
+        example: password123
+        minLength: 6
+        type: string
+      remark:
+        example: 测试分组
+        type: string
+      reset_time:
+        example: "09:00:00"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - user_id
+    type: object
+  schemas.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      error:
+        example: invalid_credentials
+        type: string
+      message:
+        example: 用户名或密码错误
+        type: string
+    type: object
+  schemas.GroupInfo:
+    properties:
+      activation_code:
+        example: ABC123
+        type: string
+      category:
+        example: default
+        type: string
+      id:
+        example: 1
+        type: integer
+    type: object
+  schemas.GroupListResponse:
+    properties:
+      account_limit:
+        example: 10
+        type: integer
+      activation_code:
+        example: ABC123
+        type: string
+      category:
+        example: default
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      dedup_scope:
+        example: current
+        type: string
+      description:
+        example: 这是一个测试分组
+        type: string
+      duplicate_incoming:
+        example: 5
+        type: integer
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      last_login_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      line_accounts:
+        example: 4
+        type: integer
+      line_business_accounts:
+        example: 1
+        type: integer
+      online_accounts:
+        example: 3
+        type: integer
+      remark:
+        example: 测试分组
+        type: string
+      reset_time:
+        example: "09:00:00"
+        type: string
+      today_duplicate:
+        example: 2
+        type: integer
+      today_incoming:
+        example: 10
+        type: integer
+      total_accounts:
+        description: 统计信息
+        example: 5
+        type: integer
+      total_incoming:
+        example: 100
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+      username:
+        description: 用户信息
+        example: user001
+        type: string
+    type: object
+  schemas.LoginRequest:
+    properties:
+      password:
+        example: admin123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  schemas.LoginResponse:
+    properties:
+      expires_in:
+        example: 86400
+        type: integer
+      group:
+        allOf:
+        - $ref: '#/definitions/schemas.GroupInfo'
+        description: 子账号登录时返回
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/schemas.UserInfo'
+    type: object
+  schemas.RefreshTokenRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  schemas.RefreshTokenResponse:
+    properties:
+      expires_in:
+        example: 86400
+        type: integer
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+    type: object
+  schemas.SubAccountLoginRequest:
+    properties:
+      activation_code:
+        example: ABC123
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - activation_code
+    - password
+    type: object
+  schemas.UpdateGroupRequest:
+    properties:
+      account_limit:
+        example: 10
+        type: integer
+      category:
+        example: default
+        type: string
+      dedup_scope:
+        enum:
+        - current
+        - global
+        example: current
+        type: string
+      description:
+        example: 这是一个测试分组
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      login_password:
+        example: password123
+        minLength: 6
+        type: string
+      remark:
+        example: 测试分组
+        type: string
+      reset_time:
+        example: "09:00:00"
+        type: string
+    type: object
+  schemas.UserInfo:
+    properties:
+      email:
+        example: admin@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      role:
+        example: admin
+        type: string
+      username:
+        example: admin
+        type: string
+    type: object
+  utils.Pagination:
+    properties:
+      page:
+        description: 当前页码
+        type: integer
+      page_size:
+        description: 每页数量
+        type: integer
+      total:
+        description: 总记录数
+        type: integer
+      total_pages:
+        description: 总页数
+        type: integer
+    type: object
+  utils.PaginationResponse:
+    properties:
+      list: {}
+      pagination:
+        $ref: '#/definitions/utils.Pagination'
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Line账号分组管理与进线统计系统API
+  title: Line账号管理系统API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 管理员或普通用户登录
+      parameters:
+      - description: 登录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: 用户登录
+      tags:
+      - 认证
+  /auth/login-subaccount:
+    post:
+      consumes:
+      - application/json
+      description: 使用激活码和密码登录
+      parameters:
+      - description: 子账号登录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.SubAccountLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: 子账号登录
+      tags:
+      - 认证
+  /auth/logout:
+    post:
+      description: 用户登出，删除Session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 登出
+      tags:
+      - 认证
+  /auth/me:
+    get:
+      description: 获取当前登录用户的信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.UserInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取当前用户信息
+      tags:
+      - 认证
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 刷新过期的Token
+      parameters:
+      - description: 刷新Token请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      summary: 刷新Token
+      tags:
+      - 认证
+  /auth/sessions:
+    get:
+      description: 获取当前用户的所有活跃Session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取活跃会话
+      tags:
+      - 认证
+  /groups:
+    get:
+      consumes:
+      - application/json
+      description: 获取分组列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 用户ID
+        in: query
+        name: user_id
+        type: integer
+      - description: 分类
+        in: query
+        name: category
+        type: string
+      - description: 是否激活
+        in: query
+        name: is_active
+        type: boolean
+      - description: 搜索（激活码或备注）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取分组列表
+      tags:
+      - 分组管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新分组（自动生成激活码）
+      parameters:
+      - description: 创建分组请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GroupListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建分组
+      tags:
+      - 分组管理
+  /groups/:id:
+    delete:
+      consumes:
+      - application/json
+      description: 软删除分组
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除分组
+      tags:
+      - 分组管理
+    put:
+      consumes:
+      - application/json
+      description: 更新分组信息
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新分组请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GroupListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新分组
+      tags:
+      - 分组管理
+  /groups/:id/regenerate-code:
+    post:
+      consumes:
+      - application/json
+      description: 为指定分组重新生成激活码
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 重新生成激活码
+      tags:
+      - 分组管理
+  /groups/batch/delete:
+    post:
+      consumes:
+      - application/json
+      description: 批量软删除分组
+      parameters:
+      - description: 批量删除请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BatchDeleteGroupsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BatchOperationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量删除分组
+      tags:
+      - 分组管理
+  /groups/batch/update:
+    post:
+      consumes:
+      - application/json
+      description: 批量更新分组的状态、分类、去重范围等
+      parameters:
+      - description: 批量更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BatchUpdateGroupsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BatchOperationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量更新分组
+      tags:
+      - 分组管理
+  /groups/categories:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有分组分类
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取分组分类列表
+      tags:
+      - 分组管理
+securityDefinitions:
+  BearerAuth:
+    description: JWT Token，格式：Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

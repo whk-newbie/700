@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"line-management/docs"
 	"line-management/internal/handlers"
 	"line-management/internal/middleware"
 
@@ -25,16 +26,21 @@ func SetupRoutes(r *gin.RouterGroup) {
 	// 需要认证的路由
 	api := r.Group("")
 	api.Use(middleware.AuthRequired())
+	api.Use(middleware.DataFilter()) // 应用数据过滤中间件
 	{
-		// 后续添加的业务路由将在这里
-		// 例如：
-		// groups := api.Group("/groups")
-		// {
-		// 	groups.GET("", handlers.GetGroups)
-		// 	groups.POST("", handlers.CreateGroup)
-		// 	groups.PUT("/:id", handlers.UpdateGroup)
-		// 	groups.DELETE("/:id", handlers.DeleteGroup)
-		// }
+		// 分组管理路由
+		groups := api.Group("/groups")
+		{
+			groups.GET("", handlers.GetGroups)
+			groups.POST("", handlers.CreateGroup)
+			groups.PUT("/:id", handlers.UpdateGroup)
+			groups.DELETE("/:id", handlers.DeleteGroup)
+			groups.POST("/:id/regenerate-code", handlers.RegenerateActivationCode)
+			groups.GET("/categories", handlers.GetGroupCategories)
+			// 批量操作
+			groups.POST("/batch/delete", handlers.BatchDeleteGroups)
+			groups.POST("/batch/update", handlers.BatchUpdateGroups)
+		}
 	}
 
 	// 健康检查（不需要认证）
@@ -47,6 +53,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 // SetupSwagger 设置Swagger文档
 func SetupSwagger(r *gin.Engine) {
+	// 导入docs包以确保SwaggerInfo被初始化
+	_ = docs.SwaggerInfo
+	
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
