@@ -115,9 +115,9 @@ func (s *StatsService) GetOverviewStats() (map[string]interface{}, error) {
 	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(today_duplicate), 0)").Scan(&todayDuplicate)
 	result["today_duplicate"] = todayDuplicate
 	
-	// 底库总数
+	// 底库总数（GORM会自动处理软删除）
 	var totalContacts int64
-	s.db.Model(&models.ContactPool{}).Where("deleted_at IS NULL").Count(&totalContacts)
+	s.db.Model(&models.ContactPool{}).Count(&totalContacts)
 	result["total_contacts"] = totalContacts
 	
 	return result, nil
