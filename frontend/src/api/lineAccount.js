@@ -44,8 +44,26 @@ export const deleteLineAccount = (id) => {
 /**
  * 生成二维码
  * @param {number} id - 账号ID
+ * @param {string} content - 二维码内容（可选）
  */
-export const generateQRCode = (id) => {
-  return request.post(`/line-accounts/${id}/generate-qr`)
+export const generateQRCode = (id, content) => {
+  const params = content ? { content } : {}
+  return request.post(`/line-accounts/${id}/generate-qr`, null, { params })
+}
+
+/**
+ * 批量删除Line账号
+ * @param {number[]} ids - 账号ID数组
+ */
+export const batchDeleteLineAccounts = (ids) => {
+  return request.post('/line-accounts/batch/delete', { ids })
+}
+
+/**
+ * 批量更新Line账号状态（强制下线）
+ * @param {object} data - 批量更新数据 { ids: [], online_status: string }
+ */
+export const batchUpdateLineAccounts = (data) => {
+  return request.post('/line-accounts/batch/update', data)
 }
 

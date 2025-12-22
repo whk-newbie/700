@@ -308,3 +308,96 @@ func GenerateQRCode(c *gin.Context) {
 	utils.SuccessWithMessage(c, "生成成功", response)
 }
 
+// BatchDeleteLineAccounts 批量删除Line账号
+// @Summary 批量删除Line账号
+// @Description 批量软删除Line账号
+// @Tags Line账号管理
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body schemas.BatchDeleteLineAccountsRequest true "批量删除请求"
+// @Success 200 {object} schemas.BatchOperationResponse
+// @Failure 400 {object} schemas.ErrorResponse
+// @Failure 401 {object} schemas.ErrorResponse
+// @Router /line-accounts/batch/delete [post]
+func BatchDeleteLineAccounts(c *gin.Context) {
+	var req schemas.BatchDeleteLineAccountsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
+		return
+	}
+
+	// 获取当前用户ID（用于记录删除者）
+	userID, exists := c.Get("user_id")
+	var deletedBy *uint
+	if exists {
+		if uid, ok := userID.(uint); ok {
+			deletedBy = &uid
+		}
+	}
+
+	lineAccountService := services.NewLineAccountService()
+	successCount, failedIDs, err := lineAccountService.BatchDeleteLineAccounts(c, req.IDs, deletedBy)
+	if err != nil {
+		logger.Errorf("批量删除Line账号失败: %v", err)
+		utils.ErrorWithErrorCode(c, 5001, "批量删除Line账号失败", "internal_error")
+		return
+	}
+
+	failCount := len(failedIDs)
+	response := schemas.BatchOperationResponse{
+		SuccessCount: successCount,
+		FailCount:    failCount,
+	}
+	if failCount > 0 {
+		response.FailedIDs = failedIDs
+	}
+
+	utils.SuccessWithMessage(c, "批量删除完成", response)
+}
+
+// BatchUpdateLineAccounts 批量更新Line账号
+// @Summary 批量更新Line账号
+// @Description 批量更新Line账号的在线状态等
+// @Tags Line账号管理
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body schemas.BatchUpdateLineAccountsRequest true "批量更新请求"
+// @Success 200 {object} schemas.BatchOperationResponse
+// @Failure 400 {object} schemas.ErrorResponse
+// @Failure 401 {object} schemas.ErrorResponse
+// @Router /line-accounts/batch/update [post]
+func BatchUpdateLineAccounts(c *gin.Context) {
+	var req schemas.BatchUpdateLineAccountsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
+		return
+	}
+
+	// 验证至少有一个更新字段
+	if req.OnlineStatus == "" {
+		utils.ErrorWithErrorCode(c, 1001, "至少需要提供一个更新字段", "invalid_params")
+		return
+	}
+
+	lineAccountService := services.NewLineAccountService()
+	successCount, failedIDs, err := lineAccountService.BatchUpdateLineAccounts(c, req.IDs, &req)
+	if err != nil {
+		logger.Errorf("批量更新Line账号失败: %v", err)
+		utils.ErrorWithErrorCode(c, 5001, "批量更新Line账号失败", "internal_error")
+		return
+	}
+
+	failCount := len(failedIDs)
+	response := schemas.BatchOperationResponse{
+		SuccessCount: successCount,
+		FailCount:    failCount,
+	}
+	if failCount > 0 {
+		response.FailedIDs = failedIDs
+	}
+
+	utils.SuccessWithMessage(c, "批量更新完成", response)
+}
+

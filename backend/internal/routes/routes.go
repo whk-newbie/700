@@ -50,6 +50,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 			lineAccounts.PUT("/:id", handlers.UpdateLineAccount)
 			lineAccounts.DELETE("/:id", handlers.DeleteLineAccount)
 			lineAccounts.POST("/:id/generate-qr", handlers.GenerateQRCode)
+			// 批量操作
+			lineAccounts.POST("/batch/delete", handlers.BatchDeleteLineAccounts)
+			lineAccounts.POST("/batch/update", handlers.BatchUpdateLineAccounts)
 		}
 	}
 

@@ -73,3 +73,14 @@ type GenerateQRCodeResponse struct {
 	QRCodeURL  string `json:"qr_code_url" example:"http://localhost:8080/static/qrcodes/1.png"`
 }
 
+// BatchDeleteLineAccountsRequest 批量删除Line账号请求
+type BatchDeleteLineAccountsRequest struct {
+	IDs []uint `json:"ids" binding:"required,min=1,dive,min=1"`
+}
+
+// BatchUpdateLineAccountsRequest 批量更新Line账号请求
+type BatchUpdateLineAccountsRequest struct {
+	IDs          []uint `json:"ids" binding:"required,min=1,dive,min=1"`
+	OnlineStatus string `json:"online_status" binding:"omitempty,oneof=online offline user_logout abnormal_offline" example:"offline"`
+}
+

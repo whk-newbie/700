@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"line-management/internal/models"
@@ -388,5 +389,157 @@ func (s *LineAccountService) updateGroupStatsForAccountChange(groupID uint, plat
 	}
 
 	return nil
+}
+
+// BatchDeleteLineAccounts 批量删除Line账号
+func (s *LineAccountService) BatchDeleteLineAccounts(c *gin.Context, ids []uint, deletedBy *uint) (int, []uint, error) {
+	if len(ids) == 0 {
+		return 0, nil, errors.New("账号ID列表不能为空")
+	}
+
+	// 应用数据过滤，获取可操作的账号
+	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
+	query = query.Where("id IN ? AND deleted_at IS NULL", ids)
+
+	var accounts []models.LineAccount
+	if err := query.Find(&accounts).Error; err != nil {
+		return 0, nil, err
+	}
+
+	// 找出实际存在的账号ID
+	existingIDs := make(map[uint]bool)
+	for _, acc := range accounts {
+		existingIDs[acc.ID] = true
+	}
+
+	// 找出不存在的ID
+	var failedIDs []uint
+	for _, id := range ids {
+		if !existingIDs[id] {
+			failedIDs = append(failedIDs, id)
+		}
+	}
+
+	// 批量软删除并更新统计
+	if len(accounts) > 0 {
+		// 按分组和平台类型分组，用于批量更新统计
+		groupStatsMap := make(map[uint]map[string]int) // groupID -> platformType -> count
+		for _, acc := range accounts {
+			if groupStatsMap[acc.GroupID] == nil {
+				groupStatsMap[acc.GroupID] = make(map[string]int)
+			}
+			key := acc.PlatformType + "_" + acc.OnlineStatus
+			groupStatsMap[acc.GroupID][key]++
+		}
+
+		// 执行批量删除
+		accountIDs := make([]uint, 0, len(accounts))
+		for _, acc := range accounts {
+			accountIDs = append(accountIDs, acc.ID)
+		}
+
+		// 批量更新deleted_by
+		if deletedBy != nil {
+			if err := s.db.Model(&models.LineAccount{}).
+				Where("id IN ?", accountIDs).
+				Update("deleted_by", *deletedBy).Error; err != nil {
+				return 0, ids, err
+			}
+		}
+
+		// 批量软删除
+		if err := s.db.Where("id IN ?", accountIDs).Delete(&models.LineAccount{}).Error; err != nil {
+			return 0, ids, err
+		}
+
+		// 批量更新分组统计（减少统计）
+		for groupID, stats := range groupStatsMap {
+			for key, count := range stats {
+				parts := strings.Split(key, "_")
+				if len(parts) == 2 {
+					platformType := parts[0]
+					onlineStatus := parts[1]
+					for i := 0; i < count; i++ {
+						if err := s.updateGroupStatsForAccountChange(groupID, platformType, onlineStatus, false); err != nil {
+							logger.Warnf("更新分组统计失败: %v", err)
+							// 不影响删除操作
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return len(accounts), failedIDs, nil
+}
+
+// BatchUpdateLineAccounts 批量更新Line账号
+func (s *LineAccountService) BatchUpdateLineAccounts(c *gin.Context, ids []uint, req *schemas.BatchUpdateLineAccountsRequest) (int, []uint, error) {
+	if len(ids) == 0 {
+		return 0, nil, errors.New("账号ID列表不能为空")
+	}
+
+	// 应用数据过滤，获取可操作的账号
+	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
+	query = query.Where("id IN ? AND deleted_at IS NULL", ids)
+
+	var accounts []models.LineAccount
+	if err := query.Find(&accounts).Error; err != nil {
+		return 0, nil, err
+	}
+
+	// 找出实际存在的账号ID
+	existingIDs := make(map[uint]bool)
+	for _, acc := range accounts {
+		existingIDs[acc.ID] = true
+	}
+
+	// 找出不存在的ID
+	var failedIDs []uint
+	for _, id := range ids {
+		if !existingIDs[id] {
+			failedIDs = append(failedIDs, id)
+		}
+	}
+
+	// 批量更新
+	if len(accounts) > 0 {
+		updates := make(map[string]interface{})
+		
+		if req.OnlineStatus != "" {
+			updates["online_status"] = req.OnlineStatus
+		}
+
+		if len(updates) > 0 {
+			accountIDs := make([]uint, 0, len(accounts))
+			for _, acc := range accounts {
+				accountIDs = append(accountIDs, acc.ID)
+			}
+
+			// 如果更新了在线状态，需要更新分组统计
+			if req.OnlineStatus != "" {
+				// 先减少旧状态的统计，再增加新状态的统计
+				for _, acc := range accounts {
+					// 减少旧状态
+					if err := s.updateGroupStatsForAccountChange(acc.GroupID, acc.PlatformType, acc.OnlineStatus, false); err != nil {
+						logger.Warnf("更新分组统计失败: %v", err)
+					}
+					// 增加新状态
+					if err := s.updateGroupStatsForAccountChange(acc.GroupID, acc.PlatformType, req.OnlineStatus, true); err != nil {
+						logger.Warnf("更新分组统计失败: %v", err)
+					}
+				}
+			}
+
+			// 执行批量更新
+			if err := s.db.Model(&models.LineAccount{}).
+				Where("id IN ?", accountIDs).
+				Updates(updates).Error; err != nil {
+				return 0, ids, err
+			}
+		}
+	}
+
+	return len(accounts), failedIDs, nil
 }
 
