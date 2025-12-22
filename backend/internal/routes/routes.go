@@ -36,6 +36,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			groups.PUT("/:id", handlers.UpdateGroup)
 			groups.DELETE("/:id", handlers.DeleteGroup)
 			groups.POST("/:id/regenerate-code", handlers.RegenerateActivationCode)
+			groups.POST("/:id/generate-subaccount-token", handlers.GenerateSubAccountToken)
 			groups.GET("/categories", handlers.GetGroupCategories)
 			// 批量操作
 			groups.POST("/batch/delete", handlers.BatchDeleteGroups)
@@ -62,6 +63,15 @@ func SetupRoutes(r *gin.RouterGroup) {
 			"status": "ok",
 		})
 	})
+}
+
+// SetupWebSocketRoutes 设置WebSocket路由
+func SetupWebSocketRoutes(r *gin.Engine) {
+	// Windows客户端WebSocket连接（不需要JWT认证，使用激活码+token认证）
+	r.GET("/api/ws/client", handlers.HandleClientWebSocket)
+	
+	// 前端看板WebSocket连接（需要JWT认证）
+	r.GET("/api/ws/dashboard", middleware.AuthRequired(), handlers.HandleDashboardWebSocket)
 }
 
 // SetupSwagger 设置Swagger文档

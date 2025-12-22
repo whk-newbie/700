@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"line-management/internal/config"
+	"line-management/internal/handlers"
 	"line-management/internal/middleware"
 	"line-management/internal/routes"
 	"line-management/pkg/database"
@@ -73,9 +74,15 @@ func main() {
 	// 静态文件服务（用于提供二维码图片等）
 	r.Static("/static", "./static")
 
+	// 初始化WebSocket管理器
+	handlers.InitWebSocketManager()
+
 	// API路由
 	apiV1 := r.Group("/api/v1")
 	routes.SetupRoutes(apiV1)
+
+	// WebSocket路由
+	routes.SetupWebSocketRoutes(r)
 
 	// Swagger文档
 	if viper.GetBool("swagger.enable") {
