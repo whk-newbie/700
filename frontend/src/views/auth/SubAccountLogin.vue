@@ -27,7 +27,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码"
+            placeholder="请输入密码（如果分组设置了密码）"
             size="large"
             show-password
             @keyup.enter="handleLogin"
@@ -36,6 +36,9 @@
               <el-icon><Lock /></el-icon>
             </template>
           </el-input>
+          <div class="password-hint">
+            <el-text type="info" size="small">如果分组未设置密码，可直接使用激活码登录</el-text>
+          </div>
         </el-form-item>
         <el-form-item>
           <el-button
@@ -81,7 +84,7 @@ const loginRules = {
     { required: true, message: '请输入激活码', trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
+    // 密码是可选的，如果分组设置了密码则需要输入
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
   ]
 }
@@ -89,14 +92,25 @@ const loginRules = {
 const handleLogin = async () => {
   if (!loginFormRef.value) return
   
-  await loginFormRef.value.validate(async (valid) => {
+  // 只验证激活码，密码可选
+  await loginFormRef.value.validateField('activationCode', async (valid) => {
     if (!valid) return
+    
+    // 如果输入了密码，验证密码长度
+    if (loginForm.password && loginForm.password.length > 0) {
+      if (loginForm.password.length < 6) {
+        ElMessage.warning('密码长度不能少于6位')
+        return
+      }
+    }
     
     loading.value = true
     try {
+      // 如果密码为空，传空字符串
+      const password = loginForm.password || ''
       const result = await authStore.loginSubAccount(
         loginForm.activationCode,
-        loginForm.password
+        password
       )
       
       if (result.success) {
@@ -155,6 +169,11 @@ const goToAdminLogin = () => {
 .login-form {
   .el-form-item {
     margin-bottom: 20px;
+  }
+  
+  .password-hint {
+    margin-top: 8px;
+    text-align: center;
   }
   
   .login-button {

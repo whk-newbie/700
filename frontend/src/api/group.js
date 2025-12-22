@@ -49,3 +49,26 @@ export const regenerateCode = (id) => {
   return request.post(`/groups/${id}/regenerate-code`)
 }
 
+/**
+ * 获取分组分类列表
+ */
+export const getGroupCategories = () => {
+  return request.get('/groups/categories')
+}
+
+/**
+ * 批量删除分组
+ * @param {number[]} ids - 分组ID数组
+ */
+export const batchDeleteGroups = (ids) => {
+  return request.post('/groups/batch/delete', { ids })
+}
+
+/**
+ * 批量更新分组
+ * @param {object} data - 批量更新数据 { ids: [], is_active?: boolean, category?: string, dedup_scope?: string }
+ */
+export const batchUpdateGroups = (data) => {
+  return request.post('/groups/batch/update', data)
+}
+
