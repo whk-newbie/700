@@ -18,16 +18,16 @@ export const useAuthStore = defineStore('auth', () => {
         password
       })
       
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         token.value = res.data.token
-        user.value = res.data.user
+        user.value = res.data.user || res.data // 兼容不同的响应格式
         
         localStorage.setItem('token', res.data.token)
-        localStorage.setItem('user', JSON.stringify(res.data.user))
+        localStorage.setItem('user', JSON.stringify(user.value))
         
         return { success: true }
       } else {
-        return { success: false, message: res.message }
+        return { success: false, message: res.message || '登录失败' }
       }
     } catch (error) {
       return { success: false, message: error.message || '登录失败' }
@@ -42,16 +42,26 @@ export const useAuthStore = defineStore('auth', () => {
         password
       })
       
-      if (res.code === 200) {
+      if (res.code === 200 && res.data) {
         token.value = res.data.token
-        user.value = res.data.user
+        // 子账号登录返回的是group信息，需要转换为user格式
+        if (res.data.group) {
+          user.value = {
+            id: res.data.group.id,
+            activation_code: res.data.group.activation_code,
+            category: res.data.group.category,
+            role: 'subaccount'
+          }
+        } else {
+          user.value = res.data
+        }
         
         localStorage.setItem('token', res.data.token)
-        localStorage.setItem('user', JSON.stringify(res.data.user))
+        localStorage.setItem('user', JSON.stringify(user.value))
         
         return { success: true }
       } else {
-        return { success: false, message: res.message }
+        return { success: false, message: res.message || '登录失败' }
       }
     } catch (error) {
       return { success: false, message: error.message || '登录失败' }

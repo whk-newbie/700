@@ -26,11 +26,7 @@ import (
 func Login(c *gin.Context) {
 	var req schemas.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
 		return
 	}
 
@@ -42,15 +38,12 @@ func Login(c *gin.Context) {
 	response, err := authService.Login(&req, ipAddress, userAgent)
 	if err != nil {
 		logger.Warnf("登录失败: %v", err)
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: err.Error(),
-			Error:   "invalid_credentials",
-		})
+		utils.ErrorWithErrorCode(c, 2004, err.Error(), "invalid_credentials")
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	// 统一响应格式
+	utils.SuccessWithMessage(c, "登录成功", response)
 }
 
 // LoginSubAccount 子账号登录
@@ -67,11 +60,7 @@ func Login(c *gin.Context) {
 func LoginSubAccount(c *gin.Context) {
 	var req schemas.SubAccountLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
 		return
 	}
 
@@ -83,15 +72,17 @@ func LoginSubAccount(c *gin.Context) {
 	response, err := authService.LoginSubAccount(&req, ipAddress, userAgent)
 	if err != nil {
 		logger.Warnf("子账号登录失败: %v", err)
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: err.Error(),
-			Error:   "invalid_credentials",
-		})
+		// 判断是激活码错误还是密码错误
+		if err.Error() == "激活码或密码错误" {
+			utils.ErrorWithErrorCode(c, 2006, err.Error(), "invalid_activation_code_or_password")
+		} else {
+			utils.ErrorWithErrorCode(c, 2005, err.Error(), "invalid_activation_code")
+		}
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	// 统一响应格式
+	utils.SuccessWithMessage(c, "登录成功", response)
 }
 
 // Logout 登出
@@ -120,11 +111,7 @@ func Logout(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	parts := strings.SplitN(authHeader, " ", 2)
 	if len(parts) != 2 {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "Token格式错误",
-			Error:   "invalid_token_format",
-		})
+		utils.ErrorWithErrorCode(c, 2002, "Token格式错误", "invalid_token_format")
 		return
 	}
 	token := parts[1]
@@ -143,9 +130,7 @@ func Logout(c *gin.Context) {
 		// 即使删除失败也返回成功，因为Token可能已过期
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "登出成功",
-	})
+	utils.SuccessWithMessage(c, "登出成功", nil)
 }
 
 // GetMe 获取当前用户信息
@@ -178,15 +163,12 @@ func GetMe(c *gin.Context) {
 		// 子账号返回分组信息
 		group, err := authService.GetGroupByID(jwtClaims.GroupID)
 		if err != nil {
-			c.JSON(http.StatusNotFound, schemas.ErrorResponse{
-				Code:    http.StatusNotFound,
-				Message: "分组不存在",
-				Error:   "group_not_found",
-			})
+			utils.ErrorWithErrorCode(c, 3002, "分组不存在", "group_not_found")
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		// 统一响应格式
+		utils.SuccessWithMessage(c, "获取成功", gin.H{
 			"id":              group.ID,
 			"activation_code": group.ActivationCode,
 			"category":        group.Category,
@@ -198,15 +180,12 @@ func GetMe(c *gin.Context) {
 	// 管理员/普通用户返回用户信息
 	user, err := authService.GetUserByID(jwtClaims.UserID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, schemas.ErrorResponse{
-			Code:    http.StatusNotFound,
-			Message: "用户不存在",
-			Error:   "user_not_found",
-		})
+		utils.ErrorWithErrorCode(c, 3001, "用户不存在", "user_not_found")
 		return
 	}
 
-	c.JSON(http.StatusOK, schemas.UserInfo{
+	// 统一响应格式
+	utils.SuccessWithMessage(c, "获取成功", schemas.UserInfo{
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
@@ -228,26 +207,18 @@ func GetMe(c *gin.Context) {
 func RefreshToken(c *gin.Context) {
 	var req schemas.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
-			Code:    http.StatusBadRequest,
-			Message: "请求参数错误",
-			Error:   err.Error(),
-		})
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
 		return
 	}
 
 	newToken, err := utils.RefreshToken(req.Token)
 	if err != nil {
 		logger.Warnf("刷新Token失败: %v", err)
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: err.Error(),
-			Error:   "invalid_token",
-		})
+		utils.ErrorWithErrorCode(c, 2003, err.Error(), "invalid_token")
 		return
 	}
 
-	c.JSON(http.StatusOK, schemas.RefreshTokenResponse{
+	utils.SuccessWithMessage(c, "刷新成功", schemas.RefreshTokenResponse{
 		Token:     newToken,
 		TokenType: "Bearer",
 		ExpiresIn: 24 * 3600, // 24小时
@@ -267,11 +238,7 @@ func GetActiveSessions(c *gin.Context) {
 	// 从上下文获取claims
 	claims, exists := c.Get("claims")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-			Code:    http.StatusUnauthorized,
-			Message: "未授权",
-			Error:   "unauthorized",
-		})
+		utils.ErrorWithErrorCode(c, 2001, "未授权", "unauthorized")
 		return
 	}
 
@@ -288,15 +255,11 @@ func GetActiveSessions(c *gin.Context) {
 	sessions, err := sessionService.GetUserSessions(userID)
 	if err != nil {
 		logger.Warnf("获取活跃会话失败: %v", err)
-		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
-			Code:    http.StatusInternalServerError,
-			Message: "获取活跃会话失败",
-			Error:   "internal_error",
-		})
+		utils.ErrorWithErrorCode(c, 5002, "获取活跃会话失败", "internal_error")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	utils.SuccessWithMessage(c, "获取成功", gin.H{
 		"sessions": sessions,
 		"count":    len(sessions),
 	})

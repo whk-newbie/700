@@ -1,0 +1,44 @@
+[33mcommit 64ff9d02368f6572026549307e8795350597aa36[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: whk <15170188941@163.com>
+Date:   Mon Dec 22 10:57:38 2025 +0800
+
+    feat: 完成前端项目初始化并更新.gitignore
+    
+    - 完成前端项目基础结构搭建
+    - 添加所有API封装文件
+    - 创建登录页面和管理后台布局
+    - 添加工具函数（格式化、WebSocket、认证等）
+    - 更新.gitignore，忽略需求方案文档和敏感文件
+    - 从Git中移除需求方案文档（保留本地文件）
+
+ backend/static/qrcodes/.gitkeep              |    2 [32m+[m
+ frontend/README.md                           |  225 [32m++[m
+ frontend/package-lock.json                   | 3880 [32m++++++++++++++++++++++++++[m
+ frontend/src/api/auth.js                     |   47 [32m+[m
+ frontend/src/api/contactPool.js              |   37 [32m+[m
+ frontend/src/api/customer.js                 |   35 [32m+[m
+ frontend/src/api/followUp.js                 |   51 [32m+[m
+ frontend/src/api/group.js                    |   51 [32m+[m
+ frontend/src/api/lineAccount.js              |   51 [32m+[m
+ frontend/src/api/llm.js                      |  104 [32m+[m
+ frontend/src/api/stats.js                    |   25 [32m+[m
+ frontend/src/api/user.js                     |   35 [32m+[m
+ frontend/src/store/auth.js                   |   24 [32m+[m[31m-[m
+ frontend/src/utils/auth.js                   |   87 [32m+[m
+ frontend/src/utils/format.js                 |  108 [32m+[m
+ frontend/src/utils/request.js                |    2 [32m+[m[31m-[m
+ frontend/src/utils/websocket.js              |  175 [32m++[m
+ frontend/src/views/admin/AccountList.vue     |   40 [32m+[m
+ frontend/src/views/admin/ContactPool.vue     |   47 [32m+[m
+ frontend/src/views/admin/CustomerList.vue    |   40 [32m+[m
+ frontend/src/views/admin/Dashboard.vue       |   95 [32m+[m
+ frontend/src/views/admin/FollowUpRecords.vue |   44 [32m+[m
+ frontend/src/views/admin/GroupManage.vue     |   45 [32m+[m
+ frontend/src/views/admin/LLMCallLogs.vue     |   33 [32m+[m
+ frontend/src/views/admin/LLMConfig.vue       |   46 [32m+[m
+ frontend/src/views/admin/LeadsList.vue       |   39 [32m+[m
+ frontend/src/views/admin/UserManage.vue      |   44 [32m+[m
+ frontend/src/views/auth/Login.vue            |  169 [32m++[m
+ frontend/src/views/auth/SubAccountLogin.vue  |  171 [32m++[m
+ frontend/src/views/subaccount/Layout.vue     |  170 [32m++[m
+ 30 files changed, 5920 insertions(+), 2 deletions(-)

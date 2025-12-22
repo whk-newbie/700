@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"net/http"
 	"strings"
 
-	"line-management/internal/schemas"
 	"line-management/internal/services"
 	"line-management/internal/utils"
 	"line-management/pkg/logger"
@@ -18,11 +16,7 @@ func AuthRequired() gin.HandlerFunc {
 		// 从Header获取Token
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-				Code:    http.StatusUnauthorized,
-				Message: "未提供认证Token",
-				Error:   "missing_token",
-			})
+			utils.ErrorWithErrorCode(c, 2001, "未提供认证Token", "missing_token")
 			c.Abort()
 			return
 		}
@@ -30,11 +24,7 @@ func AuthRequired() gin.HandlerFunc {
 		// 检查Token格式（Bearer <token>）
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-				Code:    http.StatusUnauthorized,
-				Message: "Token格式错误",
-				Error:   "invalid_token_format",
-			})
+			utils.ErrorWithErrorCode(c, 2002, "Token格式错误", "invalid_token_format")
 			c.Abort()
 			return
 		}
@@ -45,11 +35,7 @@ func AuthRequired() gin.HandlerFunc {
 		claims, err := utils.ParseToken(tokenString)
 		if err != nil {
 			logger.Warnf("Token解析失败: %v", err)
-			c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-				Code:    http.StatusUnauthorized,
-				Message: "Token无效或已过期",
-				Error:   "invalid_token",
-			})
+			utils.ErrorWithErrorCode(c, 2003, "Token无效或已过期", "invalid_token")
 			c.Abort()
 			return
 		}
@@ -66,11 +52,7 @@ func AuthRequired() gin.HandlerFunc {
 		// 验证Session是否存在
 		if !sessionService.CheckSession(userID, tokenString) {
 			logger.Warnf("Session不存在或已过期: user_id=%d", userID)
-			c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
-				Code:    http.StatusUnauthorized,
-				Message: "Session已过期，请重新登录",
-				Error:   "session_expired",
-			})
+			utils.ErrorWithErrorCode(c, 2003, "Session已过期，请重新登录", "session_expired")
 			c.Abort()
 			return
 		}
@@ -105,11 +87,7 @@ func AdminRequired() gin.HandlerFunc {
 		// 检查角色
 		role, exists := c.Get("role")
 		if !exists || role != "admin" {
-			c.JSON(http.StatusForbidden, schemas.ErrorResponse{
-				Code:    http.StatusForbidden,
-				Message: "需要管理员权限",
-				Error:   "admin_required",
-			})
+			utils.ErrorWithErrorCode(c, 2007, "需要管理员权限", "admin_required")
 			c.Abort()
 			return
 		}
@@ -132,11 +110,7 @@ func UserRequired() gin.HandlerFunc {
 		// 检查角色（管理员或普通用户都可以）
 		role, exists := c.Get("role")
 		if !exists || (role != "admin" && role != "user") {
-			c.JSON(http.StatusForbidden, schemas.ErrorResponse{
-				Code:    http.StatusForbidden,
-				Message: "需要用户权限",
-				Error:   "user_required",
-			})
+			utils.ErrorWithErrorCode(c, 2007, "需要用户权限", "user_required")
 			c.Abort()
 			return
 		}
@@ -159,11 +133,7 @@ func SubAccountRequired() gin.HandlerFunc {
 		// 检查角色
 		role, exists := c.Get("role")
 		if !exists || role != "subaccount" {
-			c.JSON(http.StatusForbidden, schemas.ErrorResponse{
-				Code:    http.StatusForbidden,
-				Message: "需要子账号权限",
-				Error:   "subaccount_required",
-			})
+			utils.ErrorWithErrorCode(c, 2007, "需要子账号权限", "subaccount_required")
 			c.Abort()
 			return
 		}

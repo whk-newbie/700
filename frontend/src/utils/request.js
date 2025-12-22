@@ -10,7 +10,7 @@ NProgress.configure({ showSpinner: false })
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
@@ -45,12 +45,12 @@ service.interceptors.response.use(
 
     const res = response.data
 
-    // 如果响应状态码不是200，说明有错误
-    if (res.code && res.code !== 200) {
+    // 如果业务状态码不是1000（成功），说明有错误
+    if (res.code && res.code !== 1000) {
       ElMessage.error(res.message || '请求失败')
       
-      // 401未授权，清除token并跳转到登录页
-      if (res.code === 401) {
+      // 2xxx - 认证与授权错误，清除token并跳转到登录页
+      if (res.code >= 2001 && res.code < 3000) {
         const authStore = useAuthStore()
         authStore.logout()
         router.push({ name: 'Login' })
