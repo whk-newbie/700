@@ -42,6 +42,11 @@ func ApplyDataFilter(c *gin.Context, query *gorm.DB, tableName string) *gorm.DB 
 			query = query.Joins("JOIN groups ON groups.id = incoming_logs.group_id").
 				Where("groups.user_id = ?", userID)
 		}
+	case "import_batches":
+		if userID, ok := filterMap["user_id"].(uint); ok {
+			query = query.Where("imported_by = ?", userID)
+		}
+		// 子账号不能查看导入批次（因为导入批次是管理员/普通用户的功能）
 	}
 
 	return query

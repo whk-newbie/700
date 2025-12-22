@@ -66,6 +66,16 @@ func SetupRoutes(r *gin.RouterGroup) {
 			stats.GET("/account/:id/trend", handlers.GetAccountIncomingTrend)
 			stats.GET("/incoming-logs", handlers.GetIncomingLogs)
 		}
+
+		// 底库管理路由
+		contactPool := api.Group("/contact-pool")
+		{
+			contactPool.GET("/summary", handlers.GetContactPoolSummary)
+			contactPool.GET("/list", handlers.GetContactPoolList)
+			contactPool.GET("/detail", handlers.GetContactPoolDetail)
+			contactPool.POST("/import", handlers.ImportContacts)
+			contactPool.GET("/import-batches", handlers.GetImportBatchList)
+		}
 	}
 
 	// 健康检查（不需要认证）
