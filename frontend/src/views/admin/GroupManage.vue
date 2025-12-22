@@ -104,7 +104,7 @@
         </el-table-column>
         <el-table-column prop="account_limit" label="账号限制" width="100">
           <template #default="{ row }">
-            {{ row.account_limit != null && row.account_limit !== '' ? row.account_limit : '无限制' }}
+            {{ row.account_limit == null || row.account_limit === -1 ? '无限制' : row.account_limit }}
           </template>
         </el-table-column>
         <el-table-column label="账号统计" width="150">
@@ -186,10 +186,13 @@
         <el-form-item label="账号限制" prop="account_limit">
           <el-input-number
             v-model="formData.account_limit"
-            :min="0"
+            :min="-1"
             style="width: 100%"
-            placeholder="0表示无限制"
+            placeholder="-1表示无限制，0表示显示为0但允许"
           />
+          <div style="font-size: 12px; color: #909399; margin-top: 4px;">
+            提示：-1表示无限制，0表示显示为0但实际允许，大于0表示有限制
+          </div>
         </el-form-item>
         <el-form-item label="状态" prop="is_active">
           <el-switch
@@ -616,10 +619,14 @@ const handleSubmit = async () => {
         data.user_id = authStore.user?.id
       }
       
-      // 移除空值
+      // 移除空值（但保留 -1，因为 -1 表示无限制）
       Object.keys(data).forEach(key => {
         if (data[key] === '' || data[key] === null || data[key] === undefined) {
           delete data[key]
+        }
+        // account_limit 为 -1 时保留（表示无限制）
+        if (key === 'account_limit' && data[key] === -1) {
+          // 保留 -1
         }
       })
 

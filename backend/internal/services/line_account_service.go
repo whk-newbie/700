@@ -45,7 +45,8 @@ func (s *LineAccountService) CreateLineAccount(c *gin.Context, req *schemas.Crea
 	}
 
 	// 检查账号数量限制
-	if group.AccountLimit != nil {
+	// 规则：nil 或 -1 表示无限制，0 表示显示为0但实际允许，>0 表示有限制
+	if group.AccountLimit != nil && *group.AccountLimit > 0 {
 		var count int64
 		if err := s.db.Model(&models.LineAccount{}).
 			Where("group_id = ? AND deleted_at IS NULL", req.GroupID).
