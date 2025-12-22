@@ -80,6 +80,13 @@ go install github.com/swaggo/swag/cmd/swag@latest
 - `POST /api/v1/groups/batch/delete` - 批量删除分组
 - `POST /api/v1/groups/batch/update` - 批量更新分组
 
+### Line账号管理
+- `GET /api/v1/line-accounts` - 获取Line账号列表（支持分页、筛选）
+- `POST /api/v1/line-accounts` - 创建Line账号
+- `PUT /api/v1/line-accounts/:id` - 更新Line账号
+- `DELETE /api/v1/line-accounts/:id` - 删除Line账号（软删除）
+- `POST /api/v1/line-accounts/:id/generate-qr` - 生成二维码（Line添加好友链接）
+
 ## 🚀 快速开始
 
 1. 确保后端服务正在运行（`go run cmd/server/main.go`）

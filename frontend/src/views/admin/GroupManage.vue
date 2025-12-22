@@ -136,6 +136,11 @@
             {{ row.created_at ? formatDateTime(row.created_at) : '-' }}
           </template>
         </el-table-column>
+        <el-table-column prop="updated_at" label="更新时间" width="180">
+          <template #default="{ row }">
+            {{ row.updated_at ? formatDateTime(row.updated_at) : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="handleView(row)">

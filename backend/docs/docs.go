@@ -681,6 +681,330 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/line-accounts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取Line账号列表（支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "获取Line账号列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "online",
+                            "offline",
+                            "user_logout",
+                            "abnormal_offline"
+                        ],
+                        "type": "string",
+                        "description": "在线状态",
+                        "name": "online_status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "激活码",
+                        "name": "activation_code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（Line ID或显示名称）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新的Line账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "创建Line账号",
+                "parameters": [
+                    {
+                        "description": "创建Line账号请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CreateLineAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.LineAccountListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/line-accounts/:id": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新Line账号信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "更新Line账号",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新Line账号请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateLineAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.LineAccountListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "软删除Line账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "删除Line账号",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/line-accounts/:id/generate-qr": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "为Line账号生成二维码（二维码内容为Line添加好友链接）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "生成二维码",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "二维码内容（默认为Line添加好友链接：https://line.me/ti/p/~{line_id}）",
+                        "name": "content",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GenerateQRCodeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -798,6 +1122,60 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.CreateLineAccountRequest": {
+            "type": "object",
+            "required": [
+                "group_id",
+                "line_id",
+                "platform_type"
+            ],
+            "properties": {
+                "account_remark": {
+                    "type": "string",
+                    "example": "这是备注"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "这是个人简介"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "测试账号"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "enum": [
+                        "line",
+                        "line_business"
+                    ],
+                    "example": "line"
+                },
+                "profile_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "status_message": {
+                    "type": "string",
+                    "example": "这是状态消息"
+                }
+            }
+        },
         "schemas.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -812,6 +1190,19 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "用户名或密码错误"
+                }
+            }
+        },
+        "schemas.GenerateQRCodeResponse": {
+            "type": "object",
+            "properties": {
+                "qr_code_path": {
+                    "type": "string",
+                    "example": "/static/qrcodes/1.png"
+                },
+                "qr_code_url": {
+                    "type": "string",
+                    "example": "http://localhost:8080/static/qrcodes/1.png"
                 }
             }
         },
@@ -924,6 +1315,109 @@ const docTemplate = `{
                     "description": "用户信息",
                     "type": "string",
                     "example": "user001"
+                }
+            }
+        },
+        "schemas.LineAccountListResponse": {
+            "type": "object",
+            "properties": {
+                "account_remark": {
+                    "type": "string",
+                    "example": "这是备注"
+                },
+                "activation_code": {
+                    "type": "string",
+                    "example": "ABC12345"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "这是个人简介"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "测试账号"
+                },
+                "duplicate_incoming": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "first_login_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "group_remark": {
+                    "description": "分组信息",
+                    "type": "string",
+                    "example": "测试分组"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_active_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "last_online_time": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "online_status": {
+                    "type": "string",
+                    "example": "online"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "example": "line"
+                },
+                "profile_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "qr_code_path": {
+                    "type": "string",
+                    "example": "/static/qrcodes/1.png"
+                },
+                "status_message": {
+                    "type": "string",
+                    "example": "这是状态消息"
+                },
+                "today_duplicate": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "today_incoming": {
+                    "description": "统计信息",
+                    "type": "integer",
+                    "example": 10
+                },
+                "total_incoming": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
                 }
             }
         },
@@ -1056,6 +1550,49 @@ const docTemplate = `{
                 "reset_time": {
                     "type": "string",
                     "example": "09:00:00"
+                }
+            }
+        },
+        "schemas.UpdateLineAccountRequest": {
+            "type": "object",
+            "properties": {
+                "account_remark": {
+                    "type": "string",
+                    "example": "这是备注"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "这是个人简介"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "测试账号"
+                },
+                "online_status": {
+                    "type": "string",
+                    "enum": [
+                        "online",
+                        "offline",
+                        "user_logout",
+                        "abnormal_offline"
+                    ],
+                    "example": "online"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "profile_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "status_message": {
+                    "type": "string",
+                    "example": "这是状态消息"
                 }
             }
         },

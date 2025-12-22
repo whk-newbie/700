@@ -81,6 +81,46 @@ definitions:
     required:
     - user_id
     type: object
+  schemas.CreateLineAccountRequest:
+    properties:
+      account_remark:
+        example: 这是备注
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      bio:
+        example: 这是个人简介
+        type: string
+      display_name:
+        example: 测试账号
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      line_id:
+        example: U1234567890abcdef
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      platform_type:
+        enum:
+        - line
+        - line_business
+        example: line
+        type: string
+      profile_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      status_message:
+        example: 这是状态消息
+        type: string
+    required:
+    - group_id
+    - line_id
+    - platform_type
+    type: object
   schemas.ErrorResponse:
     properties:
       code:
@@ -91,6 +131,15 @@ definitions:
         type: string
       message:
         example: 用户名或密码错误
+        type: string
+    type: object
+  schemas.GenerateQRCodeResponse:
+    properties:
+      qr_code_path:
+        example: /static/qrcodes/1.png
+        type: string
+      qr_code_url:
+        example: http://localhost:8080/static/qrcodes/1.png
         type: string
     type: object
   schemas.GroupInfo:
@@ -174,6 +223,83 @@ definitions:
       username:
         description: 用户信息
         example: user001
+        type: string
+    type: object
+  schemas.LineAccountListResponse:
+    properties:
+      account_remark:
+        example: 这是备注
+        type: string
+      activation_code:
+        example: ABC12345
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      bio:
+        example: 这是个人简介
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      display_name:
+        example: 测试账号
+        type: string
+      duplicate_incoming:
+        example: 5
+        type: integer
+      first_login_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      group_remark:
+        description: 分组信息
+        example: 测试分组
+        type: string
+      id:
+        example: 1
+        type: integer
+      last_active_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      last_online_time:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      line_id:
+        example: U1234567890abcdef
+        type: string
+      online_status:
+        example: online
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      platform_type:
+        example: line
+        type: string
+      profile_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      qr_code_path:
+        example: /static/qrcodes/1.png
+        type: string
+      status_message:
+        example: 这是状态消息
+        type: string
+      today_duplicate:
+        example: 2
+        type: integer
+      today_incoming:
+        description: 统计信息
+        example: 10
+        type: integer
+      total_incoming:
+        example: 100
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
         type: string
     type: object
   schemas.LoginRequest:
@@ -266,6 +392,38 @@ definitions:
         type: string
       reset_time:
         example: "09:00:00"
+        type: string
+    type: object
+  schemas.UpdateLineAccountRequest:
+    properties:
+      account_remark:
+        example: 这是备注
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      bio:
+        example: 这是个人简介
+        type: string
+      display_name:
+        example: 测试账号
+        type: string
+      online_status:
+        enum:
+        - online
+        - offline
+        - user_logout
+        - abnormal_offline
+        example: online
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      profile_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      status_message:
+        example: 这是状态消息
         type: string
     type: object
   schemas.UserInfo:
@@ -737,6 +895,216 @@ paths:
       summary: 获取分组分类列表
       tags:
       - 分组管理
+  /line-accounts:
+    get:
+      consumes:
+      - application/json
+      description: 获取Line账号列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 分组ID
+        in: query
+        name: group_id
+        type: integer
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      - description: 在线状态
+        enum:
+        - online
+        - offline
+        - user_logout
+        - abnormal_offline
+        in: query
+        name: online_status
+        type: string
+      - description: 激活码
+        in: query
+        name: activation_code
+        type: string
+      - description: 搜索（Line ID或显示名称）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取Line账号列表
+      tags:
+      - Line账号管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的Line账号
+      parameters:
+      - description: 创建Line账号请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateLineAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LineAccountListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建Line账号
+      tags:
+      - Line账号管理
+  /line-accounts/:id:
+    delete:
+      consumes:
+      - application/json
+      description: 软删除Line账号
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除Line账号
+      tags:
+      - Line账号管理
+    put:
+      consumes:
+      - application/json
+      description: 更新Line账号信息
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新Line账号请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateLineAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LineAccountListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新Line账号
+      tags:
+      - Line账号管理
+  /line-accounts/:id/generate-qr:
+    post:
+      consumes:
+      - application/json
+      description: 为Line账号生成二维码（二维码内容为Line添加好友链接）
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 二维码内容（默认为Line添加好友链接：https://line.me/ti/p/~{line_id}）
+        in: query
+        name: content
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GenerateQRCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 生成二维码
+      tags:
+      - Line账号管理
 securityDefinitions:
   BearerAuth:
     description: JWT Token，格式：Bearer {token}

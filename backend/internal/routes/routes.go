@@ -41,6 +41,16 @@ func SetupRoutes(r *gin.RouterGroup) {
 			groups.POST("/batch/delete", handlers.BatchDeleteGroups)
 			groups.POST("/batch/update", handlers.BatchUpdateGroups)
 		}
+
+		// Line账号管理路由
+		lineAccounts := api.Group("/line-accounts")
+		{
+			lineAccounts.GET("", handlers.GetLineAccounts)
+			lineAccounts.POST("", handlers.CreateLineAccount)
+			lineAccounts.PUT("/:id", handlers.UpdateLineAccount)
+			lineAccounts.DELETE("/:id", handlers.DeleteLineAccount)
+			lineAccounts.POST("/:id/generate-qr", handlers.GenerateQRCode)
+		}
 	}
 
 	// 健康检查（不需要认证）
