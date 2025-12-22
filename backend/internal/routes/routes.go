@@ -64,6 +64,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			stats.GET("/group/:id/trend", handlers.GetGroupIncomingTrend)
 			stats.GET("/account/:id", handlers.GetAccountStats)
 			stats.GET("/account/:id/trend", handlers.GetAccountIncomingTrend)
+			stats.GET("/incoming-logs", handlers.GetIncomingLogs)
 		}
 	}
 

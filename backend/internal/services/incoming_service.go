@@ -4,9 +4,12 @@ import (
 	"time"
 
 	"line-management/internal/models"
+	"line-management/internal/schemas"
+	"line-management/internal/utils"
 	"line-management/pkg/database"
 	"line-management/pkg/logger"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -167,6 +170,118 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 
 		return nil
 	})
+}
+
+// GetIncomingLogList 获取进线日志列表（带分页和筛选）
+func (s *IncomingService) GetIncomingLogList(c *gin.Context, params *schemas.IncomingLogQueryParams) ([]schemas.IncomingLogListResponse, int64, error) {
+	// 应用数据过滤
+	query := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
+
+	// 添加查询条件
+	if params.GroupID != nil {
+		query = query.Where("group_id = ?", *params.GroupID)
+	}
+
+	if params.LineAccountID != nil {
+		query = query.Where("line_account_id = ?", *params.LineAccountID)
+	}
+
+	if params.IsDuplicate != nil {
+		query = query.Where("is_duplicate = ?", *params.IsDuplicate)
+	}
+
+	if params.StartTime != "" {
+		startTime, err := time.Parse(time.RFC3339, params.StartTime)
+		if err == nil {
+			query = query.Where("incoming_time >= ?", startTime)
+		}
+	}
+
+	if params.EndTime != "" {
+		endTime, err := time.Parse(time.RFC3339, params.EndTime)
+		if err == nil {
+			query = query.Where("incoming_time <= ?", endTime)
+		}
+	}
+
+	if params.Search != "" {
+		search := "%" + params.Search + "%"
+		query = query.Where("incoming_line_id LIKE ? OR display_name LIKE ?", search, search)
+	}
+
+	// 获取总数
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 分页
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := params.PageSize
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	offset := (page - 1) * pageSize
+
+	// 查询进线日志列表
+	var logs []models.IncomingLog
+	if err := query.
+		Preload("LineAccount").
+		Preload("Group").
+		Order("incoming_time DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&logs).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 转换为响应格式
+	result := make([]schemas.IncomingLogListResponse, 0, len(logs))
+	for _, log := range logs {
+		item := schemas.IncomingLogListResponse{
+			ID:             log.ID,
+			LineAccountID:  log.LineAccountID,
+			GroupID:        log.GroupID,
+			IncomingLineID: log.IncomingLineID,
+			IncomingTime:   log.IncomingTime.Format(time.RFC3339),
+			DisplayName:    log.DisplayName,
+			AvatarURL:      log.AvatarURL,
+			PhoneNumber:    log.PhoneNumber,
+			IsDuplicate:    log.IsDuplicate,
+			DuplicateScope: log.DuplicateScope,
+			CustomerType:   log.CustomerType,
+		}
+
+		// 关联Line账号信息
+		if log.LineAccount != nil {
+			item.LineAccount = &schemas.LineAccountInfo{
+				ID:          log.LineAccount.ID,
+				LineID:      log.LineAccount.LineID,
+				DisplayName: log.LineAccount.DisplayName,
+				PlatformType: log.LineAccount.PlatformType,
+			}
+		}
+
+		// 关联分组信息
+		if log.Group != nil {
+			item.Group = &schemas.GroupInfo{
+				ID:            log.Group.ID,
+				ActivationCode: log.Group.ActivationCode,
+				Remark:        log.Group.Remark,
+			}
+		}
+
+		result = append(result, item)
+	}
+
+	return result, total, nil
 }
 
 

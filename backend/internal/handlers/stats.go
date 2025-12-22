@@ -3,6 +3,7 @@ package handlers
 import (
 	"strconv"
 
+	"line-management/internal/schemas"
 	"line-management/internal/services"
 	"line-management/internal/utils"
 
@@ -164,5 +165,51 @@ func GetAccountIncomingTrend(c *gin.Context) {
 	}
 
 	utils.Success(c, trend)
+}
+
+// GetIncomingLogs 获取进线日志列表
+// @Summary 获取进线日志列表
+// @Description 获取进线日志列表（支持分页和筛选）
+// @Tags 统计
+// @Accept json
+// @Produce json
+// @Param page query int false "页码" default(1)
+// @Param page_size query int false "每页数量" default(10)
+// @Param group_id query int false "分组ID"
+// @Param line_account_id query int false "账号ID"
+// @Param is_duplicate query bool false "是否重复"
+// @Param start_time query string false "开始时间（ISO 8601格式）"
+// @Param end_time query string false "结束时间（ISO 8601格式）"
+// @Param search query string false "搜索（进线Line ID或显示名称）"
+// @Success 200 {object} utils.PaginationResponse
+// @Failure 400 {object} utils.Response
+// @Failure 500 {object} utils.Response
+// @Router /stats/incoming-logs [get]
+// @Security BearerAuth
+func GetIncomingLogs(c *gin.Context) {
+	var params schemas.IncomingLogQueryParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误", "invalid_params")
+		return
+	}
+
+	incomingService := services.NewIncomingService(nil)
+	list, total, err := incomingService.GetIncomingLogList(c, &params)
+	if err != nil {
+		utils.ErrorWithErrorCode(c, 5001, "获取进线日志列表失败", "internal_error")
+		return
+	}
+
+	// 分页参数
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := params.PageSize
+	if pageSize < 1 {
+		pageSize = 10
+	}
+
+	utils.SuccessWithPagination(c, list, page, pageSize, total)
 }
 
