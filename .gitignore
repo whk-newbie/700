@@ -1,0 +1,203 @@
+# ============================================
+# 通用忽略规则
+# ============================================
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Go后端忽略规则
+# ============================================
+
+# Go编译产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+go.work.sum
+
+# Go依赖
+vendor/
+
+# 环境变量文件
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/env.example.txt
+
+# 日志文件
+backend/logs/
+*.log
+*.log.*
+
+# 临时文件
+backend/tmp/
+backend/temp/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 静态文件（上传的文件）
+backend/static/qrcodes/*
+!backend/static/qrcodes/.gitkeep
+
+# 测试覆盖率
+backend/coverage/
+*.coverprofile
+
+# ============================================
+# Node.js前端忽略规则
+# ============================================
+
+# 依赖
+frontend/node_modules/
+frontend/.pnpm-store/
+frontend/.yarn/
+frontend/.pnp.*
+
+# 构建产物
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.nuxt/
+frontend/.next/
+frontend/.output/
+
+# 环境变量文件
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# 日志
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# 编辑器目录
+frontend/.idea
+frontend/.vscode
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+# 测试覆盖率
+frontend/coverage/
+frontend/.nyc_output/
+
+# 缓存
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/.eslintcache
+frontend/.stylelintcache
+
+# ============================================
+# Docker相关
+# ============================================
+
+# Docker卷数据
+docker-data/
+postgres_data/
+redis_data/
+backend_static/
+
+# ============================================
+# 文档和配置文件（可选）
+# ============================================
+
+# 敏感配置文件
+*.key
+*.pem
+*.cert
+*.crt
+secrets/
+.secrets
+
+# 备份文件
+*.bak
+*.backup
+*.old
+*.orig
+
+# 压缩文件（如果不需要版本控制）
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ============================================
+# 项目特定忽略
+# ============================================
+
+# Excel文件（如果包含敏感数据）
+*.xlsx
+*.xls
+
+# 项目设计文件
+项目初步设计.xlsx
+
+# 需求方案文档（不上传到Git）
+*需求方案.md
+*需求汇总.md
+*交互协议.md
+*表设计*.md
+*状态码定义.md
+*权限体系设计.md
+*API文档规划.md
+*去重逻辑.md
+*增量更新方案.md
+
+# 具体需求文档
+分组管理需求方案.md
+大模型API代理需求方案.md
+客户列表需求方案.md
+底库管理需求方案.md
+用户管理需求方案.md
+系统需求汇总.md
+线索列表需求方案.md
+账号列表需求方案.md
+跟进记录需求方案.md
+进线统计与去重逻辑.md
+进线统计增量更新方案.md
+Windows客户端交互协议.md
+数据库表设计-完整版.md
+状态码定义.md
+用户权限体系设计.md
+API文档规划.md
+
+# 临时上传文件
+uploads/
+temp_uploads/
+
