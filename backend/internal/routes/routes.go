@@ -19,6 +19,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 		auth.POST("/logout", middleware.AuthRequired(), handlers.Logout)
 		auth.GET("/me", middleware.AuthRequired(), handlers.GetMe)
 		auth.POST("/refresh", handlers.RefreshToken)
+		auth.GET("/sessions", middleware.AuthRequired(), handlers.GetActiveSessions)
 	}
 
 	// 需要认证的路由

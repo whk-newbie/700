@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"line-management/internal/schemas"
 	"line-management/internal/services"
@@ -33,8 +34,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// 获取客户端IP和User-Agent
+	ipAddress := c.ClientIP()
+	userAgent := c.GetHeader("User-Agent")
+
 	authService := services.NewAuthService()
-	response, err := authService.Login(&req)
+	response, err := authService.Login(&req, ipAddress, userAgent)
 	if err != nil {
 		logger.Warnf("登录失败: %v", err)
 		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
@@ -70,8 +75,12 @@ func LoginSubAccount(c *gin.Context) {
 		return
 	}
 
+	// 获取客户端IP和User-Agent
+	ipAddress := c.ClientIP()
+	userAgent := c.GetHeader("User-Agent")
+
 	authService := services.NewAuthService()
-	response, err := authService.LoginSubAccount(&req)
+	response, err := authService.LoginSubAccount(&req, ipAddress, userAgent)
 	if err != nil {
 		logger.Warnf("子账号登录失败: %v", err)
 		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
@@ -87,14 +96,53 @@ func LoginSubAccount(c *gin.Context) {
 
 // Logout 登出
 // @Summary 登出
-// @Description 用户登出（目前仅返回成功，后续可添加Token黑名单）
+// @Description 用户登出，删除Session
 // @Tags 认证
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @Router /auth/logout [post]
 func Logout(c *gin.Context) {
-	// TODO: 可以实现Token黑名单机制，将Token加入Redis黑名单
+	// 从上下文获取claims
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "未授权",
+			Error:   "unauthorized",
+		})
+		return
+	}
+
+	jwtClaims := claims.(*utils.JWTClaims)
+
+	// 获取Token
+	authHeader := c.GetHeader("Authorization")
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 {
+		c.JSON(http.StatusBadRequest, schemas.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Token格式错误",
+			Error:   "invalid_token_format",
+		})
+		return
+	}
+	token := parts[1]
+
+	// 删除Session
+	sessionService := services.NewSessionService()
+	var userID uint
+	if jwtClaims.Role == "subaccount" {
+		userID = jwtClaims.GroupID
+	} else {
+		userID = jwtClaims.UserID
+	}
+
+	if err := sessionService.DeleteSession(userID, token); err != nil {
+		logger.Warnf("删除Session失败: %v", err)
+		// 即使删除失败也返回成功，因为Token可能已过期
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "登出成功",
 	})
@@ -203,6 +251,54 @@ func RefreshToken(c *gin.Context) {
 		Token:     newToken,
 		TokenType: "Bearer",
 		ExpiresIn: 24 * 3600, // 24小时
+	})
+}
+
+// GetActiveSessions 获取当前用户的活跃会话
+// @Summary 获取活跃会话
+// @Description 获取当前用户的所有活跃Session
+// @Tags 认证
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} schemas.ErrorResponse
+// @Router /auth/sessions [get]
+func GetActiveSessions(c *gin.Context) {
+	// 从上下文获取claims
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "未授权",
+			Error:   "unauthorized",
+		})
+		return
+	}
+
+	jwtClaims := claims.(*utils.JWTClaims)
+
+	sessionService := services.NewSessionService()
+	var userID uint
+	if jwtClaims.Role == "subaccount" {
+		userID = jwtClaims.GroupID
+	} else {
+		userID = jwtClaims.UserID
+	}
+
+	sessions, err := sessionService.GetUserSessions(userID)
+	if err != nil {
+		logger.Warnf("获取活跃会话失败: %v", err)
+		c.JSON(http.StatusInternalServerError, schemas.ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: "获取活跃会话失败",
+			Error:   "internal_error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"sessions": sessions,
+		"count":    len(sessions),
 	})
 }
 

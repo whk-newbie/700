@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"line-management/internal/schemas"
+	"line-management/internal/services"
 	"line-management/internal/utils"
 	"line-management/pkg/logger"
 
@@ -48,6 +49,27 @@ func AuthRequired() gin.HandlerFunc {
 				Code:    http.StatusUnauthorized,
 				Message: "Token无效或已过期",
 				Error:   "invalid_token",
+			})
+			c.Abort()
+			return
+		}
+
+		// 检查Session是否存在（如果启用了Session管理）
+		sessionService := services.NewSessionService()
+		var userID uint
+		if claims.Role == "subaccount" {
+			userID = claims.GroupID
+		} else {
+			userID = claims.UserID
+		}
+
+		// 验证Session是否存在
+		if !sessionService.CheckSession(userID, tokenString) {
+			logger.Warnf("Session不存在或已过期: user_id=%d", userID)
+			c.JSON(http.StatusUnauthorized, schemas.ErrorResponse{
+				Code:    http.StatusUnauthorized,
+				Message: "Session已过期，请重新登录",
+				Error:   "session_expired",
 			})
 			c.Abort()
 			return

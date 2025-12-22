@@ -26,7 +26,7 @@ func NewAuthService() *AuthService {
 }
 
 // Login 用户登录（管理员/普通用户）
-func (s *AuthService) Login(req *schemas.LoginRequest) (*schemas.LoginResponse, error) {
+func (s *AuthService) Login(req *schemas.LoginRequest, ipAddress, userAgent string) (*schemas.LoginResponse, error) {
 	var user models.User
 
 	// 查找用户
@@ -53,6 +53,21 @@ func (s *AuthService) Login(req *schemas.LoginRequest) (*schemas.LoginResponse, 
 		return nil, err
 	}
 
+	// 创建Session
+	sessionService := NewSessionService()
+	sessionInfo := &SessionInfo{
+		UserID:    user.ID,
+		Username:  user.Username,
+		Role:      user.Role,
+		LoginTime: time.Now(),
+		IPAddress: ipAddress,
+		UserAgent: userAgent,
+	}
+	if err := sessionService.CreateSession(user.ID, token, sessionInfo, 24*time.Hour); err != nil {
+		// Session创建失败不影响登录，只记录日志
+		// 但Token仍然有效
+	}
+
 	// 构建响应
 	response := &schemas.LoginResponse{
 		Token:     token,
@@ -70,7 +85,7 @@ func (s *AuthService) Login(req *schemas.LoginRequest) (*schemas.LoginResponse, 
 }
 
 // LoginSubAccount 子账号登录
-func (s *AuthService) LoginSubAccount(req *schemas.SubAccountLoginRequest) (*schemas.LoginResponse, error) {
+func (s *AuthService) LoginSubAccount(req *schemas.SubAccountLoginRequest, ipAddress, userAgent string) (*schemas.LoginResponse, error) {
 	var group models.Group
 
 	// 查找分组（激活码）
@@ -104,6 +119,21 @@ func (s *AuthService) LoginSubAccount(req *schemas.SubAccountLoginRequest) (*sch
 	token, err := utils.GenerateSubAccountToken(group.ID, group.ActivationCode)
 	if err != nil {
 		return nil, err
+	}
+
+	// 创建Session（子账号使用GroupID作为标识）
+	sessionService := NewSessionService()
+	sessionInfo := &SessionInfo{
+		GroupID:        group.ID,
+		ActivationCode: group.ActivationCode,
+		Role:           "subaccount",
+		LoginTime:      time.Now(),
+		IPAddress:      ipAddress,
+		UserAgent:      userAgent,
+	}
+	// 子账号使用GroupID作为Session的用户ID标识
+	if err := sessionService.CreateSession(uint(group.ID), token, sessionInfo, 24*time.Hour); err != nil {
+		// Session创建失败不影响登录
 	}
 
 	// 构建响应
