@@ -76,6 +76,25 @@ func SetupRoutes(r *gin.RouterGroup) {
 			contactPool.POST("/import", handlers.ImportContacts)
 			contactPool.GET("/import-batches", handlers.GetImportBatchList)
 		}
+
+		// 客户管理路由
+		customers := api.Group("/customers")
+		{
+			customers.GET("", handlers.GetCustomers)
+			customers.GET("/:id", handlers.GetCustomerDetail)
+			customers.PUT("/:id", handlers.UpdateCustomer)
+			customers.DELETE("/:id", handlers.DeleteCustomer)
+		}
+
+		// 跟进记录路由
+		followUps := api.Group("/follow-ups")
+		{
+			followUps.GET("", handlers.GetFollowUps)
+			followUps.POST("", handlers.CreateFollowUp)
+			followUps.PUT("/:id", handlers.UpdateFollowUp)
+			followUps.DELETE("/:id", handlers.DeleteFollowUp)
+			followUps.POST("/batch", handlers.BatchCreateFollowUp)
+		}
 	}
 
 	// 健康检查（不需要认证）

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"line-management/internal/models"
+	"line-management/internal/schemas"
 	"line-management/internal/services"
 	"line-management/pkg/database"
 	"line-management/pkg/logger"
@@ -282,15 +283,72 @@ func (h *MessageHandler) handleCustomerSync(client *Client, message []byte) erro
 		return fmt.Errorf("解析客户同步消息失败: %w", err)
 	}
 
-	// TODO: 第8周实现客户管理模块时处理
-	logger.Infof("收到客户同步数据: ActivationCode=%s, CustomerID=%s", 
-		customerMsg.ActivationCode, customerMsg.Data.CustomerID)
+	// 验证激活码
+	if customerMsg.ActivationCode != client.ActivationCode {
+		return errors.New("激活码不匹配")
+	}
 
+	// 获取分组信息
+	var group models.Group
+	if err := h.db.Where("activation_code = ? AND deleted_at IS NULL", customerMsg.ActivationCode).First(&group).Error; err != nil {
+		return fmt.Errorf("分组不存在: %w", err)
+	}
+
+	// 查找Line账号（如果提供了line_account_id）
+	var lineAccountID *uint
+	if customerMsg.Data.LineAccountID != "" {
+		var lineAccount models.LineAccount
+		if err := h.db.Where("group_id = ? AND line_id = ? AND deleted_at IS NULL", group.ID, customerMsg.Data.LineAccountID).
+			First(&lineAccount).Error; err == nil {
+			lineAccountID = &lineAccount.ID
+		} else {
+			logger.Warnf("Line账号不存在: line_id=%s, group_id=%d", customerMsg.Data.LineAccountID, group.ID)
+		}
+	}
+
+	// 确定平台类型（如果没有提供，默认为line）
+	platformType := customerMsg.Data.PlatformType
+	if platformType == "" {
+		platformType = "line"
+	}
+
+	// 转换数据格式
+	customerSyncData := &schemas.CustomerSyncData{
+		LineAccountID: customerMsg.Data.LineAccountID,
+		CustomerID:     customerMsg.Data.CustomerID,
+		PlatformType:   platformType,
+		DisplayName:    customerMsg.Data.DisplayName,
+		AvatarURL:      customerMsg.Data.AvatarURL,
+		PhoneNumber:    customerMsg.Data.PhoneNumber,
+		Gender:         customerMsg.Data.Gender,
+		Country:        customerMsg.Data.Country,
+		Birthday:       customerMsg.Data.Birthday,
+		Address:        customerMsg.Data.Address,
+		Remark:         customerMsg.Data.Remark,
+	}
+
+	// 调用客户同步服务
+	customerService := services.NewCustomerService()
+	customer, err := customerService.SyncCustomer(group.ID, group.ActivationCode, customerSyncData)
+	if err != nil {
+		logger.Errorf("同步客户失败: %v", err)
+		return fmt.Errorf("同步客户失败: %w", err)
+	}
+
+	// 如果提供了line_account_id，更新客户的line_account_id关联
+	if lineAccountID != nil && customer.LineAccountID == nil {
+		if err := h.db.Model(customer).Update("line_account_id", lineAccountID).Error; err != nil {
+			logger.Warnf("更新客户Line账号关联失败: %v", err)
+		}
+	}
+
+	// 发送确认消息
 	response := Message{
 		Type: "customer_sync_received",
 		Data: map[string]interface{}{
 			"customer_id": customerMsg.Data.CustomerID,
-			"status":      "received",
+			"customer_db_id": customer.ID,
+			"status":      "processed",
 		},
 	}
 	return h.sendMessage(client, response)
@@ -303,15 +361,47 @@ func (h *MessageHandler) handleFollowUpSync(client *Client, message []byte) erro
 		return fmt.Errorf("解析跟进记录同步消息失败: %w", err)
 	}
 
-	// TODO: 第9周实现跟进记录模块时处理
-	logger.Infof("收到跟进记录同步数据: ActivationCode=%s, CustomerID=%s", 
-		followUpMsg.ActivationCode, followUpMsg.Data.CustomerID)
+	// 验证激活码
+	if followUpMsg.ActivationCode != client.ActivationCode {
+		return errors.New("激活码不匹配")
+	}
 
+	// 获取分组信息
+	var group models.Group
+	if err := h.db.Where("activation_code = ? AND deleted_at IS NULL", followUpMsg.ActivationCode).First(&group).Error; err != nil {
+		return fmt.Errorf("分组不存在: %w", err)
+	}
+
+	// 确定平台类型（如果没有提供，默认为line）
+	platformType := followUpMsg.Data.PlatformType
+	if platformType == "" {
+		platformType = "line"
+	}
+
+	// 转换数据格式
+	followUpSyncData := &schemas.FollowUpSyncData{
+		LineAccountID: followUpMsg.Data.LineAccountID,
+		CustomerID:    followUpMsg.Data.CustomerID,
+		PlatformType:  platformType,
+		Content:       followUpMsg.Data.Content,
+		Timestamp:     followUpMsg.Data.Timestamp,
+	}
+
+	// 调用跟进记录同步服务
+	followUpService := services.NewFollowUpService()
+	record, err := followUpService.SyncFollowUp(group.ID, group.ActivationCode, followUpSyncData)
+	if err != nil {
+		logger.Errorf("同步跟进记录失败: %v", err)
+		return fmt.Errorf("同步跟进记录失败: %w", err)
+	}
+
+	// 发送确认消息
 	response := Message{
 		Type: "follow_up_sync_received",
 		Data: map[string]interface{}{
-			"customer_id": followUpMsg.Data.CustomerID,
-			"status":      "received",
+			"customer_id":   followUpMsg.Data.CustomerID,
+			"follow_up_id":  record.ID,
+			"status":        "processed",
 		},
 	}
 	return h.sendMessage(client, response)

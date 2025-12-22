@@ -91,6 +91,7 @@ type CustomerSyncMessage struct {
 type CustomerData struct {
 	LineAccountID string `json:"line_account_id"`
 	CustomerID    string `json:"customer_id"`
+	PlatformType  string `json:"platform_type,omitempty"`
 	DisplayName   string `json:"display_name,omitempty"`
 	AvatarURL     string `json:"avatar_url,omitempty"`
 	PhoneNumber   string `json:"phone_number,omitempty"`
@@ -112,6 +113,7 @@ type FollowUpSyncMessage struct {
 type FollowUpData struct {
 	LineAccountID string `json:"line_account_id"`
 	CustomerID    string `json:"customer_id"`
+	PlatformType  string `json:"platform_type,omitempty"`
 	Content       string `json:"content"`
 	Timestamp     string `json:"timestamp,omitempty"`
 }
