@@ -435,14 +435,15 @@ const formRules = {
 // 二维码图片URL
 const qrImageUrl = computed(() => {
   if (!currentQRCode.value) return ''
-  // 后端返回的路径格式：/static/qrcodes/1.png
-  // 开发环境：通过vite代理访问（/static已配置代理）
-  // 生产环境：需要拼接完整URL
-  if (currentQRCode.value.startsWith('/')) {
-    // 开发环境直接使用相对路径，通过代理访问
-    return currentQRCode.value
+  // 后端返回的路径格式：/static/qrcodes/1.png 或 /qrcodes/1.png（旧数据）
+  // 如果是旧格式（/qrcodes/...），需要转换为 /static/qrcodes/...
+  let path = currentQRCode.value
+  if (path.startsWith('/qrcodes/') && !path.startsWith('/static/')) {
+    // 兼容旧数据：/qrcodes/... -> /static/qrcodes/...
+    path = path.replace(/^\/qrcodes\//, '/static/qrcodes/')
   }
-  return currentQRCode.value
+  // 开发环境：通过vite代理访问（/static已配置代理）
+  return path
 })
 
 // 加载分组列表（用于下拉选择）

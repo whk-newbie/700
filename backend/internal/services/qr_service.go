@@ -68,7 +68,8 @@ func (s *QRService) GenerateQRCode(accountID uint, content string) (string, erro
 	}
 
 	// 更新账号的二维码路径（相对路径，用于前端访问）
-	qrCodePath := filepath.Join("/", s.qrcodeSubDir, filename)
+	// 注意：静态文件服务配置为 /static，所以路径应该是 /static/qrcodes/...
+	qrCodePath := filepath.Join("/static", s.qrcodeSubDir, filename)
 	account.QRCodePath = qrCodePath
 	if err := s.db.Save(&account).Error; err != nil {
 		logger.Warnf("更新账号二维码路径失败: %v", err)
