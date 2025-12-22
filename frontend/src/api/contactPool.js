@@ -35,3 +35,11 @@ export const importContacts = (formData) => {
   })
 }
 
+/**
+ * 获取导入批次列表
+ * @param {object} params - 查询参数
+ */
+export const getImportBatches = (params) => {
+  return request.get('/contact-pool/import-batches', { params })
+}
+
