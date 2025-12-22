@@ -79,6 +79,27 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 检查认证状态
+  const checkAuth = () => {
+    const storedToken = localStorage.getItem('token')
+    const storedUser = localStorage.getItem('user')
+    
+    if (storedToken) {
+      token.value = storedToken
+      if (storedUser) {
+        try {
+          user.value = JSON.parse(storedUser)
+        } catch (e) {
+          console.error('解析用户信息失败:', e)
+          user.value = null
+        }
+      }
+    } else {
+      token.value = ''
+      user.value = null
+    }
+  }
+
   return {
     token,
     user,
@@ -88,7 +109,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     loginSubAccount,
     logout,
-    fetchUserInfo
+    fetchUserInfo,
+    checkAuth
   }
 })
 
