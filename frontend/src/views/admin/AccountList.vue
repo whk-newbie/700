@@ -437,11 +437,19 @@ const qrImageUrl = computed(() => {
   if (!currentQRCode.value) return ''
   // 后端返回的路径格式：/static/qrcodes/1.png 或 /qrcodes/1.png（旧数据）
   // 如果是旧格式（/qrcodes/...），需要转换为 /static/qrcodes/...
-  let path = currentQRCode.value
-  if (path.startsWith('/qrcodes/') && !path.startsWith('/static/')) {
-    // 兼容旧数据：/qrcodes/... -> /static/qrcodes/...
+  let path = String(currentQRCode.value).trim()
+  
+  // 兼容旧数据：/qrcodes/... -> /static/qrcodes/...
+  if (path.startsWith('/qrcodes/') && !path.startsWith('/static/qrcodes/')) {
     path = path.replace(/^\/qrcodes\//, '/static/qrcodes/')
   }
+  
+  // 确保路径以 /static/qrcodes/ 开头
+  if (!path.startsWith('/static/qrcodes/') && path.includes('qrcodes')) {
+    // 如果路径包含 qrcodes 但没有 /static 前缀，添加前缀
+    path = '/static' + path
+  }
+  
   // 开发环境：通过vite代理访问（/static已配置代理）
   return path
 })
@@ -658,7 +666,13 @@ const handleBatchOffline = async () => {
 // 查看二维码
 const handleViewQR = (row) => {
   currentAccountForQR.value = row
-  currentQRCode.value = row.qr_code_path || null
+  // 获取二维码路径，如果是旧格式会自动转换
+  let qrPath = row.qr_code_path || null
+  if (qrPath && qrPath.startsWith('/qrcodes/') && !qrPath.startsWith('/static/qrcodes/')) {
+    // 兼容旧数据：立即转换
+    qrPath = qrPath.replace(/^\/qrcodes\//, '/static/qrcodes/')
+  }
+  currentQRCode.value = qrPath
   qrDialogVisible.value = true
 }
 
