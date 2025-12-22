@@ -80,6 +80,7 @@ func (s *LineAccountService) CreateLineAccount(c *gin.Context, req *schemas.Crea
 		AvatarURL:     req.AvatarURL,
 		Bio:           req.Bio,
 		StatusMessage: req.StatusMessage,
+		AddFriendLink: req.AddFriendLink,
 		AccountRemark: req.AccountRemark,
 		OnlineStatus:  "offline",
 	}
@@ -230,6 +231,7 @@ func (s *LineAccountService) GetLineAccountList(c *gin.Context, params *schemas.
 			AvatarURL:       a.AvatarURL,
 			Bio:             a.Bio,
 			StatusMessage:   a.StatusMessage,
+			AddFriendLink:   a.AddFriendLink,
 			QRCodePath:      a.QRCodePath,
 			OnlineStatus:    a.OnlineStatus,
 			LastActiveAt:    lastActiveAt,
@@ -274,35 +276,77 @@ func (s *LineAccountService) UpdateLineAccount(c *gin.Context, id uint, req *sch
 
 	oldStatus := account.OnlineStatus
 	oldPlatformType := account.PlatformType
+	oldGroupID := account.GroupID
 
-	// 更新字段
-	if req.DisplayName != "" {
-		account.DisplayName = req.DisplayName
+	// 如果更新分组，需要验证新分组
+	if req.GroupID != nil && *req.GroupID != account.GroupID {
+		var newGroup models.Group
+		if err := s.db.Where("id = ? AND deleted_at IS NULL", *req.GroupID).First(&newGroup).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("分组不存在")
+			}
+			return nil, err
+		}
+
+		if !newGroup.IsActive {
+			return nil, errors.New("分组已被禁用")
+		}
+
+		// 检查新分组下是否已存在相同的line_id（排除当前账号）
+		var existingAccount models.LineAccount
+		if err := s.db.Where("group_id = ? AND line_id = ? AND id != ? AND deleted_at IS NULL", *req.GroupID, account.LineID, id).
+			First(&existingAccount).Error; err == nil {
+			return nil, errors.New("该Line ID在新分组中已存在")
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+
+		account.GroupID = *req.GroupID
+		account.ActivationCode = newGroup.ActivationCode
+
+		// 更新统计：从旧分组减少，向新分组增加
+		if err := s.updateGroupStatsForAccountChange(oldGroupID, oldPlatformType, oldStatus, false); err != nil {
+			logger.Warnf("更新分组统计失败: %v", err)
+		}
+		if err := s.updateGroupStatsForAccountChange(account.GroupID, oldPlatformType, oldStatus, true); err != nil {
+			logger.Warnf("更新分组统计失败: %v", err)
+		}
 	}
 
-	if req.PhoneNumber != "" {
-		account.PhoneNumber = req.PhoneNumber
+	// 如果更新平台类型
+	if req.PlatformType != "" && req.PlatformType != account.PlatformType {
+		account.PlatformType = req.PlatformType
 	}
 
-	if req.ProfileURL != "" {
-		account.ProfileURL = req.ProfileURL
+	// 如果更新Line ID，需要检查是否重复
+	if req.LineID != "" && req.LineID != account.LineID {
+		// 检查同一分组下是否已存在相同的line_id（排除当前账号）
+		var existingAccount models.LineAccount
+		if err := s.db.Where("group_id = ? AND line_id = ? AND id != ? AND deleted_at IS NULL", account.GroupID, req.LineID, id).
+			First(&existingAccount).Error; err == nil {
+			return nil, errors.New("该Line ID在此分组中已存在")
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+
+		account.LineID = req.LineID
 	}
 
-	if req.AvatarURL != "" {
-		account.AvatarURL = req.AvatarURL
-	}
+	// 更新其他字段（支持空值，使用指针判断是否提供）
+	// 使用字符串指针的方式：如果字段在请求中（即使为空字符串），也更新
+	// 这里我们通过检查字段是否在JSON中提供来判断，但由于Go的限制，我们使用特殊值判断
+	// 实际上，前端会发送空字符串，我们直接更新即可
 
-	if req.Bio != "" {
-		account.Bio = req.Bio
-	}
-
-	if req.StatusMessage != "" {
-		account.StatusMessage = req.StatusMessage
-	}
-
-	if req.AccountRemark != "" {
-		account.AccountRemark = req.AccountRemark
-	}
+	// 对于字符串字段，如果请求中提供了（即使是空字符串），也更新
+	// 这里我们直接赋值，因为前端会发送所有字段
+	account.DisplayName = req.DisplayName
+	account.PhoneNumber = req.PhoneNumber
+	account.ProfileURL = req.ProfileURL
+	account.AvatarURL = req.AvatarURL
+	account.Bio = req.Bio
+	account.StatusMessage = req.StatusMessage
+	account.AddFriendLink = req.AddFriendLink
+	account.AccountRemark = req.AccountRemark
 
 	if req.OnlineStatus != "" {
 		account.OnlineStatus = req.OnlineStatus

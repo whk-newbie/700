@@ -64,10 +64,15 @@ func (h *MessageHandler) handleHeartbeat(client *Client, msg *Message) error {
 	// 更新心跳时间
 	h.manager.UpdateHeartbeat(client.ID, client.Type)
 
-	// 发送心跳响应
+	// 发送心跳响应（告知客户端服务器正常）
 	response := Message{
-		Type:      "heartbeat",
-		Timestamp: time.Now().Unix(),
+		Type:          "heartbeat_ack",
+		ActivationCode: client.ActivationCode,
+		Timestamp:     time.Now().Unix(),
+		Data: map[string]interface{}{
+			"status": "ok",
+			"message": "心跳正常",
+		},
 	}
 	return h.sendMessage(client, response)
 }

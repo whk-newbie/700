@@ -19,6 +19,7 @@ type LineAccount struct {
 	AvatarURL       string         `gorm:"type:varchar(500)" json:"avatar_url"`
 	Bio             string         `gorm:"type:text" json:"bio"`
 	StatusMessage   string         `gorm:"type:varchar(255)" json:"status_message"`
+	AddFriendLink   string         `gorm:"type:varchar(500)" json:"add_friend_link"`
 	QRCodePath      string         `gorm:"type:varchar(255)" json:"qr_code_path"`
 	OnlineStatus    string         `gorm:"type:varchar(20);default:'offline';check:online_status IN ('online', 'offline', 'user_logout', 'abnormal_offline')" json:"online_status"`
 	LastActiveAt    *time.Time     `gorm:"type:timestamp" json:"last_active_at"`

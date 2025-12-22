@@ -25,6 +25,11 @@ import (
 // @title Line账号管理系统API
 // @version 1.0
 // @description Line账号分组管理与进线统计系统API
+//
+// ## WebSocket 接口文档
+// 由于 Swagger 主要支持 REST API，WebSocket 接口无法在此界面直接测试。
+// 详细的 WebSocket 接口文档请访问：http://localhost:8080/docs/websocket
+//
 // @host localhost:8080
 // @BasePath /api/v1
 // @securityDefinitions.apikey BearerAuth

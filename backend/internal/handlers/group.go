@@ -314,6 +314,49 @@ func BatchDeleteGroups(c *gin.Context) {
 	utils.SuccessWithMessage(c, "批量删除完成", response)
 }
 
+// GenerateSubAccountToken 为分组生成子账户Token
+// @Summary 生成子账户Token
+// @Description 管理员可以为任何分组生成子账户登录Token，普通用户只能为自己管理的分组生成Token，用于在新标签页自动登录
+// @Tags 分组管理
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "分组ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} schemas.ErrorResponse
+// @Failure 401 {object} schemas.ErrorResponse
+// @Failure 403 {object} schemas.ErrorResponse
+// @Failure 404 {object} schemas.ErrorResponse
+// @Router /groups/:id/generate-subaccount-token [post]
+func GenerateSubAccountToken(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		utils.ErrorWithErrorCode(c, 1001, "无效的分组ID", "invalid_id")
+		return
+	}
+
+	groupService := services.NewGroupService()
+	token, err := groupService.GenerateSubAccountTokenForUser(c, uint(id))
+	if err != nil {
+		logger.Warnf("生成子账户Token失败: %v", err)
+		if err.Error() == "分组不存在" {
+			utils.ErrorWithErrorCode(c, 3002, err.Error(), "group_not_found")
+		} else if err.Error() == "分组已被禁用" {
+			utils.ErrorWithErrorCode(c, 4003, err.Error(), "group_disabled")
+		} else if err.Error() == "无权访问该分组" {
+			utils.ErrorWithErrorCode(c, 2007, err.Error(), "permission_denied")
+		} else {
+			utils.ErrorWithErrorCode(c, 5001, "生成Token失败", "internal_error")
+		}
+		return
+	}
+
+	utils.SuccessWithMessage(c, "生成成功", gin.H{
+		"token": token,
+	})
+}
+
 // BatchUpdateGroups 批量更新分组
 // @Summary 批量更新分组
 // @Description 批量更新分组的状态、分类、去重范围等

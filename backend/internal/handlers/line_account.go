@@ -123,6 +123,7 @@ func CreateLineAccount(c *gin.Context) {
 		AvatarURL:      account.AvatarURL,
 		Bio:            account.Bio,
 		StatusMessage:  account.StatusMessage,
+		AddFriendLink:  account.AddFriendLink,
 		QRCodePath:     account.QRCodePath,
 		OnlineStatus:   account.OnlineStatus,
 		LastActiveAt:   lastActiveAt,
@@ -203,6 +204,7 @@ func UpdateLineAccount(c *gin.Context) {
 		AvatarURL:      account.AvatarURL,
 		Bio:            account.Bio,
 		StatusMessage:  account.StatusMessage,
+		AddFriendLink:  account.AddFriendLink,
 		QRCodePath:     account.QRCodePath,
 		OnlineStatus:   account.OnlineStatus,
 		LastActiveAt:   lastActiveAt,
@@ -282,7 +284,7 @@ func GenerateQRCode(c *gin.Context) {
 		return
 	}
 
-	// 获取二维码内容（可选，如果为空则自动生成Line添加好友链接）
+	// 获取二维码内容（可选，如果为空则使用账号的添加好友链接）
 	content := c.Query("content")
 
 	qrService := services.NewQRService()
@@ -291,6 +293,8 @@ func GenerateQRCode(c *gin.Context) {
 		logger.Warnf("生成二维码失败: %v", err)
 		if err.Error() == "账号不存在" {
 			utils.ErrorWithErrorCode(c, 3003, err.Error(), "account_not_found")
+		} else if err.Error() == "账号没有添加好友链接，无法生成二维码" {
+			utils.ErrorWithErrorCode(c, 4004, err.Error(), "no_add_friend_link")
 		} else {
 			utils.ErrorWithErrorCode(c, 5001, "生成二维码失败", "internal_error")
 		}

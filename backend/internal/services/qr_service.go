@@ -40,7 +40,7 @@ func NewQRService() *QRService {
 }
 
 // GenerateQRCode 为Line账号生成二维码
-// content: 二维码内容（如果为空，则自动生成Line添加好友链接）
+// content: 二维码内容（如果为空，则使用账号的添加好友链接）
 func (s *QRService) GenerateQRCode(accountID uint, content string) (string, error) {
 	// 获取账号信息
 	var account models.LineAccount
@@ -51,10 +51,12 @@ func (s *QRService) GenerateQRCode(accountID uint, content string) (string, erro
 		return "", err
 	}
 
-	// 如果content为空，自动生成Line添加好友链接
-	// Line添加好友链接格式: https://line.me/ti/p/~{line_id}
+	// 如果content为空，使用账号的添加好友链接
 	if content == "" {
-		content = fmt.Sprintf("https://line.me/ti/p/~%s", account.LineID)
+		if account.AddFriendLink == "" {
+			return "", errors.New("账号没有添加好友链接，无法生成二维码")
+		}
+		content = account.AddFriendLink
 	}
 
 	// 生成二维码文件名

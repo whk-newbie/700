@@ -11,17 +11,22 @@ type CreateLineAccountRequest struct {
 	AvatarURL     string `json:"avatar_url" example:"https://profile.line-scdn.net/..."`
 	Bio           string `json:"bio" example:"这是个人简介"`
 	StatusMessage string `json:"status_message" example:"这是状态消息"`
+	AddFriendLink string `json:"add_friend_link" example:"https://line.me/ti/p/~U1234567890abcdef"`
 	AccountRemark string `json:"account_remark" example:"这是备注"`
 }
 
 // UpdateLineAccountRequest 更新Line账号请求
 type UpdateLineAccountRequest struct {
+	GroupID       *uint  `json:"group_id" example:"1"`
+	PlatformType  string `json:"platform_type" binding:"omitempty,oneof=line line_business" example:"line"`
+	LineID        string `json:"line_id" example:"U1234567890abcdef"`
 	DisplayName   string `json:"display_name" example:"测试账号"`
 	PhoneNumber   string `json:"phone_number" example:"13800138000"`
 	ProfileURL    string `json:"profile_url" example:"https://profile.line-scdn.net/..."`
 	AvatarURL     string `json:"avatar_url" example:"https://profile.line-scdn.net/..."`
 	Bio           string `json:"bio" example:"这是个人简介"`
 	StatusMessage string `json:"status_message" example:"这是状态消息"`
+	AddFriendLink string `json:"add_friend_link" example:"https://line.me/ti/p/~U1234567890abcdef"`
 	AccountRemark string `json:"account_remark" example:"这是备注"`
 	OnlineStatus  string `json:"online_status" binding:"omitempty,oneof=online offline user_logout abnormal_offline" example:"online"`
 }
@@ -39,6 +44,7 @@ type LineAccountListResponse struct {
 	AvatarURL      string  `json:"avatar_url" example:"https://profile.line-scdn.net/..."`
 	Bio            string  `json:"bio" example:"这是个人简介"`
 	StatusMessage  string  `json:"status_message" example:"这是状态消息"`
+	AddFriendLink  string  `json:"add_friend_link" example:"https://line.me/ti/p/~U1234567890abcdef"`
 	QRCodePath     string  `json:"qr_code_path" example:"/static/qrcodes/1.png"`
 	OnlineStatus   string  `json:"online_status" example:"online"`
 	LastActiveAt   *string `json:"last_active_at,omitempty" example:"2024-01-01T00:00:00Z"`

@@ -513,3 +513,65 @@ func (s *GroupService) BatchUpdateGroups(c *gin.Context, ids []uint, req *schema
 	return len(groups), failedIDs, nil
 }
 
+// GenerateSubAccountTokenForUser 为用户生成子账户Token（管理员或普通用户）
+// 管理员可以为任何分组生成Token，普通用户只能为自己管理的分组生成Token
+func (s *GroupService) GenerateSubAccountTokenForUser(c *gin.Context, id uint) (string, error) {
+	// 获取用户角色和ID
+	role, roleExists := c.Get("role")
+	userID, userIDExists := c.Get("user_id")
+
+	if !roleExists {
+		return "", errors.New("无法获取用户角色")
+	}
+
+	// 获取分组（应用数据过滤，普通用户只能看到自己的分组）
+	group, err := s.GetGroupByID(c, id)
+	if err != nil {
+		return "", err
+	}
+
+	// 如果是普通用户，额外检查分组是否属于该用户
+	if role == "user" {
+		if !userIDExists {
+			return "", errors.New("无法获取用户ID")
+		}
+		if group.UserID != userID.(uint) {
+			return "", errors.New("无权访问该分组")
+		}
+	}
+
+	// 检查分组是否激活
+	if !group.IsActive {
+		return "", errors.New("分组已被禁用")
+	}
+
+	// 更新最后登录时间
+	now := time.Now()
+	group.LastLoginAt = &now
+	s.db.Save(group)
+
+	// 生成Token
+	token, err := utils.GenerateSubAccountToken(group.ID, group.ActivationCode)
+	if err != nil {
+		return "", err
+	}
+
+	// 创建Session（子账号使用GroupID作为标识）
+	sessionService := NewSessionService()
+	sessionInfo := &SessionInfo{
+		GroupID:        group.ID,
+		ActivationCode: group.ActivationCode,
+		Role:           "subaccount",
+		LoginTime:      time.Now(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.GetHeader("User-Agent"),
+	}
+	// 子账号使用GroupID作为Session的用户ID标识
+	if err := sessionService.CreateSession(uint(group.ID), token, sessionInfo, 24*time.Hour); err != nil {
+		// Session创建失败不影响Token生成
+		logger.Warnf("创建Session失败: %v", err)
+	}
+
+	return token, nil
+}
+

@@ -489,6 +489,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/groups/:id/generate-subaccount-token": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "管理员可以为任何分组生成子账户登录Token，普通用户只能为自己管理的分组生成Token，用于在新标签页自动登录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分组管理"
+                ],
+                "summary": "生成子账户Token",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/groups/:id/regenerate-code": {
             "post": {
                 "security": [
@@ -1005,10 +1067,127 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/line-accounts/batch/delete": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量软删除Line账号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "批量删除Line账号",
+                "parameters": [
+                    {
+                        "description": "批量删除请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BatchDeleteLineAccountsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/line-accounts/batch/update": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量更新Line账号的在线状态等",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Line账号管理"
+                ],
+                "summary": "批量更新Line账号",
+                "parameters": [
+                    {
+                        "description": "批量更新请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BatchUpdateLineAccountsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "schemas.BatchDeleteGroupsRequest": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "schemas.BatchDeleteLineAccountsRequest": {
             "type": "object",
             "required": [
                 "ids"
@@ -1073,6 +1252,31 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BatchUpdateLineAccountsRequest": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "online_status": {
+                    "type": "string",
+                    "enum": [
+                        "online",
+                        "offline",
+                        "user_logout",
+                        "abnormal_offline"
+                    ],
+                    "example": "offline"
+                }
+            }
+        },
         "schemas.CreateGroupRequest": {
             "type": "object",
             "required": [
@@ -1133,6 +1337,10 @@ const docTemplate = `{
                 "account_remark": {
                     "type": "string",
                     "example": "这是备注"
+                },
+                "add_friend_link": {
+                    "type": "string",
+                    "example": "https://line.me/ti/p/~U1234567890abcdef"
                 },
                 "avatar_url": {
                     "type": "string",
@@ -1328,6 +1536,10 @@ const docTemplate = `{
                 "activation_code": {
                     "type": "string",
                     "example": "ABC12345"
+                },
+                "add_friend_link": {
+                    "type": "string",
+                    "example": "https://line.me/ti/p/~U1234567890abcdef"
                 },
                 "avatar_url": {
                     "type": "string",
@@ -1560,6 +1772,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "这是备注"
                 },
+                "add_friend_link": {
+                    "type": "string",
+                    "example": "https://line.me/ti/p/~U1234567890abcdef"
+                },
                 "avatar_url": {
                     "type": "string",
                     "example": "https://profile.line-scdn.net/..."
@@ -1571,6 +1787,14 @@ const docTemplate = `{
                 "display_name": {
                     "type": "string",
                     "example": "测试账号"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
                 },
                 "online_status": {
                     "type": "string",
@@ -1585,6 +1809,14 @@ const docTemplate = `{
                 "phone_number": {
                     "type": "string",
                     "example": "13800138000"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "enum": [
+                        "line",
+                        "line_business"
+                    ],
+                    "example": "line"
                 },
                 "profile_url": {
                     "type": "string",

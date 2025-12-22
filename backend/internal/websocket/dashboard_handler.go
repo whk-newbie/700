@@ -104,11 +104,15 @@ func (c *Client) readPumpDashboard(manager *Manager) {
 		var msg Message
 		if err := json.Unmarshal(message, &msg); err == nil {
 			if msg.Type == "heartbeat" {
-				// 处理心跳
+				// 处理心跳并回复确认
 				manager.UpdateHeartbeat(c.ID, c.Type)
 				response := Message{
-					Type:      "heartbeat",
+					Type:      "heartbeat_ack",
 					Timestamp: time.Now().Unix(),
+					Data: map[string]interface{}{
+						"status":  "ok",
+						"message": "心跳正常",
+					},
 				}
 				responseBytes, _ := json.Marshal(response)
 				c.Conn.WriteMessage(websocket.TextMessage, responseBytes)

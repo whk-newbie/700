@@ -10,6 +10,16 @@ definitions:
     required:
     - ids
     type: object
+  schemas.BatchDeleteLineAccountsRequest:
+    properties:
+      ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
   schemas.BatchOperationResponse:
     properties:
       fail_count:
@@ -42,6 +52,24 @@ definitions:
       is_active:
         example: true
         type: boolean
+    required:
+    - ids
+    type: object
+  schemas.BatchUpdateLineAccountsRequest:
+    properties:
+      ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      online_status:
+        enum:
+        - online
+        - offline
+        - user_logout
+        - abnormal_offline
+        example: offline
+        type: string
     required:
     - ids
     type: object
@@ -85,6 +113,9 @@ definitions:
     properties:
       account_remark:
         example: 这是备注
+        type: string
+      add_friend_link:
+        example: https://line.me/ti/p/~U1234567890abcdef
         type: string
       avatar_url:
         example: https://profile.line-scdn.net/...
@@ -232,6 +263,9 @@ definitions:
         type: string
       activation_code:
         example: ABC12345
+        type: string
+      add_friend_link:
+        example: https://line.me/ti/p/~U1234567890abcdef
         type: string
       avatar_url:
         example: https://profile.line-scdn.net/...
@@ -399,6 +433,9 @@ definitions:
       account_remark:
         example: 这是备注
         type: string
+      add_friend_link:
+        example: https://line.me/ti/p/~U1234567890abcdef
+        type: string
       avatar_url:
         example: https://profile.line-scdn.net/...
         type: string
@@ -407,6 +444,12 @@ definitions:
         type: string
       display_name:
         example: 测试账号
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      line_id:
+        example: U1234567890abcdef
         type: string
       online_status:
         enum:
@@ -418,6 +461,12 @@ definitions:
         type: string
       phone_number:
         example: "13800138000"
+        type: string
+      platform_type:
+        enum:
+        - line
+        - line_business
+        example: line
         type: string
       profile_url:
         example: https://profile.line-scdn.net/...
@@ -773,6 +822,46 @@ paths:
       summary: 更新分组
       tags:
       - 分组管理
+  /groups/:id/generate-subaccount-token:
+    post:
+      consumes:
+      - application/json
+      description: 管理员可以为任何分组生成子账户登录Token，普通用户只能为自己管理的分组生成Token，用于在新标签页自动登录
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 生成子账户Token
+      tags:
+      - 分组管理
   /groups/:id/regenerate-code:
     post:
       consumes:
@@ -1103,6 +1192,70 @@ paths:
       security:
       - BearerAuth: []
       summary: 生成二维码
+      tags:
+      - Line账号管理
+  /line-accounts/batch/delete:
+    post:
+      consumes:
+      - application/json
+      description: 批量软删除Line账号
+      parameters:
+      - description: 批量删除请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BatchDeleteLineAccountsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BatchOperationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量删除Line账号
+      tags:
+      - Line账号管理
+  /line-accounts/batch/update:
+    post:
+      consumes:
+      - application/json
+      description: 批量更新Line账号的在线状态等
+      parameters:
+      - description: 批量更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BatchUpdateLineAccountsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BatchOperationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量更新Line账号
       tags:
       - Line账号管理
 securityDefinitions:

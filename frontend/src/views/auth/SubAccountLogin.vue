@@ -62,13 +62,15 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { ElMessage } from 'element-plus'
 import { Key, Lock } from '@element-plus/icons-vue'
+import request from '@/utils/request'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const loginFormRef = ref(null)
@@ -131,6 +133,61 @@ const handleLogin = async () => {
 const goToAdminLogin = () => {
   router.push({ name: 'Login' })
 }
+
+// 使用Token自动登录
+const loginWithToken = async (token) => {
+  loading.value = true
+  try {
+    // 直接使用token设置认证信息
+    // 先验证token是否有效
+    const res = await request.get('/auth/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    if (res.code === 1000 && res.data) {
+      // Token有效，设置认证信息
+      authStore.token = token
+      let userData
+      if (res.data.activation_code) {
+        // 子账户信息
+        userData = {
+          id: res.data.id,
+          activation_code: res.data.activation_code,
+          category: res.data.category,
+          role: 'subaccount'
+        }
+      } else {
+        userData = res.data
+      }
+      authStore.user = userData
+      
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(userData))
+      
+      ElMessage.success('登录成功')
+      // 跳转到子账号首页
+      router.push('/subaccount/dashboard')
+    } else {
+      ElMessage.error('Token无效或已过期')
+    }
+  } catch (error) {
+    console.error('Token登录失败:', error)
+    ElMessage.error(error.message || 'Token登录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 页面加载时检查URL参数中的token
+onMounted(() => {
+  const token = route.query.token
+  if (token) {
+    // 如果URL中有token，自动登录
+    loginWithToken(token)
+  }
+})
 </script>
 
 <style scoped lang="less">

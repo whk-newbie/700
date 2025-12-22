@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 接口文档 - Line账号管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header .meta {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .nav-links {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .section h4 {
+            color: #555;
+            font-size: 1.1em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .endpoint .method {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .endpoint .url {
+            font-family: 'Courier New', monospace;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        code {
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .code-block code {
+            color: #333;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .badge-required {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-optional {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .badge-type {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .message-type {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .message-type h4 {
+            color: #2196F3;
+            margin-top: 0;
+        }
+        
+        .flow-step {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .flow-step strong {
+            color: #856404;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .note {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔌 WebSocket 接口文档</h1>
+            <div class="meta">
+                <strong>版本:</strong> v1.0 | 
+                <strong>更新日期:</strong> 2025-12-21 | 
+                <strong>说明:</strong> Windows客户端与服务器的完整交互协议设计
+            </div>
+        </header>
+        
+        <div class="nav-links">
+            <a href="#overview">协议概述</a>
+            <a href="#connection">连接方式</a>
+            <a href="#client-messages">客户端消息</a>
+            <a href="#server-messages">服务器消息</a>
+            <a href="#examples">交互示例</a>
+            <a href="/swagger/index.html">返回 Swagger API 文档</a>
+        </div>
+        
+        <div class="section" id="overview">
+            <h2>📋 协议概述</h2>
+            
+            <h3>通信方式</h3>
+            <ul>
+                <li><strong>WebSocket</strong>: 实时数据上报、心跳保持连接</li>
+                <li><strong>HTTP/HTTPS</strong>: 登录认证、批量数据上传</li>
+            </ul>
+            
+            <h3>认证方式</h3>
+            <ul>
+                <li>使用激活码进行认证</li>
+                <li>支持一个客户端登录多个激活码</li>
+            </ul>
+        </div>
+        
+        <div class="section" id="connection">
+            <h2>🔌 WebSocket 连接</h2>
+            
+            <h3>1. Windows客户端连接</h3>
+            <div class="endpoint">
+                <span class="method">WS</span>
+                <span class="url">ws://localhost:8080/api/ws/client?activation_code={code}&token={token}</span>
+            </div>
+            
+            <h4>连接参数:</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>参数</th>
+                        <th>类型</th>
+                        <th>必填</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>activation_code</code></td>
+                        <td>string</td>
+                        <td><span class="badge badge-required">必填</span></td>
+                        <td>激活码</td>
+                    </tr>
+                    <tr>
+                        <td><code>token</code></td>
+                        <td>string</td>
+                        <td><span class="badge badge-required">必填</span></td>
+                        <td>登录时获取的临时token</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h4>连接成功响应:</h4>
+            <pre><code>{
+  "type": "auth_success",
+  "data": {
+    "group_id": 1,
+    "activation_code": "ABC123",
+    "message": "认证成功，请同步Line账号列表"
+  }
+}</code></pre>
+            
+            <h3>2. 前端看板连接</h3>
+            <div class="endpoint">
+                <span class="method">WS</span>
+                <span class="url">ws://localhost:8080/api/ws/dashboard</span>
+            </div>
+            
+            <div class="note">
+                <strong>注意:</strong> 前端看板连接需要在 HTTP Header 中传递 JWT Token（格式：<code>Authorization: Bearer {token}</code>）
+            </div>
+            
+            <h3>3. 多激活码连接</h3>
+            <p>客户端可以同时建立多个WebSocket连接，每个连接独立管理：</p>
+            <div class="code-block">
+                <code>
+                    ws1: ws://domain.com/api/ws/client?activation_code=ABC123&token=xxx<br>
+                    ws2: ws://domain.com/api/ws/client?activation_code=DEF456&token=yyy<br>
+                    ws3: ws://domain.com/api/ws/client?activation_code=GHI789&token=zzz
+                </code>
+            </div>
+        </div>
+        
+        <div class="section" id="client-messages">
+            <h2>📤 客户端 → 服务器消息</h2>
+            
+            <div class="message-type">
+                <h4>1. 心跳包 (heartbeat)</h4>
+                <p><strong>触发时机:</strong> 每60秒发送一次</p>
+                <p><strong>说明:</strong> 服务器更新该激活码的最后活跃时间，服务器会立即回复心跳确认消息，超过65秒未收到心跳，标记为离线</p>
+                <pre><code>{
+  "type": "heartbeat",
+  "activation_code": "ABC123",
+  "timestamp": 1703123456
+}</code></pre>
+                <div class="note">
+                    <strong>服务器回复:</strong> 服务器收到心跳后会立即回复 <code>heartbeat_ack</code> 消息，客户端收到此消息表示服务器连接正常。
+                </div>
+            </div>
+            
+            <div class="message-type">
+                <h4>2. 同步Line账号列表 (sync_line_accounts)</h4>
+                <p><strong>触发时机:</strong> WebSocket连接成功后，或检测到本地Line账号有变化时</p>
+                <pre><code>{
+  "type": "sync_line_accounts",
+  "activation_code": "ABC123",
+  "data": [
+    {
+      "line_id": "@line001",
+      "display_name": "张三",
+      "phone_number": "+886123456789",
+      "platform_type": "line",
+      "profile_url": "https://line.me/R/ti/p/@line001",
+      "avatar_url": "https://...",
+      "online_status": "online"
+    }
+  ]
+}</code></pre>
+                <h4>字段说明:</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>字段</th>
+                            <th>类型</th>
+                            <th>必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>line_id</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">必填</span></td>
+                            <td>Line账号的唯一标识</td>
+                        </tr>
+                        <tr>
+                            <td><code>platform_type</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">必填</span></td>
+                            <td>平台类型（line / line_business）</td>
+                        </tr>
+                        <tr>
+                            <td><code>display_name</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>显示名称</td>
+                        </tr>
+                        <tr>
+                            <td><code>phone_number</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>手机号</td>
+                        </tr>
+                        <tr>
+                            <td><code>profile_url</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>主页地址</td>
+                        </tr>
+                        <tr>
+                            <td><code>avatar_url</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>头像URL</td>
+                        </tr>
+                        <tr>
+                            <td><code>online_status</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>在线状态</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="message-type">
+                <h4>3. 上报进线数据 (incoming)</h4>
+                <p><strong>触发时机:</strong> 检测到有人加好友（进线）</p>
+                <pre><code>{
+  "type": "incoming",
+  "activation_code": "ABC123",
+  "data": {
+    "line_account_id": "@line001",
+    "incoming_line_id": "U123456789",
+    "timestamp": "2025-12-21 10:30:00",
+    "display_name": "王五",
+    "avatar_url": "https://...",
+    "phone_number": "+886999888777"
+  }
+}</code></pre>
+                <h4>字段说明:</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>字段</th>
+                            <th>类型</th>
+                            <th>必填</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>line_account_id</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">必填</span></td>
+                            <td>哪个Line账号收到的进线（使用line_id标识）</td>
+                        </tr>
+                        <tr>
+                            <td><code>incoming_line_id</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">必填</span></td>
+                            <td>进线客户的Line User ID</td>
+                        </tr>
+                        <tr>
+                            <td><code>timestamp</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-required">必填</span></td>
+                            <td>进线时间</td>
+                        </tr>
+                        <tr>
+                            <td><code>display_name</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>客户显示名称</td>
+                        </tr>
+                        <tr>
+                            <td><code>avatar_url</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>客户头像</td>
+                        </tr>
+                        <tr>
+                            <td><code>phone_number</code></td>
+                            <td>string</td>
+                            <td><span class="badge badge-optional">可选</span></td>
+                            <td>客户手机号</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="message-type">
+                <h4>4. 上报客户信息 (customer_sync)</h4>
+                <p><strong>触发时机:</strong> 在Line上为客户添加了画像信息</p>
+                <pre><code>{
+  "type": "customer_sync",
+  "activation_code": "ABC123",
+  "data": {
+    "line_account_id": "@line001",
+    "customer_id": "U123456789",
+    "display_name": "张三",
+    "avatar_url": "https://...",
+    "phone_number": "+886123456789",
+    "gender": "male",
+    "country": "Taiwan",
+    "birthday": "1990-01-01",
+    "address": "台北市...",
+    "remark": "VIP客户"
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>5. 上报跟进记录 (follow_up_sync)</h4>
+                <p><strong>触发时机:</strong> 在Line上为客户添加了跟进记录</p>
+                <pre><code>{
+  "type": "follow_up_sync",
+  "activation_code": "ABC123",
+  "data": {
+    "line_account_id": "@line001",
+    "customer_id": "U123456789",
+    "content": "已联系客户，客户表示有兴趣",
+    "timestamp": "2025-12-21 11:00:00"
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>6. Line账号状态变化 (account_status_change)</h4>
+                <p><strong>触发时机:</strong> Line账号登录或退出</p>
+                <pre><code>{
+  "type": "account_status_change",
+  "activation_code": "ABC123",
+  "data": {
+    "line_account_id": "@line001",
+    "online_status": "online",
+    "timestamp": "2025-12-21 12:00:00"
+  }
+}</code></pre>
+                <div class="note">
+                    <strong>online_status 可选值:</strong> <code>online</code> | <code>user_logout</code> | <code>abnormal_offline</code>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="server-messages">
+            <h2>📥 服务器 → 客户端消息</h2>
+            
+            <div class="message-type">
+                <h4>1. 心跳确认 (heartbeat_ack)</h4>
+                <p><strong>说明:</strong> 服务器收到客户端心跳后立即回复，客户端收到此消息表示服务器连接正常。如果长时间未收到心跳回复，客户端应检查连接状态。</p>
+                <pre><code>{
+  "type": "heartbeat_ack",
+  "activation_code": "ABC123",
+  "timestamp": 1703123456,
+  "data": {
+    "status": "ok",
+    "message": "心跳正常"
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>2. 认证成功 (auth_success)</h4>
+                <pre><code>{
+  "type": "auth_success",
+  "data": {
+    "group_id": 1,
+    "activation_code": "ABC123",
+    "message": "认证成功，请同步Line账号列表"
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>3. 认证失败 (auth_error)</h4>
+                <pre><code>{
+  "type": "auth_error",
+  "error": "激活码无效或已被禁用"
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>4. 账号同步结果 (sync_result)</h4>
+                <pre><code>{
+  "type": "sync_result",
+  "data": {
+    "success": true,
+    "created_count": 2,
+    "updated_count": 1,
+    "accounts": [
+      {
+        "line_id": "@line001",
+        "account_id": 123,
+        "status": "created"
+      }
+    ]
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>5. 进线数据接收确认 (incoming_received)</h4>
+                <pre><code>{
+  "type": "incoming_received",
+  "data": {
+    "line_account_id": "@line001",
+    "incoming_line_id": "U123456789",
+    "status": "received"
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>6. 账号状态更新 (account_status_change)</h4>
+                <p><strong>说明:</strong> 服务器推送账号状态变化到前端看板</p>
+                <pre><code>{
+  "type": "account_status_change",
+  "data": {
+    "line_account_id": "@line001",
+    "online_status": "online",
+    "group_id": 1,
+    "timestamp": 1703123456
+  }
+}</code></pre>
+            </div>
+            
+            <div class="message-type">
+                <h4>7. 错误消息 (error)</h4>
+                <pre><code>{
+  "type": "error",
+  "error": "错误描述信息"
+}</code></pre>
+            </div>
+        </div>
+        
+        <div class="section" id="examples">
+            <h2>🔄 完整交互流程示例</h2>
+            
+            <h3>场景：客户端添加新激活码并上报数据</h3>
+            
+            <div class="flow-step">
+                <strong>第1步：客户端HTTP登录</strong><br>
+                <code>POST /api/client/login</code><br>
+                <pre><code>{
+  "activation_code": "ABC123"
+}</code></pre>
+            </div>
+            
+            <div class="flow-step">
+                <strong>第2步：建立WebSocket连接</strong><br>
+                <code>ws://domain.com/api/ws/client?activation_code=ABC123&token=xxx</code><br>
+                服务器返回认证成功消息
+            </div>
+            
+            <div class="flow-step">
+                <strong>第3步：客户端同步Line账号列表</strong><br>
+                发送 <code>sync_line_accounts</code> 消息，服务器创建或更新账号记录
+            </div>
+            
+            <div class="flow-step">
+                <strong>第4步：客户端发送心跳（每60秒）</strong><br>
+                发送 <code>heartbeat</code> 消息保持连接
+            </div>
+            
+            <div class="flow-step">
+                <strong>第5步：检测到进线，上报进线数据</strong><br>
+                发送 <code>incoming</code> 消息，服务器处理去重、记录日志、更新统计
+            </div>
+            
+            <div class="flow-step">
+                <strong>第6步：客户端上报客户画像</strong><br>
+                发送 <code>customer_sync</code> 消息
+            </div>
+            
+            <div class="flow-step">
+                <strong>第7步：客户端上报跟进记录</strong><br>
+                发送 <code>follow_up_sync</code> 消息
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🎯 数据归属规则</h2>
+            <p>每条数据的归属通过以下方式确定：</p>
+            <div class="code-block">
+                <code>
+                    激活码 + Line ID → 确定数据归属<br><br>
+                    示例：<br>
+                    - 激活码ABC123 + Line账号@line001 → 分组1的Line账号1<br>
+                    - 激活码DEF456 + Line账号@line002 → 分组2的Line账号2<br>
+                    - 激活码ABC123 + 进线UVW789 + Line账号@line001 → 分组1的进线记录
+                </code>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 去重范围说明</h2>
+            
+            <h3>1. 当前激活码（本分组去重）</h3>
+            <ul>
+                <li>只检查该分组下的进线历史</li>
+                <li>只检查该分组的底库数据</li>
+            </ul>
+            
+            <h3>2. 全局去重</h3>
+            <ul>
+                <li>检查所有分组的进线历史</li>
+                <li>检查所有分组的底库数据</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>✅ 已确认内容</h2>
+            <ul>
+                <li>✅ 通信方式：WebSocket + HTTP</li>
+                <li>✅ 认证方式：激活码认证</li>
+                <li>✅ 多激活码支持：一个客户端可登录多个激活码</li>
+                <li>✅ 数据归属：通过激活码 + Line ID确定</li>
+                <li>✅ 上报内容：Line账号、进线、客户信息、跟进记录</li>
+                <li>✅ 在线判断：WebSocket连接 = 在线</li>
+                <li>✅ 去重范围：本分组、全局两种</li>
+                <li>✅ 进线数据：最小必填 + 可选扩展</li>
+            </ul>
+        </div>
+        
+        <div class="nav-links" style="margin-top: 40px;">
+            <a href="#overview">返回顶部</a>
+            <a href="/swagger/index.html">返回 Swagger API 文档</a>
+        </div>
+    </div>
+</body>
+</html>
+

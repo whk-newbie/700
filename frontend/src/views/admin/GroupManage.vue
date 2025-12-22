@@ -115,12 +115,13 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="进线统计" width="200">
+        <el-table-column label="进线统计" width="220">
           <template #default="{ row }">
             <div class="stats-info">
-              <div>今日: <strong style="color: #409eff">{{ row.today_incoming ?? 0 }}</strong></div>
-              <div>总计: <strong>{{ row.total_incoming ?? 0 }}</strong></div>
-              <div>重复: <strong style="color: #e6a23c">{{ row.duplicate_incoming ?? 0 }}</strong></div>
+              <div>当日进线: <strong style="color: #409eff">{{ row.today_incoming ?? 0 }}</strong></div>
+              <div>当日重复: <strong style="color: #e6a23c">{{ row.today_duplicate ?? 0 }}</strong></div>
+              <div>总进线: <strong>{{ row.total_incoming ?? 0 }}</strong></div>
+              <div>总重复: <strong style="color: #e6a23c">{{ row.duplicate_incoming ?? 0 }}</strong></div>
             </div>
           </template>
         </el-table-column>
@@ -309,7 +310,8 @@ import {
   deleteGroup,
   regenerateCode,
   batchDeleteGroups,
-  batchUpdateGroups
+  batchUpdateGroups,
+  generateSubAccountToken
 } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
 import { useAuthStore } from '@/store/auth'
@@ -449,12 +451,22 @@ const handleAdd = () => {
 }
 
 // 查看
-const handleView = (row) => {
-  // 跳转到账号列表页面，筛选该分组
-  router.push({
-    name: 'AccountList',
-    query: { group_id: row.id }
-  })
+const handleView = async (row) => {
+  try {
+    // 调用接口生成子账户token
+    const res = await generateSubAccountToken(row.id)
+    if (res.code === 1000 && res.data?.token) {
+      // 在新标签页打开子账户登录页面，通过URL参数传递token
+      const baseUrl = window.location.origin
+      const subAccountUrl = `${baseUrl}/subaccount-login?token=${encodeURIComponent(res.data.token)}`
+      window.open(subAccountUrl, '_blank')
+    } else {
+      ElMessage.error(res.message || '生成登录Token失败')
+    }
+  } catch (error) {
+    console.error('打开子账户界面失败:', error)
+    ElMessage.error(error.message || '打开子账户界面失败')
+  }
 }
 
 // 编辑

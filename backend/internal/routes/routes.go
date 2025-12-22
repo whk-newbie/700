@@ -80,5 +80,10 @@ func SetupSwagger(r *gin.Engine) {
 	_ = docs.SwaggerInfo
 	
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	
+	// WebSocket文档页面（也可以通过 /static/websocket-docs.html 访问）
+	r.GET("/docs/websocket", func(c *gin.Context) {
+		c.File("./static/websocket-docs.html")
+	})
 }
 

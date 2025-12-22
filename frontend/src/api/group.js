@@ -72,3 +72,11 @@ export const batchUpdateGroups = (data) => {
   return request.post('/groups/batch/update', data)
 }
 
+/**
+ * 为分组生成子账户Token（管理员功能）
+ * @param {number} id - 分组ID
+ */
+export const generateSubAccountToken = (id) => {
+  return request.post(`/groups/${id}/generate-subaccount-token`)
+}
+

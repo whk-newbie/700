@@ -128,6 +128,30 @@
             <el-tag type="info" size="small">{{ row.activation_code }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="添加好友链接" width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="friend-link-cell" v-if="row.add_friend_link">
+              <el-link
+                :href="row.add_friend_link"
+                target="_blank"
+                type="primary"
+                :underline="false"
+                style="margin-right: 8px"
+              >
+                {{ row.add_friend_link }}
+              </el-link>
+              <el-button
+                type="text"
+                size="small"
+                @click="handleCopyLink(row.add_friend_link)"
+                title="复制链接"
+              >
+                <el-icon><DocumentCopy /></el-icon>
+              </el-button>
+            </div>
+            <span v-else style="color: #909399">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="online_status" label="在线状态" width="120">
           <template #default="{ row }">
             <el-tag
@@ -221,7 +245,6 @@
             placeholder="请选择分组"
             filterable
             style="width: 100%"
-            :disabled="!!formData.id"
           >
             <el-option
               v-for="group in groupList"
@@ -241,7 +264,12 @@
           <el-input
             v-model="formData.line_id"
             placeholder="请输入Line ID"
-            :disabled="!!formData.id"
+          />
+        </el-form-item>
+        <el-form-item label="添加好友链接">
+          <el-input
+            v-model="formData.add_friend_link"
+            placeholder="请输入添加好友链接（如：https://line.me/ti/p/~U1234567890abcdef）"
           />
         </el-form-item>
         <el-form-item label="显示名称">
@@ -249,6 +277,9 @@
         </el-form-item>
         <el-form-item label="手机号">
           <el-input v-model="formData.phone_number" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="Profile URL">
+          <el-input v-model="formData.profile_url" placeholder="请输入Profile URL" />
         </el-form-item>
         <el-form-item label="头像URL">
           <el-input v-model="formData.avatar_url" placeholder="请输入头像URL" />
@@ -362,7 +393,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, DocumentCopy } from '@element-plus/icons-vue'
 import {
   getLineAccounts,
   createLineAccount,
@@ -418,9 +449,11 @@ const formData = reactive({
   line_id: '',
   display_name: '',
   phone_number: '',
+  profile_url: '',
   avatar_url: '',
   bio: '',
   status_message: '',
+  add_friend_link: '',
   account_remark: '',
   online_status: 'offline'
 })
@@ -551,9 +584,11 @@ const handleEdit = (row) => {
   formData.line_id = row.line_id
   formData.display_name = row.display_name || ''
   formData.phone_number = row.phone_number || ''
+  formData.profile_url = row.profile_url || ''
   formData.avatar_url = row.avatar_url || ''
   formData.bio = row.bio || ''
   formData.status_message = row.status_message || ''
+  formData.add_friend_link = row.add_friend_link || ''
   formData.account_remark = row.account_remark || ''
   formData.online_status = row.online_status || 'offline'
   dialogVisible.value = true
@@ -736,26 +771,28 @@ const handleSubmit = async () => {
     try {
       const data = { ...formData }
 
-      // 移除空值
+      // 移除 id 字段（不提交）
+      delete data.id
+
+      // 对于空字符串，保留它们以便可以清空字段
+      // 只移除 null 和 undefined
       Object.keys(data).forEach(key => {
-        if (data[key] === '' || data[key] === null || data[key] === undefined) {
+        if (data[key] === null || data[key] === undefined) {
           delete data[key]
         }
       })
 
-      // 编辑时不需要group_id和line_id（这些字段不可修改）
-      if (formData.id) {
-        delete data.group_id
-        delete data.line_id
-        delete data.id
-      }
-
       let res
       if (formData.id) {
-        // 更新
+        // 更新 - 允许更新所有字段
         res = await updateLineAccount(formData.id, data)
       } else {
-        // 创建
+        // 创建 - 移除空字符串（创建时不需要空字段）
+        Object.keys(data).forEach(key => {
+          if (data[key] === '') {
+            delete data[key]
+          }
+        })
         res = await createLineAccount(data)
       }
 
@@ -772,6 +809,29 @@ const handleSubmit = async () => {
   })
 }
 
+// 复制链接
+const handleCopyLink = async (link) => {
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success('链接已复制到剪贴板')
+  } catch (error) {
+    // 降级方案：使用传统方法
+    const textarea = document.createElement('textarea')
+    textarea.value = link
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      ElMessage.success('链接已复制到剪贴板')
+    } catch (err) {
+      ElMessage.error('复制失败，请手动复制')
+    }
+    document.body.removeChild(textarea)
+  }
+}
+
 // 重置表单
 const resetForm = () => {
   formData.id = null
@@ -780,9 +840,11 @@ const resetForm = () => {
   formData.line_id = ''
   formData.display_name = ''
   formData.phone_number = ''
+  formData.profile_url = ''
   formData.avatar_url = ''
   formData.bio = ''
   formData.status_message = ''
+  formData.add_friend_link = ''
   formData.account_remark = ''
   formData.online_status = 'offline'
   if (formRef.value) {
@@ -866,6 +928,22 @@ onMounted(() => {
   .log-content {
     max-height: 500px;
     overflow-y: auto;
+  }
+
+  .friend-link-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .friend-link-form-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    :deep(.el-input-group__append) {
+      padding: 0;
+    }
   }
 }
 </style>
