@@ -1,66 +1,86 @@
 <template>
   <el-container class="layout-container">
-    <!-- 侧边栏 -->
-    <el-aside width="200px" class="layout-sidebar">
-      <div class="sidebar-header">
-        <h3>Line管理系统</h3>
+    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+      <div class="logo">
+        <span v-if="!isCollapse">Line管理系统</span>
+        <span v-else>L</span>
       </div>
-
       <el-menu
-        :default-active="$route.path"
-        class="sidebar-menu"
-        :collapse="sidebarCollapsed"
+        :default-active="activeMenu"
+        :collapse="isCollapse"
         router
+        class="sidebar-menu"
       >
-        <el-menu-item
-          v-for="item in menuItems"
-          :key="item.path"
-          :index="item.path"
-          :disabled="!hasPermission(item.roles)"
-        >
-          <component :is="item.icon" />
-          <template #title>{{ item.title }}</template>
+        <el-menu-item index="/dashboard">
+          <el-icon><HomeFilled /></el-icon>
+          <template #title>首页</template>
+        </el-menu-item>
+        <el-menu-item index="/groups">
+          <el-icon><Folder /></el-icon>
+          <template #title>分组管理</template>
+        </el-menu-item>
+        <el-menu-item index="/accounts">
+          <el-icon><User /></el-icon>
+          <template #title>账号列表</template>
+        </el-menu-item>
+        <el-menu-item index="/leads">
+          <el-icon><List /></el-icon>
+          <template #title>线索列表</template>
+        </el-menu-item>
+        <el-menu-item index="/contact-pool">
+          <el-icon><Box /></el-icon>
+          <template #title>底库管理</template>
+        </el-menu-item>
+        <el-menu-item index="/customers">
+          <el-icon><Avatar /></el-icon>
+          <template #title>客户列表</template>
+        </el-menu-item>
+        <el-menu-item index="/follow-ups">
+          <el-icon><Document /></el-icon>
+          <template #title>跟进记录</template>
+        </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/users">
+          <el-icon><Setting /></el-icon>
+          <template #title>用户管理</template>
+        </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/llm-config">
+          <el-icon><Cpu /></el-icon>
+          <template #title>大模型配置</template>
+        </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/llm-logs">
+          <el-icon><DataLine /></el-icon>
+          <template #title>调用记录</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
-
-    <!-- 主内容区域 -->
     <el-container>
-      <!-- 顶部导航 -->
-      <el-header class="layout-header">
+      <el-header class="header">
         <div class="header-left">
-          <el-button
-            type="text"
-            @click="toggleSidebar"
-            class="sidebar-toggle"
-          >
-            <Fold v-if="!sidebarCollapsed" />
-            <Expand v-else />
-          </el-button>
+          <el-icon @click="toggleCollapse" class="collapse-icon">
+            <Expand v-if="isCollapse" />
+            <Fold v-else />
+          </el-icon>
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
-
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <el-avatar size="small" :src="user?.avatar">
-                {{ user?.username?.charAt(0)?.toUpperCase() }}
-              </el-avatar>
-              <span class="username">{{ user?.username }}</span>
+              <el-icon><Avatar /></el-icon>
+              <span>{{ user?.username || '用户' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-                <el-dropdown-item command="change-password">修改密码</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </div>
       </el-header>
-
-      <!-- 内容区域 -->
-      <el-main class="layout-main">
+      <el-main class="main-content">
         <router-view />
       </el-main>
     </el-container>
@@ -68,230 +88,128 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
 import {
-  Fold,
-  Expand,
   HomeFilled,
-  FolderOpened,
-  Monitor,
-  DataLine,
-  Files,
+  Folder,
   User,
-  DocumentCopy,
-  UserFilled,
-  Setting,
+  List,
+  Box,
+  Avatar,
   Document,
+  Setting,
+  Cpu,
+  DataLine,
+  Expand,
+  Fold,
   ArrowDown
 } from '@element-plus/icons-vue'
-import { useAuthStore } from '@/store/auth'
+import { ElMessageBox } from 'element-plus'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// 状态
-const sidebarCollapsed = ref(false)
-
-// 用户信息
+const isCollapse = ref(false)
 const user = computed(() => authStore.user)
+const isAdmin = computed(() => authStore.isAdmin)
 
-// 菜单项配置
-const menuItems = [
-  {
-    path: '/dashboard',
-    title: '首页',
-    icon: HomeFilled,
-    roles: ['admin', 'user', 'subaccount']
-  },
-  {
-    path: '/groups',
-    title: '分组管理',
-    icon: FolderOpened,
-    roles: ['admin', 'user']
-  },
-  {
-    path: '/accounts',
-    title: '账号列表',
-    icon: Monitor,
-    roles: ['admin', 'user']
-  },
-  {
-    path: '/leads',
-    title: '线索列表',
-    icon: DataLine,
-    roles: ['admin', 'user', 'subaccount']
-  },
-  {
-    path: '/contact-pool',
-    title: '底库管理',
-    icon: Files,
-    roles: ['admin', 'user']
-  },
-  {
-    path: '/customers',
-    title: '客户列表',
-    icon: User,
-    roles: ['admin', 'user', 'subaccount']
-  },
-  {
-    path: '/follow-ups',
-    title: '跟进记录',
-    icon: DocumentCopy,
-    roles: ['admin', 'user', 'subaccount']
-  },
-  {
-    path: '/users',
-    title: '用户管理',
-    icon: UserFilled,
-    roles: ['admin']
-  },
-  {
-    path: '/llm-config',
-    title: '大模型配置',
-    icon: Setting,
-    roles: ['admin']
-  },
-  {
-    path: '/llm-logs',
-    title: '调用记录',
-    icon: Document,
-    roles: ['admin']
-  }
-]
+const activeMenu = computed(() => route.path)
+const currentTitle = computed(() => route.meta?.title || '')
 
-// 权限检查
-const hasPermission = (roles) => {
-  if (!roles) return true
-  return roles.includes(authStore.userRole)
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value
 }
 
-// 切换侧边栏
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value
-}
-
-// 处理下拉菜单命令
-const handleCommand = (command) => {
-  switch (command) {
-    case 'profile':
-      // TODO: 个人资料页面
-      ElMessage.info('个人资料功能开发中')
-      break
-    case 'change-password':
-      // TODO: 修改密码弹窗
-      ElMessage.info('修改密码功能开发中')
-      break
-    case 'logout':
-      handleLogout()
-      break
+const handleCommand = async (command) => {
+  if (command === 'logout') {
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      authStore.logout()
+      router.push({ name: 'Login' })
+    } catch {
+      // 用户取消
+    }
   }
 }
-
-// 退出登录
-const handleLogout = async () => {
-  try {
-    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-
-    authStore.logout()
-    ElMessage.success('已退出登录')
-  } catch {
-    // 用户取消操作
-  }
-}
-
-// 初始化
-onMounted(() => {
-  // 检查用户权限，过滤菜单项
-  // 可以在这里根据用户角色动态调整菜单
-})
 </script>
 
-<style lang="less" scoped>
+<style scoped lang="less">
 .layout-container {
   height: 100vh;
+}
 
-  .layout-sidebar {
-    background-color: #fff;
-    border-right: 1px solid @border-color-lighter;
-    transition: width @animation-duration;
+.sidebar {
+  background-color: #304156;
+  transition: width 0.3s;
+  
+  .logo {
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #2b3a4a;
+  }
+  
+  .sidebar-menu {
+    border: none;
+    background-color: #304156;
+    
+    :deep(.el-menu-item) {
+      color: #bfcbd9;
+      
+      &:hover {
+        background-color: #263445;
+      }
+      
+      &.is-active {
+        background-color: #409eff;
+        color: #fff;
+      }
+    }
+  }
+}
 
-    .sidebar-header {
-      height: 60px;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  padding: 0 20px;
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    
+    .collapse-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+  }
+  
+  .header-right {
+    .user-info {
       display: flex;
       align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid @border-color-lighter;
-      background-color: @primary-color;
-      color: #fff;
-
-      h3 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-      }
+      gap: 8px;
+      cursor: pointer;
     }
-
-    .sidebar-menu {
-      border-right: none;
-      margin-top: 10px;
-    }
-  }
-
-  .layout-header {
-    background-color: #fff;
-    border-bottom: 1px solid @border-color-lighter;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-
-    .header-left {
-      .sidebar-toggle {
-        color: @text-regular;
-      }
-    }
-
-    .header-right {
-      .user-info {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        padding: 8px 12px;
-        border-radius: @border-radius-base;
-        transition: background-color @animation-duration-fast;
-
-        &:hover {
-          background-color: @background-color-page;
-        }
-
-        .username {
-          margin: 0 8px;
-          font-size: 14px;
-          color: @text-regular;
-        }
-      }
-    }
-  }
-
-  .layout-main {
-    background-color: @background-color-base;
-    padding: 20px;
-    overflow-y: auto;
   }
 }
 
-:deep(.el-menu-item) {
-  height: 48px;
-  line-height: 48px;
-
-  &.is-disabled {
-    opacity: 0.6;
-  }
+.main-content {
+  background-color: #f0f2f5;
+  padding: 20px;
 }
 </style>
+

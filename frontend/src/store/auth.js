@@ -1,97 +1,60 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as apiLogin, getCurrentUser } from '@/api/auth'
-import router from '@/router'
+import request from '@/utils/request'
 
 export const useAuthStore = defineStore('auth', () => {
-  // 状态
   const token = ref(localStorage.getItem('token') || '')
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
-  const loading = ref(false)
 
-  // 计算属性
   const isAuthenticated = computed(() => !!token.value)
-  const userRole = computed(() => user.value?.role || '')
-  const isAdmin = computed(() => userRole.value === 'admin')
-  const isUser = computed(() => userRole.value === 'user')
-  const isSubAccount = computed(() => userRole.value === 'subaccount')
+  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isSubAccount = computed(() => user.value?.role === 'subaccount')
 
   // 登录
-  const login = async (credentials) => {
-    loading.value = true
+  const login = async (username, password) => {
     try {
-      const response = await apiLogin(credentials)
-      const { data } = response
-
-      // 保存token
-      token.value = data.token
-      localStorage.setItem('token', data.token)
-
-      // 保存用户信息
-      user.value = data.user
-      localStorage.setItem('user', JSON.stringify(data.user))
-
-      // 跳转到首页
-      router.push('/dashboard')
-
-      return response
+      const res = await request.post('/auth/login', {
+        username,
+        password
+      })
+      
+      if (res.code === 200) {
+        token.value = res.data.token
+        user.value = res.data.user
+        
+        localStorage.setItem('token', res.data.token)
+        localStorage.setItem('user', JSON.stringify(res.data.user))
+        
+        return { success: true }
+      } else {
+        return { success: false, message: res.message }
+      }
     } catch (error) {
-      throw error
-    } finally {
-      loading.value = false
+      return { success: false, message: error.message || '登录失败' }
     }
   }
 
   // 子账号登录
-  const subAccountLogin = async (credentials) => {
-    loading.value = true
+  const loginSubAccount = async (activationCode, password) => {
     try {
-      const response = await apiLogin(credentials)
-      const { data } = response
-
-      // 保存token
-      token.value = data.token
-      localStorage.setItem('token', data.token)
-
-      // 保存用户信息（子账号信息）
-      user.value = {
-        ...data.user,
-        role: 'subaccount',
-        groupId: data.group_id,
-        activationCode: credentials.activation_code
+      const res = await request.post('/auth/login-subaccount', {
+        activation_code: activationCode,
+        password
+      })
+      
+      if (res.code === 200) {
+        token.value = res.data.token
+        user.value = res.data.user
+        
+        localStorage.setItem('token', res.data.token)
+        localStorage.setItem('user', JSON.stringify(res.data.user))
+        
+        return { success: true }
+      } else {
+        return { success: false, message: res.message }
       }
-      localStorage.setItem('user', JSON.stringify(user.value))
-
-      // 跳转到首页
-      router.push('/dashboard')
-
-      return response
     } catch (error) {
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // 获取当前用户信息
-  const fetchUser = async () => {
-    if (!token.value) return
-
-    try {
-      const response = await getCurrentUser()
-      user.value = response.data
-      localStorage.setItem('user', JSON.stringify(response.data))
-    } catch (error) {
-      // Token可能已过期
-      logout()
-      throw error
-    }
-  }
-
-  // 检查认证状态
-  const checkAuth = async () => {
-    if (token.value && !user.value) {
-      await fetchUser()
+      return { success: false, message: error.message || '登录失败' }
     }
   }
 
@@ -101,48 +64,31 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    router.push('/login')
   }
 
-  // 更新用户信息
-  const updateUser = (userData) => {
-    user.value = { ...user.value, ...userData }
-    localStorage.setItem('user', JSON.stringify(user.value))
-  }
-
-  // 刷新token
-  const refreshToken = async () => {
+  // 获取当前用户信息
+  const fetchUserInfo = async () => {
     try {
-      // 这里应该调用刷新token的API
-      // const response = await refreshTokenAPI()
-      // token.value = response.data.token
-      // localStorage.setItem('token', response.data.token)
+      const res = await request.get('/auth/me')
+      if (res.code === 200) {
+        user.value = res.data
+        localStorage.setItem('user', JSON.stringify(res.data))
+      }
     } catch (error) {
-      logout()
-      throw error
+      console.error('获取用户信息失败:', error)
     }
   }
 
   return {
-    // 状态
     token,
     user,
-    loading,
-
-    // 计算属性
     isAuthenticated,
-    userRole,
     isAdmin,
-    isUser,
     isSubAccount,
-
-    // 方法
     login,
-    subAccountLogin,
-    fetchUser,
-    checkAuth,
+    loginSubAccount,
     logout,
-    updateUser,
-    refreshToken
+    fetchUserInfo
   }
 })
+

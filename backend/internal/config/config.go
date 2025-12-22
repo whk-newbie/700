@@ -86,6 +86,9 @@ var GlobalConfig *Config
 
 // InitConfig 初始化配置
 func InitConfig() error {
+	// 设置viper默认值
+	setViperDefaults()
+
 	// 获取当前工作目录
 	workDir, err := os.Getwd()
 	if err != nil {
@@ -95,26 +98,136 @@ func InitConfig() error {
 	// 设置配置文件路径
 	configPath := filepath.Join(workDir, ".env")
 
-	// 如果.env文件不存在，使用默认配置
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return initDefaultConfig()
+	// 如果.env文件存在，先读取配置文件
+	if _, err := os.Stat(configPath); err == nil {
+		viper.SetConfigFile(configPath)
+		viper.SetConfigType("env")
+		if err := viper.ReadInConfig(); err != nil {
+			return fmt.Errorf("读取配置文件失败: %w", err)
+		}
+		// 将.env文件中的大写键名映射到结构体路径
+		// 因为.env文件使用DATABASE_PASSWORD格式，但结构体使用database.password
+		if val := viper.GetString("DATABASE_PASSWORD"); val != "" {
+			viper.Set("database.password", val)
+		}
+		if val := viper.GetString("DATABASE_HOST"); val != "" {
+			viper.Set("database.host", val)
+		}
+		if val := viper.GetInt("DATABASE_PORT"); val != 0 {
+			viper.Set("database.port", val)
+		}
+		if val := viper.GetString("DATABASE_USER"); val != "" {
+			viper.Set("database.user", val)
+		}
+		if val := viper.GetString("DATABASE_DBNAME"); val != "" {
+			viper.Set("database.dbname", val)
+		}
+		if val := viper.GetString("DATABASE_SSLMODE"); val != "" {
+			viper.Set("database.sslmode", val)
+		}
+		if val := viper.GetString("DATABASE_TIMEZONE"); val != "" {
+			viper.Set("database.timezone", val)
+		}
+		// Redis配置
+		if val := viper.GetString("REDIS_HOST"); val != "" {
+			viper.Set("redis.host", val)
+		}
+		if val := viper.GetInt("REDIS_PORT"); val != 0 {
+			viper.Set("redis.port", val)
+		}
+		if val := viper.GetString("REDIS_PASSWORD"); val != "" {
+			viper.Set("redis.password", val)
+		}
+		if val := viper.GetInt("REDIS_DB"); val != 0 || viper.IsSet("REDIS_DB") {
+			viper.Set("redis.db", viper.GetInt("REDIS_DB"))
+		}
+		// 服务器配置
+		if val := viper.GetString("SERVER_PORT"); val != "" {
+			viper.Set("server.port", val)
+		}
+		if val := viper.GetString("SERVER_MODE"); val != "" {
+			viper.Set("server.mode", val)
+		}
+		// JWT配置
+		if val := viper.GetString("JWT_SECRET"); val != "" {
+			viper.Set("jwt.secret", val)
+		}
+		if val := viper.GetInt("JWT_EXPIRE_HOUR"); val != 0 {
+			viper.Set("jwt.expire_hour", val)
+		}
 	}
 
-	// 设置viper配置
-	viper.SetConfigFile(configPath)
-	viper.SetConfigType("env")
+	// 设置环境变量自动读取（环境变量优先级高于配置文件）
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("")
 
-	// 读取配置文件
-	if err := viper.ReadInConfig(); err != nil {
-		return fmt.Errorf("读取配置文件失败: %w", err)
-	}
+	// 绑定环境变量（支持下划线和点号两种格式）
+	bindEnvVars()
 
 	// 解析配置到结构体
-	if err := viper.Unmarshal(&GlobalConfig); err != nil {
+	GlobalConfig = &Config{}
+	if err := viper.Unmarshal(GlobalConfig); err != nil {
 		return fmt.Errorf("解析配置失败: %w", err)
 	}
 
+	// 如果配置为空，使用默认配置
+	if GlobalConfig.Server.Port == "" {
+		return initDefaultConfig()
+	}
+
+	// 调试：检查数据库密码是否正确读取（生产环境应移除）
+	if GlobalConfig.Database.Password == "" || GlobalConfig.Database.Password == "linepass" {
+		fmt.Printf("警告: 数据库密码可能未正确读取，当前值: %s\n", GlobalConfig.Database.Password)
+	}
+
 	return nil
+}
+
+// bindEnvVars 绑定环境变量
+func bindEnvVars() {
+	// 服务器配置
+	viper.BindEnv("server.port", "SERVER_PORT")
+	viper.BindEnv("server.mode", "SERVER_MODE")
+
+	// 数据库配置
+	viper.BindEnv("database.host", "DATABASE_HOST")
+	viper.BindEnv("database.port", "DATABASE_PORT")
+	viper.BindEnv("database.user", "DATABASE_USER")
+	viper.BindEnv("database.password", "DATABASE_PASSWORD")
+	viper.BindEnv("database.dbname", "DATABASE_DBNAME")
+	viper.BindEnv("database.sslmode", "DATABASE_SSLMODE")
+	viper.BindEnv("database.timezone", "DATABASE_TIMEZONE")
+
+	// Redis配置
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	viper.BindEnv("redis.db", "REDIS_DB")
+
+	// JWT配置
+	viper.BindEnv("jwt.secret", "JWT_SECRET")
+	viper.BindEnv("jwt.expire_hour", "JWT_EXPIRE_HOUR")
+
+	// 日志配置
+	viper.BindEnv("log.level", "LOG_LEVEL")
+	viper.BindEnv("log.file_path", "LOG_FILE_PATH")
+	viper.BindEnv("log.max_size", "LOG_MAX_SIZE")
+	viper.BindEnv("log.max_backups", "LOG_MAX_BACKUPS")
+	viper.BindEnv("log.max_age", "LOG_MAX_AGE")
+	viper.BindEnv("log.compress", "LOG_COMPRESS")
+
+	// Swagger配置
+	viper.BindEnv("swagger.enable", "SWAGGER_ENABLE")
+	viper.BindEnv("swagger.host", "SWAGGER_HOST")
+
+	// WebSocket配置
+	viper.BindEnv("websocket.read_timeout", "WEBSOCKET_READ_TIMEOUT")
+	viper.BindEnv("websocket.write_timeout", "WEBSOCKET_WRITE_TIMEOUT")
+	viper.BindEnv("websocket.ping_period", "WEBSOCKET_PING_PERIOD")
+	viper.BindEnv("websocket.max_message_size", "WEBSOCKET_MAX_MESSAGE_SIZE")
+
+	// LLM配置
+	viper.BindEnv("llm.default_provider", "LLM_DEFAULT_PROVIDER")
 }
 
 // initDefaultConfig 初始化默认配置

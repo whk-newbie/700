@@ -1,108 +1,104 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 
-// 懒加载组件
-const Login = () => import('@/views/auth/Login.vue')
-const SubAccountLogin = () => import('@/views/auth/SubAccountLogin.vue')
-const Layout = () => import('@/views/admin/Layout.vue')
-const Dashboard = () => import('@/views/admin/Dashboard.vue')
-const GroupManage = () => import('@/views/admin/GroupManage.vue')
-const AccountList = () => import('@/views/admin/AccountList.vue')
-const LeadsList = () => import('@/views/admin/LeadsList.vue')
-const ContactPool = () => import('@/views/admin/ContactPool.vue')
-const CustomerList = () => import('@/views/admin/CustomerList.vue')
-const FollowUpRecords = () => import('@/views/admin/FollowUpRecords.vue')
-const UserManage = () => import('@/views/admin/UserManage.vue')
-const LLMConfig = () => import('@/views/admin/LLMConfig.vue')
-const LLMCallLogs = () => import('@/views/admin/LLMCallLogs.vue')
-
 const routes = [
-  {
-    path: '/',
-    redirect: '/dashboard'
-  },
   {
     path: '/login',
     name: 'Login',
-    component: Login,
+    component: () => import('@/views/auth/Login.vue'),
     meta: { requiresAuth: false }
   },
   {
     path: '/subaccount-login',
     name: 'SubAccountLogin',
-    component: SubAccountLogin,
+    component: () => import('@/views/auth/SubAccountLogin.vue'),
     meta: { requiresAuth: false }
   },
   {
     path: '/',
-    component: Layout,
+    component: () => import('@/views/admin/Layout.vue'),
+    redirect: '/dashboard',
     meta: { requiresAuth: true },
     children: [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: Dashboard,
-        meta: { title: '首页', icon: 'HomeFilled' }
+        component: () => import('@/views/admin/Dashboard.vue'),
+        meta: { title: '首页' }
       },
       {
         path: 'groups',
         name: 'GroupManage',
-        component: GroupManage,
-        meta: { title: '分组管理', icon: 'FolderOpened', roles: ['admin', 'user'] }
+        component: () => import('@/views/admin/GroupManage.vue'),
+        meta: { title: '分组管理' }
       },
       {
         path: 'accounts',
         name: 'AccountList',
-        component: AccountList,
-        meta: { title: '账号列表', icon: 'Monitor', roles: ['admin', 'user'] }
+        component: () => import('@/views/admin/AccountList.vue'),
+        meta: { title: '账号列表' }
       },
       {
         path: 'leads',
         name: 'LeadsList',
-        component: LeadsList,
-        meta: { title: '线索列表', icon: 'DataLine', roles: ['admin', 'user', 'subaccount'] }
+        component: () => import('@/views/admin/LeadsList.vue'),
+        meta: { title: '线索列表' }
       },
       {
         path: 'contact-pool',
         name: 'ContactPool',
-        component: ContactPool,
-        meta: { title: '底库管理', icon: 'Files', roles: ['admin', 'user'] }
+        component: () => import('@/views/admin/ContactPool.vue'),
+        meta: { title: '底库管理' }
       },
       {
         path: 'customers',
         name: 'CustomerList',
-        component: CustomerList,
-        meta: { title: '客户列表', icon: 'User', roles: ['admin', 'user', 'subaccount'] }
+        component: () => import('@/views/admin/CustomerList.vue'),
+        meta: { title: '客户列表' }
       },
       {
         path: 'follow-ups',
         name: 'FollowUpRecords',
-        component: FollowUpRecords,
-        meta: { title: '跟进记录', icon: 'DocumentCopy', roles: ['admin', 'user', 'subaccount'] }
+        component: () => import('@/views/admin/FollowUpRecords.vue'),
+        meta: { title: '跟进记录' }
       },
       {
         path: 'users',
         name: 'UserManage',
-        component: UserManage,
-        meta: { title: '用户管理', icon: 'UserFilled', roles: ['admin'] }
+        component: () => import('@/views/admin/UserManage.vue'),
+        meta: { title: '用户管理', requiresAdmin: true }
       },
       {
         path: 'llm-config',
         name: 'LLMConfig',
-        component: LLMConfig,
-        meta: { title: '大模型配置', icon: 'Setting', roles: ['admin'] }
+        component: () => import('@/views/admin/LLMConfig.vue'),
+        meta: { title: '大模型配置', requiresAdmin: true }
       },
       {
         path: 'llm-logs',
         name: 'LLMCallLogs',
-        component: LLMCallLogs,
-        meta: { title: '调用记录', icon: 'Document', roles: ['admin'] }
+        component: () => import('@/views/admin/LLMCallLogs.vue'),
+        meta: { title: '大模型调用记录', requiresAdmin: true }
+      }
+    ]
+  },
+  {
+    path: '/subaccount',
+    component: () => import('@/views/subaccount/Layout.vue'),
+    redirect: '/subaccount/dashboard',
+    meta: { requiresAuth: true, requiresSubAccount: true },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'SubAccountDashboard',
+        component: () => import('@/views/admin/Dashboard.vue'),
+        meta: { title: '首页' }
       }
     ]
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/dashboard'
+    redirect: '/'
   }
 ]
 
@@ -114,25 +110,36 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  
+  // 检查是否需要认证
+  if (to.meta.requiresAuth) {
+    if (!authStore.isAuthenticated) {
+      // 未登录，重定向到登录页
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+      return
+    }
 
-  // 检查是否需要登录
-  if (to.meta.requiresAuth !== false && !authStore.isAuthenticated) {
-    next('/login')
-    return
-  }
+    // 检查管理员权限
+    if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
+      next({ name: 'Dashboard' })
+      return
+    }
 
-  // 检查角色权限
-  if (to.meta.roles && !to.meta.roles.includes(authStore.user?.role)) {
-    next('/dashboard')
-    return
-  }
-
-  // 设置页面标题
-  if (to.meta.title) {
-    document.title = `${to.meta.title} - Line管理系统`
+    // 检查子账号权限
+    if (to.meta.requiresSubAccount && authStore.user?.role !== 'subaccount') {
+      next({ name: 'Dashboard' })
+      return
+    }
+  } else {
+    // 如果已登录，访问登录页时重定向到首页
+    if (to.name === 'Login' && authStore.isAuthenticated) {
+      next({ name: 'Dashboard' })
+      return
+    }
   }
 
   next()
 })
 
 export default router
+
