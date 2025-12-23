@@ -6,7 +6,7 @@ import (
 
 // LLMCallLog 大模型调用日志模型
 type LLMCallLog struct {
-	ID               uint           `gorm:"primaryKey" json:"id"`
+	ID               uint64         `gorm:"primaryKey;autoIncrement" json:"id"`
 	ConfigID         *uint          `gorm:"type:integer" json:"config_id"`
 	TemplateID       *uint          `gorm:"type:integer" json:"template_id"`
 	GroupID          *uint          `gorm:"type:integer" json:"group_id"`

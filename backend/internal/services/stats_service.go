@@ -108,7 +108,7 @@ func (s *StatsService) GetOverviewStats() (map[string]interface{}, error) {
 	// 总重复数（从所有分组统计汇总）
 	var totalDuplicate int64
 	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(duplicate_incoming), 0)").Scan(&totalDuplicate)
-	result["total_duplicate"] = totalDuplicate
+	result["duplicate_incoming"] = totalDuplicate
 	
 	// 今日重复数（从所有分组统计汇总）
 	var todayDuplicate int64
@@ -132,10 +132,8 @@ func (s *StatsService) GetGroupIncomingTrend(groupID uint, days int) ([]map[stri
 		days = 30 // 最多30天
 	}
 	
-	var results []map[string]interface{}
-	
 	// 查询最近N天的进线数据
-	startDate := time.Now().AddDate(0, 0, -days)
+	startDate := time.Now().AddDate(0, 0, -days+1).Truncate(24 * time.Hour)
 	
 	rows, err := s.db.Model(&models.IncomingLog{}).
 		Select("DATE(incoming_time) as date, COUNT(*) as count, COUNT(CASE WHEN is_duplicate = true THEN 1 END) as duplicate_count").
@@ -150,21 +148,58 @@ func (s *StatsService) GetGroupIncomingTrend(groupID uint, days int) ([]map[stri
 	}
 	defer rows.Close()
 	
+	// 先创建一个日期到数据的映射
+	dataMap := make(map[string]map[string]interface{})
 	for rows.Next() {
-		var date time.Time
+		var dateValue interface{}
 		var count, duplicateCount int64
 		
-		if err := rows.Scan(&date, &count, &duplicateCount); err != nil {
+		if err := rows.Scan(&dateValue, &count, &duplicateCount); err != nil {
 			logger.Errorf("扫描趋势数据失败: %v", err)
 			continue
 		}
 		
-		results = append(results, map[string]interface{}{
-			"date":           date.Format("2006-01-02"),
-			"count":          count,
+		// 处理日期值，可能是time.Time或string
+		var dateStr string
+		switch v := dateValue.(type) {
+		case time.Time:
+			dateStr = v.Format("2006-01-02")
+		case string:
+			// 如果是字符串，尝试解析
+			if t, err := time.Parse("2006-01-02", v); err == nil {
+				dateStr = t.Format("2006-01-02")
+			} else {
+				dateStr = v[:10] // 取前10个字符（YYYY-MM-DD）
+			}
+		default:
+			logger.Errorf("未知的日期类型: %T", dateValue)
+			continue
+		}
+		
+		dataMap[dateStr] = map[string]interface{}{
+			"date":            dateStr,
+			"incoming_count":  count,
 			"duplicate_count": duplicateCount,
-			"unique_count":   count - duplicateCount,
-		})
+			"unique_count":    count - duplicateCount,
+		}
+	}
+	
+	// 填充完整的日期范围，即使某些日期没有数据也要填充0
+	var results []map[string]interface{}
+	for i := 0; i < days; i++ {
+		date := startDate.AddDate(0, 0, i)
+		dateStr := date.Format("2006-01-02")
+		
+		if data, exists := dataMap[dateStr]; exists {
+			results = append(results, data)
+		} else {
+			results = append(results, map[string]interface{}{
+				"date":            dateStr,
+				"incoming_count":  int64(0),
+				"duplicate_count": int64(0),
+				"unique_count":    int64(0),
+			})
+		}
 	}
 	
 	return results, nil
@@ -179,10 +214,8 @@ func (s *StatsService) GetAccountIncomingTrend(accountID uint, days int) ([]map[
 		days = 30 // 最多30天
 	}
 	
-	var results []map[string]interface{}
-	
 	// 查询最近N天的进线数据
-	startDate := time.Now().AddDate(0, 0, -days)
+	startDate := time.Now().AddDate(0, 0, -days+1).Truncate(24 * time.Hour)
 	
 	rows, err := s.db.Model(&models.IncomingLog{}).
 		Select("DATE(incoming_time) as date, COUNT(*) as count, COUNT(CASE WHEN is_duplicate = true THEN 1 END) as duplicate_count").
@@ -197,6 +230,8 @@ func (s *StatsService) GetAccountIncomingTrend(accountID uint, days int) ([]map[
 	}
 	defer rows.Close()
 	
+	// 先创建一个日期到数据的映射
+	dataMap := make(map[string]map[string]interface{})
 	for rows.Next() {
 		var date time.Time
 		var count, duplicateCount int64
@@ -206,12 +241,31 @@ func (s *StatsService) GetAccountIncomingTrend(accountID uint, days int) ([]map[
 			continue
 		}
 		
-		results = append(results, map[string]interface{}{
-			"date":           date.Format("2006-01-02"),
-			"count":          count,
+		dateStr := date.Format("2006-01-02")
+		dataMap[dateStr] = map[string]interface{}{
+			"date":            dateStr,
+			"incoming_count":  count,
 			"duplicate_count": duplicateCount,
-			"unique_count":   count - duplicateCount,
-		})
+			"unique_count":    count - duplicateCount,
+		}
+	}
+	
+	// 填充完整的日期范围，即使某些日期没有数据也要填充0
+	var results []map[string]interface{}
+	for i := 0; i < days; i++ {
+		date := startDate.AddDate(0, 0, i)
+		dateStr := date.Format("2006-01-02")
+		
+		if data, exists := dataMap[dateStr]; exists {
+			results = append(results, data)
+		} else {
+			results = append(results, map[string]interface{}{
+				"date":            dateStr,
+				"incoming_count":  int64(0),
+				"duplicate_count": int64(0),
+				"unique_count":    int64(0),
+			})
+		}
 	}
 	
 	return results, nil

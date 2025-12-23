@@ -170,7 +170,7 @@ type LLMCallLogQueryParams struct {
 
 // LLMCallLogResponse 调用日志响应
 type LLMCallLogResponse struct {
-	ID               uint                   `json:"id"`
+	ID               uint64                 `json:"id"`
 	ConfigID         *uint                  `json:"config_id"`
 	TemplateID       *uint                  `json:"template_id"`
 	GroupID          *uint                  `json:"group_id"`

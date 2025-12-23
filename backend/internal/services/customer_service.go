@@ -79,7 +79,6 @@ func (s *CustomerService) CreateCustomer(c *gin.Context, req *schemas.CreateCust
 		AvatarURL:      req.AvatarURL,
 		PhoneNumber:    req.PhoneNumber,
 		CustomerType:   req.CustomerType,
-		Gender:         req.Gender,
 		Country:        req.Country,
 		Birthday:       birthday,
 		Address:        req.Address,
@@ -87,7 +86,19 @@ func (s *CustomerService) CreateCustomer(c *gin.Context, req *schemas.CreateCust
 		Remark:         req.Remark,
 	}
 
-	if err := s.db.Create(customer).Error; err != nil {
+	// 处理Gender字段：如果提供了有效值，则设置；如果为空字符串，则不设置（让数据库使用NULL）
+	// 数据库约束要求gender必须是'male', 'female', 'unknown'之一，或者NULL，不能是空字符串
+	if req.Gender != "" {
+		customer.Gender = req.Gender
+	}
+
+	// 如果Gender为空字符串，使用Omit排除它，让数据库使用NULL
+	db := s.db
+	if req.Gender == "" {
+		db = db.Omit("gender")
+	}
+
+	if err := db.Create(customer).Error; err != nil {
 		return nil, fmt.Errorf("创建客户失败: %w", err)
 	}
 
@@ -386,10 +397,14 @@ func (s *CustomerService) SyncCustomer(groupID uint, activationCode string, data
 				DisplayName:    data.DisplayName,
 				AvatarURL:      data.AvatarURL,
 				PhoneNumber:    data.PhoneNumber,
-				Gender:         data.Gender,
 				Country:        data.Country,
 				Address:        data.Address,
 				Remark:         data.Remark,
+			}
+
+			// 处理Gender字段：如果提供了有效值，则设置；如果为空字符串，则不设置（让数据库使用NULL）
+			if data.Gender != "" {
+				customer.Gender = data.Gender
 			}
 
 			// 解析生日
@@ -400,7 +415,13 @@ func (s *CustomerService) SyncCustomer(groupID uint, activationCode string, data
 				}
 			}
 
-			if err := s.db.Create(&customer).Error; err != nil {
+			// 如果Gender为空字符串，使用Omit排除它，让数据库使用NULL
+			db := s.db
+			if data.Gender == "" {
+				db = db.Omit("gender")
+			}
+
+			if err := db.Create(&customer).Error; err != nil {
 				return nil, fmt.Errorf("创建客户失败: %w", err)
 			}
 			logger.Infof("创建新客户: customer_id=%s, group_id=%d", data.CustomerID, groupID)

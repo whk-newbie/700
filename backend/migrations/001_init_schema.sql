@@ -1,6 +1,7 @@
 -- Line Account Management System - Database Initialization Script
--- Version: v1.0
+-- Version: v2.0 (Merged all migrations)
 -- Created: 2025-12-21
+-- Updated: 2025-01-XX (Merged migrations 001-005)
 
 -- ============================================
 -- 1. Create Base Tables
@@ -85,8 +86,10 @@ CREATE TABLE IF NOT EXISTS line_accounts (
     avatar_url VARCHAR(500),
     bio TEXT,
     status_message VARCHAR(255),
+    add_friend_link VARCHAR(500),
     qr_code_path VARCHAR(255),
     online_status VARCHAR(20) DEFAULT 'offline',
+    reset_time TIME,
     last_active_at TIMESTAMP,
     last_online_time TIMESTAMP,
     first_login_at TIMESTAMP,
@@ -135,7 +138,7 @@ CREATE TABLE IF NOT EXISTS import_batches (
     dedup_scope VARCHAR(20),
     file_name VARCHAR(255),
     file_path VARCHAR(500),
-    file_size INTEGER,
+    file_size BIGINT,
     imported_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
@@ -165,6 +168,7 @@ CREATE TABLE IF NOT EXISTS contact_pool (
     metadata JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP,
     CONSTRAINT check_source_type CHECK (source_type IN ('import', 'platform')),
     CONSTRAINT check_platform_type_cp CHECK (platform_type IN ('line', 'line_business'))
 );
@@ -173,6 +177,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_contact_pool_global_unique ON contact_pool
 CREATE INDEX IF NOT EXISTS idx_contact_pool_group_id ON contact_pool(group_id);
 CREATE INDEX IF NOT EXISTS idx_contact_pool_activation_code ON contact_pool(activation_code);
 CREATE INDEX IF NOT EXISTS idx_contact_pool_line_id ON contact_pool(line_id);
+CREATE INDEX IF NOT EXISTS idx_contact_pool_deleted ON contact_pool(deleted_at);
 
 -- 1.8 customers table
 CREATE TABLE IF NOT EXISTS customers (
@@ -539,4 +544,33 @@ BEGIN
     RAISE NOTICE 'Created partitions for %', TO_CHAR(next_month_start, 'YYYY-MM');
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================
+-- 6. Initialize Data
+-- ============================================
+
+-- Initialize admin account
+-- Default username: admin
+-- Default password: admin123 (Please change in production)
+-- Password hash is bcrypt encrypted, cost=10
+--
+-- Note: This password hash is for 'admin123'
+-- In production, use Go's golang.org/x/crypto/bcrypt to generate
+-- Example: bcrypt.GenerateFromPassword([]byte("admin123"), 10)
+
+INSERT INTO users (username, password_hash, role, is_active, created_at, updated_at)
+VALUES (
+    'admin',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    'admin',
+    TRUE,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (username) DO NOTHING;
+
+-- Add column comments
+COMMENT ON COLUMN line_accounts.add_friend_link IS 'Line添加好友链接';
+COMMENT ON COLUMN line_accounts.reset_time IS 'Account reset time, use group reset_time if NULL';
+COMMENT ON COLUMN contact_pool.deleted_at IS 'Soft delete timestamp';
 

@@ -98,7 +98,7 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 			return err
 		}
 
-		// 3. 增量更新账号统计
+		// 3. 增量更新账号统计（如果不存在则创建）
 		updates := map[string]interface{}{
 			"total_incoming": gorm.Expr("total_incoming + ?", 1),
 			"today_incoming": gorm.Expr("today_incoming + ?", 1),
@@ -108,6 +108,26 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 			updates["today_duplicate"] = gorm.Expr("today_duplicate + ?", 1)
 		}
 
+		// 检查账号统计是否存在
+		var accountStatsCount int64
+		if err := tx.Model(&models.LineAccountStats{}).
+			Where("line_account_id = ?", lineAccountID).
+			Count(&accountStatsCount).Error; err != nil {
+			logger.Errorf("检查账号统计失败: %v", err)
+			return err
+		}
+
+		if accountStatsCount == 0 {
+			// 创建账号统计记录
+			accountStats := models.LineAccountStats{
+				LineAccountID: lineAccountID,
+			}
+			if err := tx.Create(&accountStats).Error; err != nil {
+				logger.Errorf("创建账号统计失败: %v", err)
+				return err
+			}
+		}
+
 		if err := tx.Model(&models.LineAccountStats{}).
 			Where("line_account_id = ?", lineAccountID).
 			Updates(updates).Error; err != nil {
@@ -115,7 +135,27 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 			return err
 		}
 
-		// 4. 增量更新分组统计
+		// 4. 增量更新分组统计（如果不存在则创建）
+		// 检查分组统计是否存在
+		var groupStatsCount int64
+		if err := tx.Model(&models.GroupStats{}).
+			Where("group_id = ?", groupID).
+			Count(&groupStatsCount).Error; err != nil {
+			logger.Errorf("检查分组统计失败: %v", err)
+			return err
+		}
+
+		if groupStatsCount == 0 {
+			// 创建分组统计记录
+			groupStats := models.GroupStats{
+				GroupID: groupID,
+			}
+			if err := tx.Create(&groupStats).Error; err != nil {
+				logger.Errorf("创建分组统计失败: %v", err)
+				return err
+			}
+		}
+
 		if err := tx.Model(&models.GroupStats{}).
 			Where("group_id = ?", groupID).
 			Updates(updates).Error; err != nil {

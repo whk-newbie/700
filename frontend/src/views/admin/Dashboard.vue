@@ -164,8 +164,8 @@ const updateChart = (data) => {
   }
   
   const dates = data.map(item => item.date)
-  const incoming = data.map(item => item.incoming || 0)
-  const duplicate = data.map(item => item.duplicate || 0)
+  const incoming = data.map(item => item.incoming_count || 0)
+  const duplicate = data.map(item => item.duplicate_count || 0)
   
   const option = {
     tooltip: {
