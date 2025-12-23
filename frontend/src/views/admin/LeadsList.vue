@@ -1,5 +1,5 @@
 <template>
-  <div class="leads-list">
+  <div class="list-page-container leads-list">
     <!-- 统计卡片 -->
     <div class="stats-cards">
       <el-row :gutter="20">
@@ -275,7 +275,7 @@ import { Search, Refresh } from '@element-plus/icons-vue'
 import { getIncomingLogs, getOverviewStats } from '@/api/stats'
 import { getGroups } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
-import { createWebSocket } from '@/utils/websocket'
+import { useWebSocketStore } from '@/store/websocket'
 import { useAuthStore } from '@/store/auth'
 import dayjs from 'dayjs'
 
@@ -305,8 +305,8 @@ const pagination = reactive({
   total: 0
 })
 
-// WebSocket连接
-let wsManager = null
+// WebSocket Store
+const wsStore = useWebSocketStore()
 
 // 是否显示分组列（子账号不显示）
 const showGroupColumn = computed(() => {
@@ -424,44 +424,20 @@ const handleViewDetail = (row) => {
   ElMessage.info('点击左侧展开按钮查看详细信息')
 }
 
-// 初始化WebSocket
+// 初始化WebSocket消息处理器
 const initWebSocket = () => {
-  const token = authStore.token
-  if (!token) {
-    console.warn('未登录，无法建立WebSocket连接')
-    return
-  }
-
-  // 构建WebSocket URL
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.host
-  // WebSocket路径不在/api/v1下，直接使用/api/ws/dashboard
-  const wsUrl = `${protocol}//${host}/api/ws/dashboard?token=${token}`
-
-  wsManager = createWebSocket(wsUrl, {
-    onMessage: (message) => {
-      // 处理进线更新消息
-      if (message.type === 'incoming_update') {
-        // 刷新列表和统计
-        fetchIncomingLogs()
-        fetchOverviewStats()
-      } else if (message.type === 'stats_update') {
-        // 更新统计
-        fetchOverviewStats()
-      }
-    },
-    onOpen: () => {
-      console.log('WebSocket连接成功（线索列表）')
-    },
-    onClose: () => {
-      console.log('WebSocket连接关闭（线索列表）')
-    },
-    onError: (error) => {
-      console.error('WebSocket错误（线索列表）:', error)
+  // 注册消息处理器
+  wsStore.registerMessageHandler('leads-list', (message) => {
+    // 处理进线更新消息
+    if (message.type === 'incoming_update') {
+      // 刷新列表和统计
+      fetchIncomingLogs()
+      fetchOverviewStats()
+    } else if (message.type === 'stats_update') {
+      // 更新统计
+      fetchOverviewStats()
     }
   })
-
-  wsManager.connect()
 }
 
 // 生命周期
@@ -473,18 +449,27 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (wsManager) {
-    wsManager.disconnect()
-  }
+  // 取消注册消息处理器
+  wsStore.unregisterMessageHandler('leads-list')
 })
 </script>
 
 <style scoped lang="less">
+@import '@/styles/list-page.less';
+
 .leads-list {
   .stats-cards {
     margin-bottom: 20px;
 
     .stats-card {
+      border-radius: 8px;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
       .stats-item {
         text-align: center;
 
@@ -511,40 +496,15 @@ onUnmounted(() => {
     }
   }
 
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .filter-section {
-    margin-bottom: 20px;
-
-    .filter-form {
-      .el-form-item {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  :deep(.el-table) {
-    min-height: 400px;
-  }
-
   .expand-content {
     padding: 20px;
-    background-color: #f5f7fa;
+    background: #f8f9fa;
+    border-radius: 8px;
   }
 
   .name-cell {
     display: flex;
     align-items: center;
-  }
-
-  .pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
   }
 }
 </style>

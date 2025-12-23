@@ -1,5 +1,5 @@
 <template>
-  <div class="account-list">
+  <div class="list-page-container account-list">
     <el-card>
       <template #header>
         <div class="card-header">
@@ -1013,52 +1013,14 @@ onMounted(() => {
 </script>
 
 <style scoped lang="less">
+@import '@/styles/list-page.less';
+
 .account-list {
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
     .header-actions {
       display: flex;
       gap: 10px;
     }
-  }
-
-  .filter-section {
-    margin-bottom: 20px;
-    padding: 20px;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-
-    .filter-form {
-      margin: 0;
-    }
-  }
-
-  .action-buttons {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 10px;
-  }
-
-  :deep(.el-table) {
-    min-height: 400px;
-  }
-
-  .stats-info {
-    font-size: 12px;
-    line-height: 1.8;
-
-    strong {
-      font-weight: 600;
-    }
-  }
-
-  .pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
   }
 
   .qr-preview {

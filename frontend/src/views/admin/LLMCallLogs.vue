@@ -1,5 +1,5 @@
 <template>
-  <div class="llm-call-logs">
+  <div class="list-page-container llm-call-logs">
     <el-card>
       <template #header>
         <div class="card-header">
@@ -537,16 +537,14 @@ onMounted(() => {
 </script>
 
 <style scoped lang="less">
+@import '@/styles/list-page.less';
+
 .llm-call-logs {
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 10px;
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
   }
 
   .stats-cards {
@@ -556,6 +554,14 @@ onMounted(() => {
     margin-bottom: 20px;
 
     .stats-card {
+      border-radius: 8px;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
       .stats-item {
         text-align: center;
 
@@ -580,23 +586,6 @@ onMounted(() => {
         }
       }
     }
-  }
-
-  .filter-section {
-    margin-bottom: 20px;
-    padding: 20px;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-  }
-
-  :deep(.el-table) {
-    min-height: 400px;
-  }
-
-  .pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
   }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-pool">
+  <div class="list-page-container contact-pool">
     <!-- 统计卡片 -->
     <div class="stats-cards">
       <el-row :gutter="20">
@@ -686,11 +686,21 @@ onMounted(() => {
 </script>
 
 <style scoped lang="less">
+@import '@/styles/list-page.less';
+
 .contact-pool {
   .stats-cards {
     margin-bottom: 20px;
 
     .stats-card {
+      border-radius: 8px;
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
       .stats-item {
         text-align: center;
 
@@ -717,36 +727,8 @@ onMounted(() => {
     }
   }
 
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
   .tab-content {
-    .filter-section {
-      margin-bottom: 20px;
-
-      .filter-form {
-        .el-form-item {
-          margin-bottom: 0;
-        }
-      }
-    }
-
-    .action-buttons {
-      margin-bottom: 20px;
-    }
-
-    :deep(.el-table) {
-      min-height: 400px;
-    }
-
-    .pagination {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-    }
+    // 标签页内容样式已在list-page.less中定义
   }
 }
 </style>
