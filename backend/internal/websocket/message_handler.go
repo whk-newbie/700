@@ -40,7 +40,7 @@ func NewMessageHandler(manager *Manager) *MessageHandler {
 			hub.BroadcastToGroup(groupID, "incoming_update", updateData)
 		}
 	}
-	
+
 	return &MessageHandler{
 		db:               database.GetDB(),
 		groupService:     services.NewGroupService(),
@@ -48,6 +48,11 @@ func NewMessageHandler(manager *Manager) *MessageHandler {
 		incomingService:  services.NewIncomingService(updateCallback),
 		manager:          manager,
 	}
+}
+
+// SetManager 设置WebSocket管理器引用
+func (h *MessageHandler) SetManager(manager *Manager) {
+	h.manager = manager
 }
 
 // HandleMessage 处理消息
@@ -312,11 +317,30 @@ func (h *MessageHandler) handleCustomerSync(client *Client, message []byte) erro
 		platformType = "line"
 	}
 
+	// 确定客户类型
+	customerType := customerMsg.Data.CustomerType
+	if customerType == "" {
+		// 检查是否有关联的进线记录，如果有则为"新增线索-实时"，否则为"新增线索-补录"
+		var incomingCount int64
+		if customerMsg.Data.LineAccountID != "" {
+			h.db.Model(&models.IncomingLog{}).
+				Where("group_id = ? AND incoming_line_id = ? AND line_account_id = (SELECT id FROM line_accounts WHERE group_id = ? AND line_id = ? AND deleted_at IS NULL)",
+					group.ID, customerMsg.Data.CustomerID, group.ID, customerMsg.Data.LineAccountID).
+				Count(&incomingCount)
+		}
+		if incomingCount > 0 {
+			customerType = "新增线索-实时"
+		} else {
+			customerType = "新增线索-补录"
+		}
+	}
+
 	// 转换数据格式
 	customerSyncData := &schemas.CustomerSyncData{
-		LineAccountID: customerMsg.Data.LineAccountID,
+		LineAccountID:  customerMsg.Data.LineAccountID,
 		CustomerID:     customerMsg.Data.CustomerID,
 		PlatformType:   platformType,
+		CustomerType:   customerType,
 		DisplayName:    customerMsg.Data.DisplayName,
 		AvatarURL:      customerMsg.Data.AvatarURL,
 		PhoneNumber:    customerMsg.Data.PhoneNumber,
@@ -414,6 +438,8 @@ func (h *MessageHandler) handleAccountStatusChange(client *Client, message []byt
 		return fmt.Errorf("解析账号状态变化消息失败: %w", err)
 	}
 
+	logger.Infof("处理账号状态变化: line_account_id=%s, status=%s", statusMsg.Data.LineAccountID, statusMsg.Data.OnlineStatus)
+
 	// 验证激活码
 	if statusMsg.ActivationCode != client.ActivationCode {
 		return errors.New("激活码不匹配")
@@ -427,11 +453,16 @@ func (h *MessageHandler) handleAccountStatusChange(client *Client, message []byt
 
 	// 查找Line账号
 	var lineAccount models.LineAccount
+	// LineAccountID 优先按line_id查询，失败则按id查询
 	if err := h.db.Where("group_id = ? AND line_id = ? AND deleted_at IS NULL", group.ID, statusMsg.Data.LineAccountID).First(&lineAccount).Error; err != nil {
-		return fmt.Errorf("Line账号不存在: %w", err)
+		// 如果按line_id查询失败，尝试按id查询
+		if err := h.db.Where("id = ? AND group_id = ? AND deleted_at IS NULL", statusMsg.Data.LineAccountID, group.ID).First(&lineAccount).Error; err != nil {
+			return fmt.Errorf("Line账号不存在: %w", err)
+		}
 	}
 
 	// 更新账号状态
+	oldStatus := lineAccount.OnlineStatus
 	lineAccount.OnlineStatus = statusMsg.Data.OnlineStatus
 	now := time.Now()
 	lineAccount.LastActiveAt = &now
@@ -442,6 +473,8 @@ func (h *MessageHandler) handleAccountStatusChange(client *Client, message []byt
 	if err := h.db.Save(&lineAccount).Error; err != nil {
 		return fmt.Errorf("更新账号状态失败: %w", err)
 	}
+
+	logger.Infof("账号状态已更新: %s -> %s (ID: %d)", oldStatus, lineAccount.OnlineStatus, lineAccount.ID)
 
 	// 推送状态更新到前端看板
 	h.pushAccountStatusUpdate(group.ID, lineAccount)
@@ -462,6 +495,7 @@ func (h *MessageHandler) handleAccountStatusChange(client *Client, message []byt
 
 // pushAccountStatusUpdate 推送账号状态更新到前端看板
 func (h *MessageHandler) pushAccountStatusUpdate(groupID uint, account models.LineAccount) {
+	logger.Infof("推送账号状态更新到前端: group_id=%d, line_account_id=%s, status=%s", groupID, account.LineID, account.OnlineStatus)
 	updateMsg := Message{
 		Type: "account_status_change",
 		Data: map[string]interface{}{
@@ -473,38 +507,177 @@ func (h *MessageHandler) pushAccountStatusUpdate(groupID uint, account models.Li
 	}
 	messageBytes, _ := json.Marshal(updateMsg)
 	h.manager.BroadcastToGroup(groupID, messageBytes)
+	logger.Debugf("账号状态更新消息已广播: %s", string(messageBytes))
 }
 
 // pushGroupStatsUpdate 推送分组统计更新到前端看板
 func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
-	statsService := services.NewStatsService()
-	groupStats, err := statsService.GetGroupStats(groupID)
-	if err != nil {
-		logger.Errorf("获取分组统计失败: %v", err)
-		return
-	}
+	logger.Infof("推送分组统计更新到前端: group_id=%d", groupID)
 
-	// 获取在线账号数
-	var onlineCount int64
-	h.db.Model(&models.LineAccount{}).
-		Where("group_id = ? AND deleted_at IS NULL AND online_status = ?", groupID, "online").
-		Count(&onlineCount)
+	// 实时计算统计数据
+	stats := h.calculateGroupStats(groupID)
+
+	logger.Infof("分组统计: group_id=%d, total_accounts=%d, online_accounts=%d", groupID, stats["total_accounts"], stats["online_accounts"])
 
 	updateMsg := Message{
 		Type: "group_stats_update",
 		Data: map[string]interface{}{
-			"group_id":        groupID,
-			"total_accounts":  groupStats.TotalAccounts,
-			"online_accounts": onlineCount,
-			"total_incoming":  groupStats.TotalIncoming,
-			"today_incoming":  groupStats.TodayIncoming,
-			"duplicate_incoming": groupStats.DuplicateIncoming,
-			"today_duplicate": groupStats.TodayDuplicate,
-			"timestamp":       time.Now().Unix(),
+			"group_id":          groupID,
+			"total_accounts":    stats["total_accounts"],
+			"online_accounts":   stats["online_accounts"],
+			"total_incoming":    stats["total_incoming"],
+			"today_incoming":    stats["today_incoming"],
+			"duplicate_incoming": stats["duplicate_incoming"],
+			"today_duplicate":   stats["today_duplicate"],
+			"timestamp":         time.Now().Unix(),
 		},
 	}
 	messageBytes, _ := json.Marshal(updateMsg)
 	h.manager.BroadcastToGroup(groupID, messageBytes)
+	logger.Debugf("分组统计更新消息已广播: %s", string(messageBytes))
+}
+
+// calculateGroupStats 实时计算分组统计数据
+func (h *MessageHandler) calculateGroupStats(groupID uint) map[string]int64 {
+	stats := make(map[string]int64)
+
+	var count int64
+
+	// 总账号数
+	h.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL", groupID).
+		Count(&count)
+	stats["total_accounts"] = count
+
+	// 在线账号数
+	h.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL AND online_status = ?", groupID, "online").
+		Count(&count)
+	stats["online_accounts"] = count
+
+	// 总进线数
+	h.db.Model(&models.IncomingLog{}).
+		Where("group_id = ?", groupID).
+		Count(&count)
+	stats["total_incoming"] = count
+
+	// 计算今日时间范围（从重置时间开始）
+	todayStartTime := h.getTodayStartTime(groupID)
+
+	// 今日进线数（从重置时间开始）
+	h.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND incoming_time >= ?", groupID, todayStartTime).
+		Count(&count)
+	stats["today_incoming"] = count
+
+	// 总重复数
+	h.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND is_duplicate = ?", groupID, true).
+		Count(&count)
+	stats["duplicate_incoming"] = count
+
+	// 今日重复数
+	h.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND incoming_time >= ? AND is_duplicate = ?", groupID, todayStartTime, true).
+		Count(&count)
+	stats["today_duplicate"] = count
+
+	return stats
+}
+
+// getTodayStartTime 获取分组今日统计开始时间（重置时间）
+func (h *MessageHandler) getTodayStartTime(groupID uint) time.Time {
+	var group models.Group
+	if err := h.db.Where("id = ? AND deleted_at IS NULL", groupID).First(&group).Error; err != nil {
+		// 如果查询失败，使用默认时间（今天09:00:00）
+		logger.Warnf("查询分组重置时间失败 (group_id=%d): %v，使用默认时间", groupID, err)
+		now := time.Now()
+		return time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, now.Location())
+	}
+
+	// 解析重置时间
+	resetTime, err := h.parseResetTime(group.ResetTime)
+	if err != nil {
+		logger.Warnf("解析分组重置时间失败 (group_id=%d, reset_time=%s): %v，使用默认时间", groupID, group.ResetTime, err)
+		now := time.Now()
+		return time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, now.Location())
+	}
+
+	now := time.Now()
+	todayResetTime := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		resetTime.Hour(), resetTime.Minute(), resetTime.Second(),
+		0, now.Location(),
+	)
+
+	// 如果当前时间还没到今天的重置时间，则使用昨天的重置时间作为开始时间
+	if now.Before(todayResetTime) {
+		yesterdayResetTime := todayResetTime.AddDate(0, 0, -1)
+		return yesterdayResetTime
+	}
+
+	return todayResetTime
+}
+
+// parseResetTime 解析重置时间字符串（格式：HH:MM:SS）
+func (h *MessageHandler) parseResetTime(resetTimeStr string) (time.Time, error) {
+	// 默认重置时间为 09:00:00
+	if resetTimeStr == "" {
+		resetTimeStr = "09:00:00"
+	}
+
+	// 解析时间字符串
+	layout := "15:04:05"
+	parsedTime, err := time.Parse(layout, resetTimeStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return parsedTime, nil
+}
+
+// HandleGroupClientDisconnect 处理分组Windows客户端断开连接
+func (h *MessageHandler) HandleGroupClientDisconnect(groupID uint, activationCode string) {
+	logger.Infof("处理分组客户端断开连接: group_id=%d, activation_code=%s", groupID, activationCode)
+
+	// 将分组所有账号状态设置为下线
+	now := time.Now()
+	result := h.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL", groupID).
+		Updates(map[string]interface{}{
+			"online_status":   "offline",
+			"last_active_at":  &now,
+		})
+
+	if result.Error != nil {
+		logger.Errorf("批量更新账号下线状态失败: %v", result.Error)
+		return
+	}
+
+	affectedCount := result.RowsAffected
+	logger.Infof("分组账号下线更新完成: group_id=%d, affected_accounts=%d", groupID, affectedCount)
+
+	// 广播账号状态变化到前端看板
+	if affectedCount > 0 {
+		h.broadcastGroupAccountsOffline(groupID)
+	}
+
+	// 推送分组统计更新
+	h.pushGroupStatsUpdate(groupID)
+}
+
+// broadcastGroupAccountsOffline 广播分组所有账号下线状态
+func (h *MessageHandler) broadcastGroupAccountsOffline(groupID uint) {
+	var accounts []models.LineAccount
+	if err := h.db.Where("group_id = ? AND deleted_at IS NULL", groupID).Find(&accounts).Error; err != nil {
+		logger.Errorf("查询分组账号失败: %v", err)
+		return
+	}
+
+	// 广播每个账号的下线状态
+	for _, account := range accounts {
+		h.pushAccountStatusUpdate(groupID, account)
+	}
 }
 
 // sendMessage 发送消息到客户端

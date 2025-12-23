@@ -79,16 +79,17 @@ type CustomerQueryParams struct {
 
 // CustomerSyncData 客户同步数据（用于WebSocket）
 type CustomerSyncData struct {
-	LineAccountID string `json:"line_account_id"` // Line账号的line_id
-	CustomerID    string `json:"customer_id"`
-	PlatformType  string `json:"platform_type"`
-	DisplayName   string `json:"display_name,omitempty"`
-	AvatarURL     string `json:"avatar_url,omitempty"`
-	PhoneNumber   string `json:"phone_number,omitempty"`
-	Gender        string `json:"gender,omitempty"`
-	Country       string `json:"country,omitempty"`
-	Birthday      string `json:"birthday,omitempty"`
-	Address       string `json:"address,omitempty"`
-	Remark        string `json:"remark,omitempty"`
+	LineAccountID  string `json:"line_account_id"` // Line账号的line_id
+	CustomerID     string `json:"customer_id"`
+	PlatformType   string `json:"platform_type"`
+	CustomerType   string `json:"customer_type,omitempty"` // 客户类型：新增线索-实时、补录等
+	DisplayName    string `json:"display_name,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	PhoneNumber    string `json:"phone_number,omitempty"`
+	Gender         string `json:"gender,omitempty"`
+	Country        string `json:"country,omitempty"`
+	Birthday       string `json:"birthday,omitempty"`
+	Address        string `json:"address,omitempty"`
+	Remark         string `json:"remark,omitempty"`
 }
 

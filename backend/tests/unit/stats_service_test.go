@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -32,6 +33,15 @@ func (suite *StatsServiceTestSuite) TearDownSuite() {
 func (suite *StatsServiceTestSuite) SetupTest() {
 	// 清理测试数据
 	CleanupTestData(suite.T(), TestDB)
+}
+
+// createTestContext 创建测试用的gin context（模拟管理员权限）
+func (suite *StatsServiceTestSuite) createTestContext() *gin.Context {
+	c, _ := gin.CreateTestContext(nil)
+	// 设置管理员权限，不应用数据过滤
+	c.Set("role", "admin")
+	c.Set("data_filter", nil)
+	return c
 }
 
 // TestGetGroupStats_Exists 测试获取分组统计 - 存在的分组
@@ -164,7 +174,8 @@ func (suite *StatsServiceTestSuite) TestGetOverviewStats() {
 	})
 	
 	// 获取总览统计
-	stats, err := suite.statsService.GetOverviewStats()
+	c := suite.createTestContext()
+	stats, err := suite.statsService.GetOverviewStats(c)
 	
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), stats)
@@ -305,7 +316,8 @@ func (suite *StatsServiceTestSuite) TestGetOverviewStats_EmptyData() {
 	// 不创建任何数据
 	
 	// 获取总览统计
-	stats, err := suite.statsService.GetOverviewStats()
+	c := suite.createTestContext()
+	stats, err := suite.statsService.GetOverviewStats(c)
 	
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), stats)

@@ -89,17 +89,18 @@ type CustomerSyncMessage struct {
 
 // CustomerData 客户数据
 type CustomerData struct {
-	LineAccountID string `json:"line_account_id"`
-	CustomerID    string `json:"customer_id"`
-	PlatformType  string `json:"platform_type,omitempty"`
-	DisplayName   string `json:"display_name,omitempty"`
-	AvatarURL     string `json:"avatar_url,omitempty"`
-	PhoneNumber   string `json:"phone_number,omitempty"`
-	Gender        string `json:"gender,omitempty"`
-	Country       string `json:"country,omitempty"`
-	Birthday      string `json:"birthday,omitempty"`
-	Address       string `json:"address,omitempty"`
-	Remark        string `json:"remark,omitempty"`
+	LineAccountID  string `json:"line_account_id"`
+	CustomerID     string `json:"customer_id"`
+	PlatformType   string `json:"platform_type,omitempty"`
+	CustomerType   string `json:"customer_type,omitempty"`
+	DisplayName    string `json:"display_name,omitempty"`
+	AvatarURL      string `json:"avatar_url,omitempty"`
+	PhoneNumber    string `json:"phone_number,omitempty"`
+	Gender         string `json:"gender,omitempty"`
+	Country        string `json:"country,omitempty"`
+	Birthday       string `json:"birthday,omitempty"`
+	Address        string `json:"address,omitempty"`
+	Remark         string `json:"remark,omitempty"`
 }
 
 // FollowUpSyncMessage 跟进记录同步消息

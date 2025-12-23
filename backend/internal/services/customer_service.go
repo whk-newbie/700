@@ -106,7 +106,7 @@ func (s *CustomerService) GetCustomerList(c *gin.Context, params *schemas.Custom
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.Customer{}), "customers")
 
 	// 添加查询条件
-	query = query.Where("deleted_at IS NULL")
+	query = query.Where("customers.deleted_at IS NULL")
 
 	if params.GroupID != nil {
 		query = query.Where("group_id = ?", *params.GroupID)
@@ -292,7 +292,7 @@ func (s *CustomerService) UpdateCustomer(c *gin.Context, id uint64, req *schemas
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.Customer{}), "customers")
 
 	var customer models.Customer
-	if err := query.Where("id = ? AND deleted_at IS NULL", id).First(&customer).Error; err != nil {
+	if err := query.Where("customers.id = ? AND customers.deleted_at IS NULL", id).First(&customer).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("客户不存在")
 		}
@@ -360,7 +360,7 @@ func (s *CustomerService) DeleteCustomer(c *gin.Context, id uint64) error {
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.Customer{}), "customers")
 
 	var customer models.Customer
-	if err := query.Where("id = ? AND deleted_at IS NULL", id).First(&customer).Error; err != nil {
+	if err := query.Where("customers.id = ? AND customers.deleted_at IS NULL", id).First(&customer).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("客户不存在")
 		}
@@ -384,11 +384,17 @@ func (s *CustomerService) SyncCustomer(groupID uint, activationCode string, data
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 创建新客户
+			customerType := data.CustomerType
+			if customerType == "" {
+				customerType = "新增线索-补录" // 默认类型
+			}
+
 			customer = models.Customer{
 				GroupID:        groupID,
 				ActivationCode: activationCode,
 				PlatformType:   data.PlatformType,
 				CustomerID:     data.CustomerID,
+				CustomerType:   customerType,
 				DisplayName:    data.DisplayName,
 				AvatarURL:      data.AvatarURL,
 				PhoneNumber:    data.PhoneNumber,

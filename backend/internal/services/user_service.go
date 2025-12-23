@@ -96,7 +96,11 @@ func (s *UserService) CreateUser(c *gin.Context, req *schemas.CreateUserRequest)
 	if !exists {
 		return nil, errors.New("无法获取当前用户信息")
 	}
-	createdBy := uint(userID.(uint))
+	userIDUint := userID.(uint)
+	var createdBy *uint
+	if userIDUint > 0 {
+		createdBy = &userIDUint
+	}
 
 	// 检查用户名是否已存在
 	var count int64
@@ -124,7 +128,7 @@ func (s *UserService) CreateUser(c *gin.Context, req *schemas.CreateUserRequest)
 		Role:         req.Role,
 		MaxGroups:    req.MaxGroups,
 		IsActive:     req.IsActive,
-		CreatedBy:    &createdBy,
+		CreatedBy:    createdBy,
 	}
 
 	if err := s.db.Create(user).Error; err != nil {

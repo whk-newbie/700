@@ -219,18 +219,17 @@ func (s *GroupService) GetGroupList(c *gin.Context, params *schemas.GroupQueryPa
 		groupIDs = append(groupIDs, g.ID)
 	}
 
-	// 批量查询统计信息
-	var statsList []models.GroupStats
-	if len(groupIDs) > 0 {
-		if err := s.db.Where("group_id IN ?", groupIDs).Find(&statsList).Error; err != nil {
-			logger.Warnf("查询分组统计失败: %v", err)
-		}
-	}
-
-	// 构建统计信息映射
+	// 实时计算统计信息
 	statsMap := make(map[uint]*models.GroupStats)
-	for i := range statsList {
-		statsMap[statsList[i].GroupID] = &statsList[i]
+	for _, groupID := range groupIDs {
+		stats, err := s.calculateGroupStats(groupID)
+		if err != nil {
+			logger.Warnf("计算分组统计失败 group_id=%d: %v", groupID, err)
+			// 如果计算失败，使用空统计
+			statsMap[groupID] = &models.GroupStats{GroupID: groupID}
+		} else {
+			statsMap[groupID] = stats
+		}
 	}
 
 	// 转换为响应格式
@@ -573,5 +572,136 @@ func (s *GroupService) GenerateSubAccountTokenForUser(c *gin.Context, id uint) (
 	}
 
 	return token, nil
+}
+
+// calculateGroupStats 实时计算分组统计
+func (s *GroupService) calculateGroupStats(groupID uint) (*models.GroupStats, error) {
+	stats := &models.GroupStats{
+		GroupID: groupID,
+	}
+
+	// 计算账号统计
+	var totalAccounts, onlineAccounts, lineAccounts, lineBusinessAccounts int64
+
+	// 总账号数
+	if err := s.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL", groupID).
+		Count(&totalAccounts).Error; err != nil {
+		return nil, err
+	}
+
+	// 在线账号数
+	if err := s.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL AND online_status = ?", groupID, "online").
+		Count(&onlineAccounts).Error; err != nil {
+		return nil, err
+	}
+
+	// Line账号数
+	if err := s.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL AND platform_type = ?", groupID, "line").
+		Count(&lineAccounts).Error; err != nil {
+		return nil, err
+	}
+
+	// Line Business账号数
+	if err := s.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL AND platform_type = ?", groupID, "line_business").
+		Count(&lineBusinessAccounts).Error; err != nil {
+		return nil, err
+	}
+
+	// 获取分组信息以计算今日时间范围
+	var group models.Group
+	if err := s.db.Where("id = ? AND deleted_at IS NULL", groupID).First(&group).Error; err != nil {
+		return nil, err
+	}
+
+	// 计算今日时间范围
+	now := time.Now()
+	todayStartTime := s.getTodayStartTime(group.ResetTime, now)
+
+	var todayIncoming, totalIncoming, duplicateIncoming, todayDuplicate int64
+
+	// 今日进线数（从今天开始时间到当前时间）
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND incoming_time >= ?", groupID, todayStartTime).
+		Count(&todayIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 总进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("group_id = ?", groupID).
+		Count(&totalIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 重复进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND is_duplicate = ?", groupID, true).
+		Count(&duplicateIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 今日重复进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("group_id = ? AND incoming_time >= ? AND is_duplicate = ?", groupID, todayStartTime, true).
+		Count(&todayDuplicate).Error; err != nil {
+		return nil, err
+	}
+
+	// 赋值给stats
+	stats.TotalAccounts = int(totalAccounts)
+	stats.OnlineAccounts = int(onlineAccounts)
+	stats.LineAccounts = int(lineAccounts)
+	stats.LineBusinessAccounts = int(lineBusinessAccounts)
+	stats.TodayIncoming = int(todayIncoming)
+	stats.TotalIncoming = int(totalIncoming)
+	stats.DuplicateIncoming = int(duplicateIncoming)
+	stats.TodayDuplicate = int(todayDuplicate)
+
+	return stats, nil
+}
+
+// getTodayStartTime 根据重置时间计算今日的开始时间
+func (s *GroupService) getTodayStartTime(resetTimeStr string, now time.Time) time.Time {
+	// 解析重置时间
+	resetTime, err := s.parseResetTime(resetTimeStr)
+	if err != nil {
+		// 解析失败，使用默认时间 09:00:00
+		resetTime = time.Date(0, 1, 1, 9, 0, 0, 0, time.Local)
+	}
+
+	// 计算今天的重置时间点
+	todayResetTime := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		resetTime.Hour(), resetTime.Minute(), resetTime.Second(),
+		0, now.Location(),
+	)
+
+	// 如果当前时间还没到今天的重置时间，则使用昨天的重置时间作为开始时间
+	if now.Before(todayResetTime) {
+		yesterdayResetTime := todayResetTime.AddDate(0, 0, -1)
+		return yesterdayResetTime
+	}
+
+	return todayResetTime
+}
+
+// parseResetTime 解析重置时间字符串（格式：HH:MM:SS）
+func (s *GroupService) parseResetTime(resetTimeStr string) (time.Time, error) {
+	// 默认重置时间为 09:00:00
+	if resetTimeStr == "" {
+		resetTimeStr = "09:00:00"
+	}
+
+	// 解析时间字符串
+	parsedTime, err := time.Parse("15:04:05", resetTimeStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return parsedTime, nil
 }
 

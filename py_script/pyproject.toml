@@ -1,0 +1,14 @@
+[project]
+name = "websocket-test-client"
+version = "0.1.0"
+description = "WebSocket测试客户端，用于测试实时数据推送功能"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.32.4",
+    "websockets>=11.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

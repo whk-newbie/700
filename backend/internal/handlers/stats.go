@@ -82,7 +82,7 @@ func GetAccountStats(c *gin.Context) {
 // @Security BearerAuth
 func GetOverviewStats(c *gin.Context) {
 	statsService := services.NewStatsService()
-	stats, err := statsService.GetOverviewStats()
+	stats, err := statsService.GetOverviewStats(c)
 	if err != nil {
 		utils.Error(c, 5001, "获取总览统计失败: "+err.Error())
 		return

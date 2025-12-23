@@ -58,6 +58,11 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 		}
 
 		// 2. 记录进线日志
+		customerType := "新增线索-实时"
+		if isDuplicate {
+			customerType = "新增线索-重复"
+		}
+
 		incomingLog := models.IncomingLog{
 			LineAccountID:  lineAccountID,
 			GroupID:        groupID,
@@ -68,6 +73,7 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 			PhoneNumber:    data.PhoneNumber,
 			IsDuplicate:    isDuplicate,
 			DuplicateScope: duplicateScope,
+			CustomerType:   customerType,
 		}
 
 		// 保存原始数据

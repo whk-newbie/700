@@ -115,7 +115,11 @@ func (s *LLMConfigService) CreateLLMConfig(c *gin.Context, req *schemas.CreateLL
 	if !exists {
 		return nil, errors.New("无法获取当前用户信息")
 	}
-	createdBy := uint(userID.(uint))
+	userIDUint := userID.(uint)
+	var createdBy *uint
+	if userIDUint > 0 {
+		createdBy = &userIDUint
+	}
 
 	// 加密API Key
 	encryptionService := GetEncryptionService()
@@ -163,7 +167,7 @@ func (s *LLMConfigService) CreateLLMConfig(c *gin.Context, req *schemas.CreateLL
 		TimeoutSeconds:  timeoutSeconds,
 		MaxRetries:      maxRetries,
 		IsActive:        req.IsActive,
-		CreatedBy:       &createdBy,
+		CreatedBy:       createdBy,
 	}
 
 	if err := s.db.Create(config).Error; err != nil {

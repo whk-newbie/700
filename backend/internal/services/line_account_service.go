@@ -116,7 +116,7 @@ func (s *LineAccountService) GetLineAccountList(c *gin.Context, params *schemas.
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
 
 	// 添加查询条件
-	query = query.Where("deleted_at IS NULL")
+	query = query.Where("line_accounts.deleted_at IS NULL")
 
 	if params.GroupID != nil {
 		query = query.Where("group_id = ?", *params.GroupID)
@@ -177,18 +177,17 @@ func (s *LineAccountService) GetLineAccountList(c *gin.Context, params *schemas.
 		accountIDs = append(accountIDs, a.ID)
 	}
 
-	// 批量查询统计信息
-	var statsList []models.LineAccountStats
-	if len(accountIDs) > 0 {
-		if err := s.db.Where("line_account_id IN ?", accountIDs).Find(&statsList).Error; err != nil {
-			logger.Warnf("查询账号统计失败: %v", err)
-		}
-	}
-
-	// 构建统计信息映射
+	// 实时计算统计信息
 	statsMap := make(map[uint]*models.LineAccountStats)
-	for i := range statsList {
-		statsMap[statsList[i].LineAccountID] = &statsList[i]
+	for _, accountID := range accountIDs {
+		stats, err := s.calculateAccountStats(accountID)
+		if err != nil {
+			logger.Warnf("计算账号统计失败 account_id=%d: %v", accountID, err)
+			// 如果计算失败，使用空统计
+			statsMap[accountID] = &models.LineAccountStats{LineAccountID: accountID}
+		} else {
+			statsMap[accountID] = stats
+		}
 	}
 
 	// 转换为响应格式
@@ -256,7 +255,7 @@ func (s *LineAccountService) GetLineAccountByID(c *gin.Context, id uint) (*model
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
 
 	var account models.LineAccount
-	if err := query.Where("id = ? AND deleted_at IS NULL", id).First(&account).Error; err != nil {
+	if err := query.Where("line_accounts.id = ? AND line_accounts.deleted_at IS NULL", id).First(&account).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("账号不存在")
 		}
@@ -444,7 +443,7 @@ func (s *LineAccountService) BatchDeleteLineAccounts(c *gin.Context, ids []uint,
 
 	// 应用数据过滤，获取可操作的账号
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
-	query = query.Where("id IN ? AND deleted_at IS NULL", ids)
+	query = query.Where("line_accounts.id IN ? AND line_accounts.deleted_at IS NULL", ids)
 
 	var accounts []models.LineAccount
 	if err := query.Find(&accounts).Error; err != nil {
@@ -526,7 +525,7 @@ func (s *LineAccountService) BatchUpdateLineAccounts(c *gin.Context, ids []uint,
 
 	// 应用数据过滤，获取可操作的账号
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
-	query = query.Where("id IN ? AND deleted_at IS NULL", ids)
+	query = query.Where("line_accounts.id IN ? AND line_accounts.deleted_at IS NULL", ids)
 
 	var accounts []models.LineAccount
 	if err := query.Find(&accounts).Error; err != nil {
@@ -586,5 +585,113 @@ func (s *LineAccountService) BatchUpdateLineAccounts(c *gin.Context, ids []uint,
 	}
 
 	return len(accounts), failedIDs, nil
+}
+
+// calculateAccountStats 实时计算账号统计
+func (s *LineAccountService) calculateAccountStats(accountID uint) (*models.LineAccountStats, error) {
+	stats := &models.LineAccountStats{
+		LineAccountID: accountID,
+	}
+
+	// 获取账号信息
+	var account models.LineAccount
+	if err := s.db.Where("id = ? AND deleted_at IS NULL", accountID).First(&account).Error; err != nil {
+		return nil, err
+	}
+
+	// 获取分组信息
+	var group models.Group
+	if err := s.db.Where("id = ? AND deleted_at IS NULL", account.GroupID).First(&group).Error; err != nil {
+		return nil, err
+	}
+
+	// 确定使用哪个重置时间：账号独立重置时间优先，否则使用分组重置时间
+	resetTimeStr := group.ResetTime
+	if account.ResetTime != nil && *account.ResetTime != "" {
+		resetTimeStr = *account.ResetTime
+	}
+
+	// 计算今日时间范围
+	now := time.Now()
+	todayStartTime := s.getTodayStartTime(resetTimeStr, now)
+
+	var todayIncoming, totalIncoming, duplicateIncoming, todayDuplicate int64
+
+	// 今日进线数（从今天开始时间到当前时间）
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND incoming_time >= ?", accountID, todayStartTime).
+		Count(&todayIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 总进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ?", accountID).
+		Count(&totalIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 重复进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND is_duplicate = ?", accountID, true).
+		Count(&duplicateIncoming).Error; err != nil {
+		return nil, err
+	}
+
+	// 今日重复进线数
+	if err := s.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND incoming_time >= ? AND is_duplicate = ?", accountID, todayStartTime, true).
+		Count(&todayDuplicate).Error; err != nil {
+		return nil, err
+	}
+
+	// 赋值给stats
+	stats.TodayIncoming = int(todayIncoming)
+	stats.TotalIncoming = int(totalIncoming)
+	stats.DuplicateIncoming = int(duplicateIncoming)
+	stats.TodayDuplicate = int(todayDuplicate)
+
+	return stats, nil
+}
+
+// getTodayStartTime 根据重置时间计算今日的开始时间
+func (s *LineAccountService) getTodayStartTime(resetTimeStr string, now time.Time) time.Time {
+	// 解析重置时间
+	resetTime, err := s.parseResetTime(resetTimeStr)
+	if err != nil {
+		// 解析失败，使用默认时间 09:00:00
+		resetTime = time.Date(0, 1, 1, 9, 0, 0, 0, time.Local)
+	}
+
+	// 计算今天的重置时间点
+	todayResetTime := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		resetTime.Hour(), resetTime.Minute(), resetTime.Second(),
+		0, now.Location(),
+	)
+
+	// 如果当前时间还没到今天的重置时间，则使用昨天的重置时间作为开始时间
+	if now.Before(todayResetTime) {
+		yesterdayResetTime := todayResetTime.AddDate(0, 0, -1)
+		return yesterdayResetTime
+	}
+
+	return todayResetTime
+}
+
+// parseResetTime 解析重置时间字符串（格式：HH:MM:SS）
+func (s *LineAccountService) parseResetTime(resetTimeStr string) (time.Time, error) {
+	// 默认重置时间为 09:00:00
+	if resetTimeStr == "" {
+		resetTimeStr = "09:00:00"
+	}
+
+	// 解析时间字符串
+	parsedTime, err := time.Parse("15:04:05", resetTimeStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return parsedTime, nil
 }
 

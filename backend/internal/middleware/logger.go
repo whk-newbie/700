@@ -15,6 +15,14 @@ func Logger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
+		// 检查是否为WebSocket升级请求
+		upgrade := c.GetHeader("Upgrade")
+		if upgrade == "websocket" {
+			// WebSocket升级请求，不记录HTTP日志
+			c.Next()
+			return
+		}
+
 		// 处理请求
 		c.Next()
 

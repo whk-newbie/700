@@ -4,9 +4,11 @@ import (
 	"time"
 
 	"line-management/internal/models"
+	"line-management/internal/utils"
 	"line-management/pkg/database"
 	"line-management/pkg/logger"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -77,7 +79,7 @@ func (s *StatsService) GetAccountStats(accountID uint) (*models.LineAccountStats
 }
 
 // GetOverviewStats 获取总览统计
-func (s *StatsService) GetOverviewStats() (map[string]interface{}, error) {
+func (s *StatsService) GetOverviewStats(c *gin.Context) (map[string]interface{}, error) {
 	var result map[string]interface{} = make(map[string]interface{})
 	
 	// 总分组数
@@ -95,24 +97,30 @@ func (s *StatsService) GetOverviewStats() (map[string]interface{}, error) {
 	s.db.Model(&models.LineAccount{}).Where("deleted_at IS NULL AND online_status = ?", "online").Count(&onlineAccounts)
 	result["online_accounts"] = onlineAccounts
 	
-	// 总进线数（从所有分组统计汇总）
+	// 总进线数（实时计算）
 	var totalIncoming int64
-	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(total_incoming), 0)").Scan(&totalIncoming)
+	incomingQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
+	incomingQuery.Count(&totalIncoming)
 	result["total_incoming"] = totalIncoming
-	
-	// 今日进线数（从所有分组统计汇总）
-	var todayIncoming int64
-	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(today_incoming), 0)").Scan(&todayIncoming)
-	result["today_incoming"] = todayIncoming
-	
-	// 总重复数（从所有分组统计汇总）
+
+	// 总重复数（实时计算）
 	var totalDuplicate int64
-	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(duplicate_incoming), 0)").Scan(&totalDuplicate)
+	duplicateQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
+	duplicateQuery.Where("is_duplicate = ?", true).Count(&totalDuplicate)
 	result["duplicate_incoming"] = totalDuplicate
-	
-	// 今日重复数（从所有分组统计汇总）
+
+	// 今日进线数（实时计算，从今天00:00:00开始）
+	now := time.Now()
+	today := now.Format("2006-01-02")
+	var todayIncoming int64
+	todayIncomingQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
+	todayIncomingQuery.Where("DATE(incoming_time) = ?", today).Count(&todayIncoming)
+	result["today_incoming"] = todayIncoming
+
+	// 今日重复数（实时计算，从今天00:00:00开始）
 	var todayDuplicate int64
-	s.db.Model(&models.GroupStats{}).Select("COALESCE(SUM(today_duplicate), 0)").Scan(&todayDuplicate)
+	todayDuplicateQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
+	todayDuplicateQuery.Where("DATE(incoming_time) = ? AND is_duplicate = ?", today, true).Count(&todayDuplicate)
 	result["today_duplicate"] = todayDuplicate
 	
 	// 底库总数（GORM会自动处理软删除）

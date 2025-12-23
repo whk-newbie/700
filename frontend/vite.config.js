@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    hmr: false, // 禁用热重载WebSocket连接
     proxy: {
       '/api': {
         target: 'http://localhost:8080',

@@ -85,7 +85,10 @@ func (s *FollowUpService) CreateFollowUp(c *gin.Context, req *schemas.CreateFoll
 	// 设置创建者
 	if userID != nil {
 		uid := userID.(uint)
-		record.CreatedBy = &uid
+		// 只在用户ID有效（不为0）时设置创建者
+		if uid > 0 {
+			record.CreatedBy = &uid
+		}
 	}
 
 	// 填充账号和客户信息（用于显示）
@@ -114,7 +117,7 @@ func (s *FollowUpService) GetFollowUpList(c *gin.Context, params *schemas.Follow
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.FollowUpRecord{}), "follow_up_records")
 
 	// 添加查询条件
-	query = query.Where("deleted_at IS NULL")
+	query = query.Where("follow_up_records.deleted_at IS NULL")
 
 	if params.GroupID != nil {
 		query = query.Where("group_id = ?", *params.GroupID)
@@ -228,7 +231,7 @@ func (s *FollowUpService) UpdateFollowUp(c *gin.Context, id uint64, req *schemas
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.FollowUpRecord{}), "follow_up_records")
 
 	var record models.FollowUpRecord
-	if err := query.Where("id = ? AND deleted_at IS NULL", id).First(&record).Error; err != nil {
+	if err := query.Where("follow_up_records.id = ? AND follow_up_records.deleted_at IS NULL", id).First(&record).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("跟进记录不存在")
 		}
@@ -251,7 +254,7 @@ func (s *FollowUpService) DeleteFollowUp(c *gin.Context, id uint64) error {
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.FollowUpRecord{}), "follow_up_records")
 
 	var record models.FollowUpRecord
-	if err := query.Where("id = ? AND deleted_at IS NULL", id).First(&record).Error; err != nil {
+	if err := query.Where("follow_up_records.id = ? AND follow_up_records.deleted_at IS NULL", id).First(&record).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("跟进记录不存在")
 		}
@@ -296,7 +299,10 @@ func (s *FollowUpService) BatchCreateFollowUp(c *gin.Context, req *schemas.Batch
 		// 设置创建者
 		if userID != nil {
 			uid := userID.(uint)
-			record.CreatedBy = &uid
+			// 只在用户ID有效（不为0）时设置创建者
+			if uid > 0 {
+				record.CreatedBy = &uid
+			}
 		}
 
 		// 填充账号和客户信息（如果提供了ID）

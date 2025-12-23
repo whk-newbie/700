@@ -40,7 +40,7 @@ func (s *ContactPoolService) GetSummary(c *gin.Context) (*schemas.ContactPoolSum
 
 	// 统计导入的联系人数量（source_type = 'import'）
 	var importCount int64
-	importQuery := query.Where("source_type = ? AND deleted_at IS NULL", "import")
+	importQuery := query.Where("contact_pool.source_type = ? AND contact_pool.deleted_at IS NULL", "import")
 	if err := importQuery.Count(&importCount).Error; err != nil {
 		logger.Errorf("统计导入联系人数量失败: %v", err)
 		return nil, err
@@ -48,7 +48,7 @@ func (s *ContactPoolService) GetSummary(c *gin.Context) (*schemas.ContactPoolSum
 
 	// 统计平台工单联系人数量（source_type = 'platform'）
 	var platformCount int64
-	platformQuery := query.Where("source_type = ? AND deleted_at IS NULL", "platform")
+	platformQuery := query.Where("contact_pool.source_type = ? AND contact_pool.deleted_at IS NULL", "platform")
 	if err := platformQuery.Count(&platformCount).Error; err != nil {
 		logger.Errorf("统计平台工单联系人数量失败: %v", err)
 		return nil, err
@@ -75,7 +75,7 @@ func (s *ContactPoolService) GetList(c *gin.Context, params *schemas.ContactPool
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.ContactPool{}), "contact_pool")
 	
 	// 只查询平台工单来源的数据（source_type = 'platform'）
-	query = query.Where("source_type = ? AND deleted_at IS NULL", "platform")
+	query = query.Where("contact_pool.source_type = ? AND contact_pool.deleted_at IS NULL", "platform")
 
 	// 筛选条件
 	if params.PlatformType != "" {
@@ -94,8 +94,8 @@ func (s *ContactPoolService) GetList(c *gin.Context, params *schemas.ContactPool
 
 	var results []GroupResult
 	if err := query.
-		Select("activation_code, platform_type, COUNT(*) as contact_count").
-		Group("activation_code, platform_type").
+		Select("contact_pool.activation_code, contact_pool.platform_type, COUNT(*) as contact_count").
+		Group("contact_pool.activation_code, contact_pool.platform_type").
 		Scan(&results).Error; err != nil {
 		logger.Errorf("查询底库列表失败: %v", err)
 		return nil, 0, err
@@ -164,7 +164,7 @@ func (s *ContactPoolService) GetDetailList(c *gin.Context, params *schemas.Conta
 
 	// 应用数据过滤
 	query := utils.ApplyDataFilter(c, s.db.Model(&models.ContactPool{}), "contact_pool")
-	query = query.Where("deleted_at IS NULL")
+	query = query.Where("contact_pool.deleted_at IS NULL")
 
 	// 筛选条件
 	if params.ActivationCode != "" {
@@ -232,7 +232,11 @@ func (s *ContactPoolService) ImportContacts(c *gin.Context, file *multipart.File
 	if !exists {
 		return nil, errors.New("无法获取用户信息")
 	}
-	importedBy := userID.(uint)
+	userIDUint := userID.(uint)
+	var importedBy *uint
+	if userIDUint > 0 {
+		importedBy = &userIDUint
+	}
 
 	// 验证分组是否存在
 	var group models.Group
@@ -266,7 +270,7 @@ func (s *ContactPoolService) ImportContacts(c *gin.Context, file *multipart.File
 		FileName:     file.Filename,
 		FilePath:     filePath,
 		FileSize:     file.Size,
-		ImportedBy:   &importedBy,
+		ImportedBy:   importedBy,
 	}
 
 	if err := s.db.Create(&batch).Error; err != nil {

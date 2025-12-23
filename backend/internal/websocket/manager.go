@@ -25,6 +25,9 @@ const (
 	PingPeriod = 54
 )
 
+// ClientDisconnectCallback 客户端断开连接回调函数
+type ClientDisconnectCallback func(groupID uint, activationCode string)
+
 // Manager WebSocket连接管理器
 type Manager struct {
 	// Windows客户端连接池 key: activation_code + conn_id
@@ -41,17 +44,20 @@ type Manager struct {
 	mu sync.RWMutex
 	// 关闭通道
 	close chan struct{}
+	// Windows客户端断开连接回调
+	onClientDisconnect ClientDisconnectCallback
 }
 
 // NewManager 创建连接管理器
-func NewManager() *Manager {
+func NewManager(onClientDisconnect ClientDisconnectCallback) *Manager {
 	return &Manager{
-		clientClients:    make(map[string]*Client),
-		dashboardClients: make(map[string]*Client),
-		register:         make(chan *Client),
-		unregister:       make(chan *Client),
-		broadcast:        make(chan []byte, 256),
-		close:            make(chan struct{}),
+		clientClients:      make(map[string]*Client),
+		dashboardClients:   make(map[string]*Client),
+		register:           make(chan *Client),
+		unregister:         make(chan *Client),
+		broadcast:          make(chan []byte, 256),
+		close:              make(chan struct{}),
+		onClientDisconnect: onClientDisconnect,
 	}
 }
 
@@ -160,7 +166,12 @@ func (m *Manager) unregisterClient(client *Client) {
 	if client.Type == ClientTypeWindows {
 		if _, ok := m.clientClients[client.ID]; ok {
 			delete(m.clientClients, client.ID)
-			logger.Infof("Windows客户端已注销: ID=%s, ActivationCode=%s", client.ID, client.ActivationCode)
+			logger.Infof("Windows客户端已注销: ID=%s, ActivationCode=%s, GroupID=%d", client.ID, client.ActivationCode, client.GroupID)
+
+			// 处理分组客户端断开连接，将所有账号下线
+			if m.onClientDisconnect != nil {
+				go m.onClientDisconnect(client.GroupID, client.ActivationCode)
+			}
 		}
 	} else if client.Type == ClientTypeDashboard {
 		if _, ok := m.dashboardClients[client.ID]; ok {
