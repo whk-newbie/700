@@ -86,19 +86,14 @@ func (s *CustomerService) CreateCustomer(c *gin.Context, req *schemas.CreateCust
 		Remark:         req.Remark,
 	}
 
-	// 处理Gender字段：如果提供了有效值，则设置；如果为空字符串，则不设置（让数据库使用NULL）
-	// 数据库约束要求gender必须是'male', 'female', 'unknown'之一，或者NULL，不能是空字符串
+	// 处理Gender字段：只有当提供了有效值时才设置，否则让数据库使用NULL
+	// 数据库约束要求gender必须是'male', 'female', 'unknown'之一，或者NULL
 	if req.Gender != "" {
 		customer.Gender = req.Gender
 	}
+	// 如果Gender为空字符串，不设置该字段，让GORM使用NULL作为默认值
 
-	// 如果Gender为空字符串，使用Omit排除它，让数据库使用NULL
-	db := s.db
-	if req.Gender == "" {
-		db = db.Omit("gender")
-	}
-
-	if err := db.Create(customer).Error; err != nil {
+	if err := s.db.Create(customer).Error; err != nil {
 		return nil, fmt.Errorf("创建客户失败: %w", err)
 	}
 

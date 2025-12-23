@@ -159,9 +159,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 func SetupWebSocketRoutes(r *gin.Engine) {
 	// Windows客户端WebSocket连接（不需要JWT认证，使用激活码+token认证）
 	r.GET("/api/ws/client", handlers.HandleClientWebSocket)
-	
-	// 前端看板WebSocket连接（需要JWT认证）
-	r.GET("/api/ws/dashboard", middleware.AuthRequired(), handlers.HandleDashboardWebSocket)
+
+	// 前端看板WebSocket连接（需要JWT认证，支持URL参数中的token）
+	r.GET("/api/ws/dashboard", middleware.WebSocketAuthRequired(), handlers.HandleDashboardWebSocket)
 }
 
 // SetupSwagger 设置Swagger文档

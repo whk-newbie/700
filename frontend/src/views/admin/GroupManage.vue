@@ -306,7 +306,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
@@ -322,9 +322,11 @@ import {
 } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
 import { useAuthStore } from '@/store/auth'
+import { useWebSocketStore } from '@/store/websocket'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const wsStore = useWebSocketStore()
 const isAdmin = computed(() => authStore.isAdmin)
 
 // 数据
@@ -697,9 +699,44 @@ const resetForm = () => {
   }
 }
 
+// 初始化WebSocket消息处理器
+const initWebSocket = () => {
+  // 注册消息处理器
+  wsStore.registerMessageHandler('group-manage', (message) => {
+    // 处理分组统计更新消息
+    if (message.type === 'group_stats_update') {
+      handleGroupStatsUpdate(message.data)
+    }
+  })
+}
+
+// 处理分组统计更新
+const handleGroupStatsUpdate = (data) => {
+  // 在表格数据中找到对应的分组并更新统计信息
+  const groupIndex = tableData.value.findIndex(group => group.id === data.group_id)
+  if (groupIndex !== -1) {
+    // 更新分组的统计信息
+    tableData.value[groupIndex].total_accounts = data.total_accounts
+    tableData.value[groupIndex].online_accounts = data.online_accounts
+    tableData.value[groupIndex].total_incoming = data.total_incoming
+    tableData.value[groupIndex].today_incoming = data.today_incoming
+    tableData.value[groupIndex].duplicate_incoming = data.duplicate_incoming
+    tableData.value[groupIndex].today_duplicate = data.today_duplicate
+
+    // 触发Vue响应式更新
+    tableData.value.splice(groupIndex, 1, { ...tableData.value[groupIndex] })
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadGroups()
+  initWebSocket()
+})
+
+onUnmounted(() => {
+  // 取消注册消息处理器
+  wsStore.unregisterMessageHandler('group-manage')
 })
 </script>
 

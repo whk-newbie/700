@@ -15,8 +15,8 @@ import (
 // 每个分组可以在自己的重置时间点重置，账号统计跟随所属分组的重置时间
 func DailyResetTask() {
 	db := database.GetDB()
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		now := time.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
 	logger.Info("开始执行每日重置任务检查")
 
@@ -67,12 +67,13 @@ func DailyResetTask() {
 				needReset = true
 			}
 		} else {
+			// 将LastResetDate转换为UTC时区的日期（只保留日期部分）
 			lastResetDate := time.Date(
 				groupStats.LastResetDate.Year(),
 				groupStats.LastResetDate.Month(),
 				groupStats.LastResetDate.Day(),
 				0, 0, 0, 0,
-				groupStats.LastResetDate.Location(),
+				time.UTC,
 			)
 
 			// 如果上次重置日期不是今天，且当前时间已过今天的重置时间点，则需要重置
@@ -93,6 +94,7 @@ func DailyResetTask() {
 		}
 
 		if needReset {
+			logger.Infof("开始重置分组%d统计: today=%v, now=%v", group.ID, today, now)
 			// 重置分组统计
 			updates := map[string]interface{}{
 				"today_incoming":  0,
@@ -107,6 +109,7 @@ func DailyResetTask() {
 				logger.Errorf("重置分组统计失败 (GroupID=%d): %v", group.ID, err)
 				continue
 			}
+
 
 			resetCount++
 			logger.Infof("已重置分组统计 (GroupID=%d, ResetTime=%s)", group.ID, group.ResetTime)
@@ -197,12 +200,13 @@ func DailyResetTask() {
 					needAccountReset = true
 				}
 			} else {
+				// 将LastResetDate转换为UTC时区的日期（只保留日期部分）
 				lastResetDate := time.Date(
 					accountStats.LastResetDate.Year(),
 					accountStats.LastResetDate.Month(),
 					accountStats.LastResetDate.Day(),
 					0, 0, 0, 0,
-					accountStats.LastResetDate.Location(),
+					time.UTC,
 				)
 
 				// 如果上次重置日期不是今天，且当前时间已过今天的重置时间点，则需要重置

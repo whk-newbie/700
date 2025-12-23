@@ -24,11 +24,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path, // 不重写路径，保持原样
       },
-      '/ws': {
+      '/api/ws': {
         target: 'ws://localhost:8080',
         changeOrigin: true,
         ws: true,
-        rewrite: (path) => path.replace(/^\/ws/, '/api/ws'),
+        rewrite: (path) => path.replace(/^\/api\/ws/, '/api/ws'),
       },
     },
   },

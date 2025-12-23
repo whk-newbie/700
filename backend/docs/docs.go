@@ -15,6 +15,971 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/llm/call-logs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取调用日志列表（管理员专用，支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型调用记录"
+                ],
+                "summary": "获取调用日志列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "config_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "模板ID",
+                        "name": "template_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "激活码",
+                        "name": "activation_code",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "success",
+                            "error"
+                        ],
+                        "type": "string",
+                        "description": "状态",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间",
+                        "name": "start_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间",
+                        "name": "end_time",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/llm/configs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取LLM配置列表（管理员专用，支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型配置"
+                ],
+                "summary": "获取LLM配置列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "提供商",
+                        "name": "provider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否激活",
+                        "name": "is_active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（名称）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建LLM配置（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型配置"
+                ],
+                "summary": "创建LLM配置",
+                "parameters": [
+                    {
+                        "description": "创建LLM配置请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CreateLLMConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMConfigResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/llm/configs/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新LLM配置（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型配置"
+                ],
+                "summary": "更新LLM配置",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新LLM配置请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateLLMConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMConfigResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除LLM配置（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型配置"
+                ],
+                "summary": "删除LLM配置",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/llm/configs/{id}/test": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "测试LLM配置连接（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型配置"
+                ],
+                "summary": "测试LLM配置连接",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/llm/templates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取Prompt模板列表（管理员专用，支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Prompt模板"
+                ],
+                "summary": "获取Prompt模板列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "config_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否激活",
+                        "name": "is_active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（模板名称）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建Prompt模板（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Prompt模板"
+                ],
+                "summary": "创建Prompt模板",
+                "parameters": [
+                    {
+                        "description": "创建Prompt模板请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CreatePromptTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.PromptTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/llm/templates/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新Prompt模板（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Prompt模板"
+                ],
+                "summary": "更新Prompt模板",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "模板ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新Prompt模板请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdatePromptTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.PromptTemplateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除Prompt模板（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Prompt模板"
+                ],
+                "summary": "删除Prompt模板",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "模板ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取用户列表（管理员专用，支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "admin",
+                            "user"
+                        ],
+                        "type": "string",
+                        "description": "角色",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否激活",
+                        "name": "is_active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（用户名或邮箱）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建普通用户（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "创建用户",
+                "parameters": [
+                    {
+                        "description": "创建用户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UserListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新用户信息（管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新用户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UserListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除用户（软删除，管理员专用）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "删除用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "管理员或普通用户登录",
@@ -35,7 +1000,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.LoginRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.LoginRequest"
                         }
                     }
                 ],
@@ -43,19 +1008,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.LoginResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -81,7 +1046,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.SubAccountLoginRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.SubAccountLoginRequest"
                         }
                     }
                 ],
@@ -89,19 +1054,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.LoginResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -152,13 +1117,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.UserInfo"
+                            "$ref": "#/definitions/line-management_internal_schemas.UserInfo"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -184,7 +1149,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.RefreshTokenRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -192,19 +1157,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.RefreshTokenResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.RefreshTokenResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -236,7 +1201,979 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/detail": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取底库详细列表（支持筛选和分页）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "获取底库详细列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "激活码",
+                        "name": "activation_code",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "开始时间",
+                        "name": "start_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "结束时间",
+                        "name": "end_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（用户名或手机号）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/import": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "从Excel/CSV/TXT文件导入联系人到底库",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "导入联系人",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "文件（Excel/CSV/TXT）",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "current",
+                            "global"
+                        ],
+                        "type": "string",
+                        "description": "去重范围",
+                        "name": "dedup_scope",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ImportContactResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/import-batches": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取导入批次列表（支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "获取导入批次列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/import-template": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "下载联系人导入模板Excel文件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "下载导入模板",
+                "responses": {
+                    "200": {
+                        "description": "Excel模板文件",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/list": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取底库列表（按激活码+平台分组）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "获取底库列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "激活码搜索",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/contact-pool/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取底库统计汇总（导入数量、平台工单数量、总数量）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "底库管理"
+                ],
+                "summary": "获取底库统计汇总",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ContactPoolSummaryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取客户列表（支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "客户管理"
+                ],
+                "summary": "获取客户列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Line账号ID",
+                        "name": "line_account_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "客户类型",
+                        "name": "customer_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（客户ID或显示名称）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取客户详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "客户管理"
+                ],
+                "summary": "获取客户详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "客户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CustomerDetailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新客户信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "客户管理"
+                ],
+                "summary": "更新客户信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "客户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新客户请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateCustomerRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CustomerListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除客户（软删除）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "客户管理"
+                ],
+                "summary": "删除客户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "客户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow-ups": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取跟进记录列表（支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "跟进记录"
+                ],
+                "summary": "获取跟进记录列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Line账号ID",
+                        "name": "line_account_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "客户ID",
+                        "name": "customer_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "line",
+                            "line_business"
+                        ],
+                        "type": "string",
+                        "description": "平台类型",
+                        "name": "platform_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（跟进内容）",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "开始时间",
+                        "name": "start_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "结束时间",
+                        "name": "end_time",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建新的跟进记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "跟进记录"
+                ],
+                "summary": "创建跟进记录",
+                "parameters": [
+                    {
+                        "description": "创建跟进记录请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.CreateFollowUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.FollowUpListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow-ups/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量创建跟进记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "跟进记录"
+                ],
+                "summary": "批量创建跟进记录",
+                "parameters": [
+                    {
+                        "description": "批量创建跟进记录请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchCreateFollowUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/line-management_internal_schemas.FollowUpListResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/follow-ups/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新跟进记录内容",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "跟进记录"
+                ],
+                "summary": "更新跟进记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "跟进记录ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新跟进记录请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateFollowUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.FollowUpListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除跟进记录（软删除）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "跟进记录"
+                ],
+                "summary": "删除跟进记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "跟进记录ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -304,19 +2241,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.PaginationResponse"
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -345,7 +2282,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.CreateGroupRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.CreateGroupRequest"
                         }
                     }
                 ],
@@ -353,19 +2290,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GroupListResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.GroupListResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -403,7 +2340,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.UpdateGroupRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateGroupRequest"
                         }
                     }
                 ],
@@ -411,25 +2348,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GroupListResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.GroupListResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -471,19 +2408,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -527,25 +2464,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -589,19 +2526,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -632,7 +2569,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchDeleteGroupsRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchDeleteGroupsRequest"
                         }
                     }
                 ],
@@ -640,19 +2577,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchOperationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -683,7 +2620,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchUpdateGroupsRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchUpdateGroupsRequest"
                         }
                     }
                 ],
@@ -691,19 +2628,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchOperationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -738,7 +2675,7 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -822,19 +2759,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.PaginationResponse"
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -863,7 +2800,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.CreateLineAccountRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.CreateLineAccountRequest"
                         }
                     }
                 ],
@@ -871,19 +2808,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.LineAccountListResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.LineAccountListResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -921,7 +2858,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.UpdateLineAccountRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.UpdateLineAccountRequest"
                         }
                     }
                 ],
@@ -929,25 +2866,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.LineAccountListResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.LineAccountListResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -989,19 +2926,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -1044,25 +2981,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.GenerateQRCodeResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.GenerateQRCodeResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -1093,7 +3030,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchDeleteLineAccountsRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchDeleteLineAccountsRequest"
                         }
                     }
                 ],
@@ -1101,19 +3038,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchOperationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     }
                 }
@@ -1144,7 +3081,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchUpdateLineAccountsRequest"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchUpdateLineAccountsRequest"
                         }
                     }
                 ],
@@ -1152,19 +3089,605 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BatchOperationResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.BatchOperationResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ErrorResponse"
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/llm/call": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "调用大模型",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型调用"
+                ],
+                "summary": "调用大模型",
+                "parameters": [
+                    {
+                        "description": "调用请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMCallRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMCallResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/llm/call-template": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "使用模板调用大模型",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型调用"
+                ],
+                "summary": "使用模板调用大模型",
+                "parameters": [
+                    {
+                        "description": "调用请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMCallTemplateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.LLMCallResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/llm/configs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取可用配置（不返回API Key）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型调用"
+                ],
+                "summary": "获取可用配置",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/line-management_internal_schemas.LLMConfigPublicResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/llm/templates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取模板列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "大模型调用"
+                ],
+                "summary": "获取模板列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "配置ID",
+                        "name": "config_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/line-management_internal_schemas.PromptTemplateResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_schemas.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/account/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定Line账号的统计数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取账号统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/line-management_internal_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/account/{id}/trend": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定账号最近N天的进线趋势数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取账号进线趋势",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 7,
+                        "description": "天数（默认7天，最多30天）",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/line-management_internal_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/group/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定分组的统计数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取分组统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/line-management_internal_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/group/{id}/trend": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定分组最近N天的进线趋势数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取分组进线趋势",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 7,
+                        "description": "天数（默认7天，最多30天）",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/line-management_internal_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/incoming-logs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取进线日志列表（支持分页和筛选）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取进线日志列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分组ID",
+                        "name": "group_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "账号ID",
+                        "name": "line_account_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否重复",
+                        "name": "is_duplicate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间（ISO 8601格式）",
+                        "name": "start_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间（ISO 8601格式）",
+                        "name": "end_time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索（进线Line ID或显示名称）",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.PaginationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/overview": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取系统总览统计数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "统计"
+                ],
+                "summary": "获取总览统计",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/line-management_internal_utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/line-management_internal_utils.Response"
                         }
                     }
                 }
@@ -1172,7 +3695,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "schemas.BatchDeleteGroupsRequest": {
+        "line-management_internal_schemas.BatchCreateFollowUpRequest": {
+            "type": "object",
+            "required": [
+                "records"
+            ],
+            "properties": {
+                "records": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/line-management_internal_schemas.CreateFollowUpRequest"
+                    }
+                }
+            }
+        },
+        "line-management_internal_schemas.BatchDeleteGroupsRequest": {
             "type": "object",
             "required": [
                 "ids"
@@ -1187,7 +3725,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BatchDeleteLineAccountsRequest": {
+        "line-management_internal_schemas.BatchDeleteLineAccountsRequest": {
             "type": "object",
             "required": [
                 "ids"
@@ -1202,7 +3740,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BatchOperationResponse": {
+        "line-management_internal_schemas.BatchOperationResponse": {
             "type": "object",
             "properties": {
                 "fail_count": {
@@ -1221,7 +3759,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BatchUpdateGroupsRequest": {
+        "line-management_internal_schemas.BatchUpdateGroupsRequest": {
             "type": "object",
             "required": [
                 "ids"
@@ -1252,7 +3790,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BatchUpdateLineAccountsRequest": {
+        "line-management_internal_schemas.BatchUpdateLineAccountsRequest": {
             "type": "object",
             "required": [
                 "ids"
@@ -1277,7 +3815,58 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.CreateGroupRequest": {
+        "line-management_internal_schemas.ContactPoolSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "import_count": {
+                    "description": "导入原始联系人数量",
+                    "type": "integer"
+                },
+                "platform_count": {
+                    "description": "平台工单原始联系人数量",
+                    "type": "integer"
+                },
+                "total_count": {
+                    "description": "原始联系人数量汇总",
+                    "type": "integer"
+                }
+            }
+        },
+        "line-management_internal_schemas.CreateFollowUpRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "group_id",
+                "platform_type"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "跟进内容"
+                },
+                "customer_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "platform_type": {
+                    "type": "string",
+                    "enum": [
+                        "line",
+                        "line_business"
+                    ],
+                    "example": "line"
+                }
+            }
+        },
+        "line-management_internal_schemas.CreateGroupRequest": {
             "type": "object",
             "required": [
                 "user_id"
@@ -1326,7 +3915,88 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.CreateLineAccountRequest": {
+        "line-management_internal_schemas.CreateLLMConfigRequest": {
+            "type": "object",
+            "required": [
+                "api_key",
+                "api_url",
+                "model",
+                "name",
+                "provider"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "api_url": {
+                    "type": "string"
+                },
+                "frequency_penalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_retries": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
+                },
+                "max_tokens": {
+                    "type": "integer",
+                    "maximum": 100000,
+                    "minimum": 1
+                },
+                "model": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "presence_penalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": [
+                        "openai",
+                        "anthropic",
+                        "aliyun",
+                        "xunfei",
+                        "baidu",
+                        "zhipu",
+                        "custom"
+                    ]
+                },
+                "system_prompt": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": 0
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "maximum": 300,
+                    "minimum": 1
+                },
+                "top_p": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                }
+            }
+        },
+        "line-management_internal_schemas.CreateLineAccountRequest": {
             "type": "object",
             "required": [
                 "group_id",
@@ -1384,7 +4054,263 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.ErrorResponse": {
+        "line-management_internal_schemas.CreatePromptTemplateRequest": {
+            "type": "object",
+            "required": [
+                "config_id",
+                "template_content",
+                "template_name"
+            ],
+            "properties": {
+                "config_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "template_content": {
+                    "type": "string"
+                },
+                "template_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "line-management_internal_schemas.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_groups": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 6
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "user"
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                }
+            }
+        },
+        "line-management_internal_schemas.CustomerDetailResponse": {
+            "type": "object",
+            "properties": {
+                "activation_code": {
+                    "type": "string",
+                    "example": "ABC12345"
+                },
+                "address": {
+                    "type": "string",
+                    "example": "地址信息"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "birthday": {
+                    "type": "string",
+                    "example": "1990-01-01"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "TW"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "customer_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "customer_type": {
+                    "type": "string",
+                    "example": "friend"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "客户名称"
+                },
+                "gender": {
+                    "type": "string",
+                    "example": "male"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "group_remark": {
+                    "type": "string",
+                    "example": "分组备注"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_display_name": {
+                    "description": "关联信息",
+                    "type": "string",
+                    "example": "账号名称"
+                },
+                "line_account_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "nickname_remark": {
+                    "type": "string",
+                    "example": "昵称备注"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "example": "line"
+                },
+                "profile_data": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "备注信息"
+                },
+                "tags": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "line-management_internal_schemas.CustomerListResponse": {
+            "type": "object",
+            "properties": {
+                "activation_code": {
+                    "type": "string",
+                    "example": "ABC12345"
+                },
+                "address": {
+                    "type": "string",
+                    "example": "地址信息"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "birthday": {
+                    "type": "string",
+                    "example": "1990-01-01"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "TW"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "customer_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "customer_type": {
+                    "type": "string",
+                    "example": "friend"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "客户名称"
+                },
+                "gender": {
+                    "type": "string",
+                    "example": "male"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "group_remark": {
+                    "type": "string",
+                    "example": "分组备注"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_display_name": {
+                    "description": "关联信息",
+                    "type": "string",
+                    "example": "账号名称"
+                },
+                "line_account_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "nickname_remark": {
+                    "type": "string",
+                    "example": "昵称备注"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "example": "line"
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "备注信息"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "line-management_internal_schemas.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1401,7 +4327,85 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.GenerateQRCodeResponse": {
+        "line-management_internal_schemas.FollowUpListResponse": {
+            "type": "object",
+            "properties": {
+                "activation_code": {
+                    "type": "string",
+                    "example": "ABC12345"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "跟进内容"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "created_by": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "created_by_username": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "customer_avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "customer_display_name": {
+                    "type": "string",
+                    "example": "客户名称"
+                },
+                "customer_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "customer_line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "group_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "group_remark": {
+                    "description": "关联信息",
+                    "type": "string",
+                    "example": "分组备注"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "line_account_display_name": {
+                    "type": "string",
+                    "example": "账号名称"
+                },
+                "line_account_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "line_account_line_id": {
+                    "type": "string",
+                    "example": "U1234567890abcdef"
+                },
+                "platform_type": {
+                    "type": "string",
+                    "example": "line"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                }
+            }
+        },
+        "line-management_internal_schemas.GenerateQRCodeResponse": {
             "type": "object",
             "properties": {
                 "qr_code_path": {
@@ -1414,7 +4418,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.GroupInfo": {
+        "line-management_internal_schemas.GroupInfo": {
             "type": "object",
             "properties": {
                 "activation_code": {
@@ -1428,10 +4432,14 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "测试分组"
                 }
             }
         },
-        "schemas.GroupListResponse": {
+        "line-management_internal_schemas.GroupListResponse": {
             "type": "object",
             "properties": {
                 "account_limit": {
@@ -1526,7 +4534,214 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.LineAccountListResponse": {
+        "line-management_internal_schemas.ImportContactResponse": {
+            "type": "object",
+            "properties": {
+                "batch_id": {
+                    "type": "integer"
+                },
+                "duplicate_count": {
+                    "type": "integer"
+                },
+                "error_count": {
+                    "type": "integer"
+                },
+                "success_count": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "line-management_internal_schemas.LLMCallRequest": {
+            "type": "object",
+            "required": [
+                "config_id",
+                "messages"
+            ],
+            "properties": {
+                "activation_code": {
+                    "type": "string"
+                },
+                "config_id": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "messages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "temperature": {
+                    "type": "number"
+                }
+            }
+        },
+        "line-management_internal_schemas.LLMCallResponse": {
+            "type": "object",
+            "properties": {
+                "completion_tokens": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "prompt_tokens": {
+                    "type": "integer"
+                },
+                "response_data": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "tokens_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "line-management_internal_schemas.LLMCallTemplateRequest": {
+            "type": "object",
+            "required": [
+                "config_id",
+                "template_id"
+            ],
+            "properties": {
+                "activation_code": {
+                    "type": "string"
+                },
+                "config_id": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "template_id": {
+                    "type": "integer"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "line-management_internal_schemas.LLMConfigPublicResponse": {
+            "type": "object",
+            "properties": {
+                "api_url": {
+                    "type": "string"
+                },
+                "frequency_penalty": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_retries": {
+                    "type": "integer"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "presence_penalty": {
+                    "type": "number"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "system_prompt": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "timeout_seconds": {
+                    "type": "integer"
+                },
+                "top_p": {
+                    "type": "number"
+                }
+            }
+        },
+        "line-management_internal_schemas.LLMConfigResponse": {
+            "type": "object",
+            "properties": {
+                "api_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "frequency_penalty": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_retries": {
+                    "type": "integer"
+                },
+                "max_tokens": {
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "presence_penalty": {
+                    "type": "number"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "system_prompt": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "timeout_seconds": {
+                    "type": "integer"
+                },
+                "top_p": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "line-management_internal_schemas.LineAccountListResponse": {
             "type": "object",
             "properties": {
                 "account_remark": {
@@ -1633,7 +4848,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.LoginRequest": {
+        "line-management_internal_schemas.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -1650,7 +4865,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.LoginResponse": {
+        "line-management_internal_schemas.LoginResponse": {
             "type": "object",
             "properties": {
                 "expires_in": {
@@ -1661,7 +4876,7 @@ const docTemplate = `{
                     "description": "子账号登录时返回",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/schemas.GroupInfo"
+                            "$ref": "#/definitions/line-management_internal_schemas.GroupInfo"
                         }
                     ]
                 },
@@ -1674,11 +4889,44 @@ const docTemplate = `{
                     "example": "Bearer"
                 },
                 "user": {
-                    "$ref": "#/definitions/schemas.UserInfo"
+                    "$ref": "#/definitions/line-management_internal_schemas.UserInfo"
                 }
             }
         },
-        "schemas.RefreshTokenRequest": {
+        "line-management_internal_schemas.PromptTemplateResponse": {
+            "type": "object",
+            "properties": {
+                "config_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "template_content": {
+                    "type": "string"
+                },
+                "template_name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "line-management_internal_schemas.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "token"
@@ -1689,7 +4937,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.RefreshTokenResponse": {
+        "line-management_internal_schemas.RefreshTokenResponse": {
             "type": "object",
             "properties": {
                 "expires_in": {
@@ -1706,7 +4954,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.SubAccountLoginRequest": {
+        "line-management_internal_schemas.SubAccountLoginRequest": {
             "type": "object",
             "required": [
                 "activation_code",
@@ -1723,7 +4971,73 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UpdateGroupRequest": {
+        "line-management_internal_schemas.UpdateCustomerRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "地址信息"
+                },
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://profile.line-scdn.net/..."
+                },
+                "birthday": {
+                    "type": "string",
+                    "example": "1990-01-01"
+                },
+                "country": {
+                    "type": "string",
+                    "example": "TW"
+                },
+                "customer_type": {
+                    "type": "string",
+                    "example": "friend"
+                },
+                "display_name": {
+                    "type": "string",
+                    "example": "客户名称"
+                },
+                "gender": {
+                    "type": "string",
+                    "enum": [
+                        "male",
+                        "female",
+                        "unknown"
+                    ],
+                    "example": "male"
+                },
+                "line_account_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "nickname_remark": {
+                    "type": "string",
+                    "example": "昵称备注"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "13800138000"
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "备注信息"
+                }
+            }
+        },
+        "line-management_internal_schemas.UpdateFollowUpRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "更新后的跟进内容"
+                }
+            }
+        },
+        "line-management_internal_schemas.UpdateGroupRequest": {
             "type": "object",
             "properties": {
                 "account_limit": {
@@ -1765,7 +5079,81 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UpdateLineAccountRequest": {
+        "line-management_internal_schemas.UpdateLLMConfigRequest": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "api_url": {
+                    "type": "string"
+                },
+                "frequency_penalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_retries": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
+                },
+                "max_tokens": {
+                    "type": "integer",
+                    "maximum": 100000,
+                    "minimum": 1
+                },
+                "model": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "presence_penalty": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": -2
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": [
+                        "openai",
+                        "anthropic",
+                        "aliyun",
+                        "xunfei",
+                        "baidu",
+                        "zhipu",
+                        "custom"
+                    ]
+                },
+                "system_prompt": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number",
+                    "maximum": 2,
+                    "minimum": 0
+                },
+                "timeout_seconds": {
+                    "type": "integer",
+                    "maximum": 300,
+                    "minimum": 1
+                },
+                "top_p": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0
+                }
+            }
+        },
+        "line-management_internal_schemas.UpdateLineAccountRequest": {
             "type": "object",
             "properties": {
                 "account_remark": {
@@ -1828,7 +5216,57 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UserInfo": {
+        "line-management_internal_schemas.UpdatePromptTemplateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "template_content": {
+                    "type": "string"
+                },
+                "template_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "line-management_internal_schemas.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_groups": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 6
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "user"
+                    ]
+                }
+            }
+        },
+        "line-management_internal_schemas.UserInfo": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1849,7 +5287,39 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.Pagination": {
+        "line-management_internal_schemas.UserListResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "max_groups": {
+                    "type": "integer"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "line-management_internal_utils.Pagination": {
             "type": "object",
             "properties": {
                 "page": {
@@ -1870,12 +5340,36 @@ const docTemplate = `{
                 }
             }
         },
-        "utils.PaginationResponse": {
+        "line-management_internal_utils.PaginationResponse": {
             "type": "object",
             "properties": {
                 "list": {},
                 "pagination": {
-                    "$ref": "#/definitions/utils.Pagination"
+                    "$ref": "#/definitions/line-management_internal_utils.Pagination"
+                }
+            }
+        },
+        "line-management_internal_utils.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "业务状态码",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "响应数据"
+                },
+                "error": {
+                    "description": "错误代码（仅错误时返回）",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "响应消息",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "时间戳",
+                    "type": "string"
                 }
             }
         }

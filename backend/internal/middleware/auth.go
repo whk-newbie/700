@@ -142,3 +142,72 @@ func SubAccountRequired() gin.HandlerFunc {
 	}
 }
 
+// WebSocketAuthRequired WebSocket认证中间件（支持URL参数中的token）
+func WebSocketAuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var tokenString string
+
+		// 优先从URL参数获取token（WebSocket连接使用）
+		tokenString = c.Query("token")
+		if tokenString == "" {
+			// 如果URL参数中没有，从Header获取Token（兼容普通HTTP请求）
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				utils.ErrorWithErrorCode(c, 2001, "未提供认证Token", "missing_token")
+				c.Abort()
+				return
+			}
+
+			// 检查Token格式（Bearer <token>）
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				utils.ErrorWithErrorCode(c, 2002, "Token格式错误", "invalid_token_format")
+				c.Abort()
+				return
+			}
+
+			tokenString = parts[1]
+		}
+
+		// 解析Token
+		claims, err := utils.ParseToken(tokenString)
+		if err != nil {
+			logger.Warnf("Token解析失败: %v", err)
+			utils.ErrorWithErrorCode(c, 2003, "Token无效或已过期", "invalid_token")
+			c.Abort()
+			return
+		}
+
+		// 检查Session是否存在（如果启用了Session管理）
+		sessionService := services.NewSessionService()
+		var userID uint
+		if claims.Role == "subaccount" {
+			userID = claims.GroupID
+		} else {
+			userID = claims.UserID
+		}
+
+		// 验证Session是否存在
+		if !sessionService.CheckSession(userID, tokenString) {
+			logger.Warnf("Session不存在或已过期: user_id=%d", userID)
+			utils.ErrorWithErrorCode(c, 2003, "Session已过期，请重新登录", "session_expired")
+			c.Abort()
+			return
+		}
+
+		// 将claims存储到上下文
+		c.Set("claims", claims)
+		c.Set("user_id", claims.UserID)
+		c.Set("username", claims.Username)
+		c.Set("role", claims.Role)
+		if claims.GroupID > 0 {
+			c.Set("group_id", claims.GroupID)
+		}
+		if claims.ActivationCode != "" {
+			c.Set("activation_code", claims.ActivationCode)
+		}
+
+		c.Next()
+	}
+}
+

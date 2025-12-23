@@ -82,7 +82,7 @@ func (s *LineAccountService) CreateLineAccount(c *gin.Context, req *schemas.Crea
 		StatusMessage: req.StatusMessage,
 		AddFriendLink: req.AddFriendLink,
 		AccountRemark: req.AccountRemark,
-		OnlineStatus:  "offline",
+		// OnlineStatus: "offline", // 移除硬编码，依赖数据库默认值
 	}
 
 	if err := s.db.Create(account).Error; err != nil {

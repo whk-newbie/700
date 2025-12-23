@@ -446,6 +446,9 @@ func (h *MessageHandler) handleAccountStatusChange(client *Client, message []byt
 	// 推送状态更新到前端看板
 	h.pushAccountStatusUpdate(group.ID, lineAccount)
 
+	// 获取并推送分组统计更新
+	h.pushGroupStatsUpdate(group.ID)
+
 	response := Message{
 		Type: "account_status_updated",
 		Data: map[string]interface{}{
@@ -466,6 +469,38 @@ func (h *MessageHandler) pushAccountStatusUpdate(groupID uint, account models.Li
 			"online_status":    account.OnlineStatus,
 			"group_id":         groupID,
 			"timestamp":        time.Now().Unix(),
+		},
+	}
+	messageBytes, _ := json.Marshal(updateMsg)
+	h.manager.BroadcastToGroup(groupID, messageBytes)
+}
+
+// pushGroupStatsUpdate 推送分组统计更新到前端看板
+func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
+	statsService := services.NewStatsService()
+	groupStats, err := statsService.GetGroupStats(groupID)
+	if err != nil {
+		logger.Errorf("获取分组统计失败: %v", err)
+		return
+	}
+
+	// 获取在线账号数
+	var onlineCount int64
+	h.db.Model(&models.LineAccount{}).
+		Where("group_id = ? AND deleted_at IS NULL AND online_status = ?", groupID, "online").
+		Count(&onlineCount)
+
+	updateMsg := Message{
+		Type: "group_stats_update",
+		Data: map[string]interface{}{
+			"group_id":        groupID,
+			"total_accounts":  groupStats.TotalAccounts,
+			"online_accounts": onlineCount,
+			"total_incoming":  groupStats.TotalIncoming,
+			"today_incoming":  groupStats.TodayIncoming,
+			"duplicate_incoming": groupStats.DuplicateIncoming,
+			"today_duplicate": groupStats.TodayDuplicate,
+			"timestamp":       time.Now().Unix(),
 		},
 	}
 	messageBytes, _ := json.Marshal(updateMsg)
