@@ -4,12 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>大模型调用记录</span>
-          <div class="header-actions">
-            <el-button type="default" :disabled="loading" @click="handleRefresh">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-          </div>
         </div>
       </template>
 
@@ -120,6 +114,10 @@
               搜索
             </el-button>
             <el-button @click="handleReset">重置</el-button>
+            <el-button type="default" :disabled="loading" @click="handleRefresh">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -591,10 +589,14 @@ onMounted(() => {
     border-radius: 4px;
   }
 
+  :deep(.el-table) {
+    min-height: 400px;
+  }
+
   .pagination {
     margin-top: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
   }
 }
 </style>

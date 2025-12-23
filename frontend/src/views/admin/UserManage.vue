@@ -4,16 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
-          <div class="header-actions">
-            <el-button type="primary" :disabled="loading" @click="handleAdd">
-              <el-icon><Plus /></el-icon>
-              新增用户
-            </el-button>
-            <el-button type="default" :disabled="loading" @click="handleRefresh">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-          </div>
         </div>
       </template>
 
@@ -61,8 +51,20 @@
               搜索
             </el-button>
             <el-button @click="handleReset">重置</el-button>
+            <el-button type="default" :disabled="loading" @click="handleRefresh">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
           </el-form-item>
         </el-form>
+      </div>
+
+      <!-- 操作按钮区域 -->
+      <div class="action-buttons">
+        <el-button type="primary" :disabled="loading" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          新增用户
+        </el-button>
       </div>
 
       <!-- 数据表格 -->
@@ -457,10 +459,18 @@ onMounted(() => {
     border-radius: 4px;
   }
 
+  .action-buttons {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-table) {
+    min-height: 400px;
+  }
+
   .pagination {
     margin-top: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .form-tip {

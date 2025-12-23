@@ -34,10 +34,6 @@
       <template #header>
         <div class="card-header">
           <span>底库管理</span>
-          <el-button type="primary" :disabled="loading" @click="handleImport">
-            <el-icon><Upload /></el-icon>
-            导入联系人
-          </el-button>
         </div>
       </template>
 
@@ -80,6 +76,14 @@
                   <el-button @click="handleSummaryReset">重置</el-button>
                 </el-form-item>
               </el-form>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="action-buttons">
+              <el-button type="primary" :disabled="loading" @click="handleImport">
+                <el-icon><Upload /></el-icon>
+                导入联系人
+              </el-button>
             </div>
 
             <!-- 数据表格 -->
@@ -196,6 +200,14 @@
                   <el-button @click="handleDetailReset">重置</el-button>
                 </el-form-item>
               </el-form>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="action-buttons">
+              <el-button type="primary" :disabled="loading" @click="handleImport">
+                <el-icon><Upload /></el-icon>
+                导入联系人
+              </el-button>
             </div>
 
             <!-- 数据表格 -->
@@ -688,10 +700,18 @@ onMounted(() => {
       }
     }
 
+    .action-buttons {
+      margin-bottom: 20px;
+    }
+
+    :deep(.el-table) {
+      min-height: 400px;
+    }
+
     .pagination {
       margin-top: 20px;
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
     }
   }
 }

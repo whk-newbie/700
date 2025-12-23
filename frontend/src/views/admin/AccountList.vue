@@ -4,28 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>账号列表</span>
-          <div class="header-actions">
-            <el-button
-              v-if="selectedRows.length > 0"
-              type="danger"
-              :disabled="loading"
-              @click="handleBatchDelete"
-            >
-              批量移除 ({{ selectedRows.length }})
-            </el-button>
-            <el-button
-              v-if="selectedRows.length > 0"
-              type="warning"
-              :disabled="loading"
-              @click="handleBatchOffline"
-            >
-              强制下线 ({{ selectedRows.length }})
-            </el-button>
-            <el-button type="primary" :disabled="loading" @click="handleAdd">
-              <el-icon><Plus /></el-icon>
-              新增账号
-            </el-button>
-          </div>
         </div>
       </template>
 
@@ -93,6 +71,28 @@
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
+      </div>
+
+      <!-- 操作按钮区域 -->
+      <div class="action-buttons">
+        <el-button type="primary" :disabled="loading" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          新增账号
+        </el-button>
+        <el-button
+          type="danger"
+          :disabled="loading || selectedRows.length === 0"
+          @click="handleBatchDelete"
+        >
+          批量移除 ({{ selectedRows.length }})
+        </el-button>
+        <el-button
+          type="warning"
+          :disabled="loading || selectedRows.length === 0"
+          @click="handleBatchOffline"
+        >
+          强制下线 ({{ selectedRows.length }})
+        </el-button>
       </div>
 
       <!-- 数据表格 -->
@@ -1036,6 +1036,16 @@ onMounted(() => {
     }
   }
 
+  .action-buttons {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+  }
+
+  :deep(.el-table) {
+    min-height: 400px;
+  }
+
   .stats-info {
     font-size: 12px;
     line-height: 1.8;
@@ -1048,7 +1058,7 @@ onMounted(() => {
   .pagination {
     margin-top: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .qr-preview {

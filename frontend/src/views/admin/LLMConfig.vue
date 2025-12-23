@@ -4,16 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>大模型配置</span>
-          <div class="header-actions">
-            <el-button type="primary" :disabled="loading" @click="handleAddConfig">
-              <el-icon><Plus /></el-icon>
-              新增配置
-            </el-button>
-            <el-button type="default" :disabled="loading" @click="handleRefresh">
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-          </div>
         </div>
       </template>
 
@@ -69,8 +59,20 @@
                   搜索
                 </el-button>
                 <el-button @click="handleReset">重置</el-button>
+                <el-button type="default" :disabled="loading" @click="handleRefresh">
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
               </el-form-item>
             </el-form>
+          </div>
+
+          <!-- 操作按钮区域 -->
+          <div class="action-buttons">
+            <el-button type="primary" :disabled="loading" @click="handleAddConfig">
+              <el-icon><Plus /></el-icon>
+              新增配置
+            </el-button>
           </div>
 
           <!-- 配置列表表格 -->
@@ -139,13 +141,6 @@
 
         <!-- 模板列表标签页 -->
         <el-tab-pane label="Prompt模板" name="templates">
-          <div class="template-header">
-            <el-button type="primary" :disabled="templateLoading" @click="handleAddTemplate">
-              <el-icon><Plus /></el-icon>
-              新增模板
-            </el-button>
-          </div>
-
           <!-- 模板筛选 -->
           <div class="filter-section">
             <el-form :model="templateFilterForm" :inline="true" class="filter-form">
@@ -197,6 +192,14 @@
                 <el-button @click="handleTemplateReset">重置</el-button>
               </el-form-item>
             </el-form>
+          </div>
+
+          <!-- 操作按钮区域 -->
+          <div class="action-buttons">
+            <el-button type="primary" :disabled="templateLoading" @click="handleAddTemplate">
+              <el-icon><Plus /></el-icon>
+              新增模板
+            </el-button>
           </div>
 
           <!-- 模板列表表格 -->
@@ -1032,10 +1035,6 @@ onMounted(() => {
     gap: 10px;
   }
 
-  .template-header {
-    margin-bottom: 20px;
-  }
-
   .filter-section {
     margin-bottom: 20px;
     padding: 20px;
@@ -1043,10 +1042,18 @@ onMounted(() => {
     border-radius: 4px;
   }
 
+  .action-buttons {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-table) {
+    min-height: 400px;
+  }
+
   .pagination {
     margin-top: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .form-tip {
