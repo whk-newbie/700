@@ -283,108 +283,230 @@ onUnmounted(() => {
 <style scoped lang="less">
 .layout-container {
   height: 100vh;
+  overflow: hidden;
 }
 
-  .sidebar {
-    background-color: #304156;
-    transition: width 0.3s;
+.sidebar {
+  background: #fff;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+  border-right: 1px solid #e4e7ed;
+  
+  .logo {
+    height: 64px;
+    line-height: 64px;
+    text-align: center;
+    color: #303133;
+    font-size: 20px;
+    font-weight: 700;
+    background: #fff;
+    border-bottom: 1px solid #e4e7ed;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
     
-    .logo {
-      height: 60px;
-      line-height: 60px;
-      text-align: center;
-      color: #fff;
-      font-size: 18px;
-      font-weight: bold;
-      background-color: #2b3a4a;
+    span {
+      display: inline-block;
+      letter-spacing: 1px;
     }
+  }
+  
+  .sidebar-menu {
+    border: none;
+    background: #fff;
+    padding: 8px 0;
     
-    .sidebar-menu {
-      border: none;
-      background-color: #304156;
+    :deep(.el-menu-item) {
+      color: #606266;
+      margin: 2px 12px;
+      border-radius: 6px;
+      height: 44px;
+      line-height: 44px;
+      transition: all 0.2s;
+      position: relative;
       
-      :deep(.el-menu-item) {
-        color: #bfcbd9;
+      .el-icon {
+        font-size: 18px;
+        margin-right: 12px;
+        color: #606266;
+        transition: color 0.2s;
+      }
+      
+      &:hover {
+        background: #f5f7fa;
+        color: #303133;
         
-        &:hover {
-          background-color: #263445;
-        }
-        
-        &.is-active {
-          background-color: #409eff;
-          color: #fff;
+        .el-icon {
+          color: #303133;
         }
       }
       
-      :deep(.el-sub-menu) {
-        .el-sub-menu__title {
-          color: #bfcbd9;
-          
-          &:hover {
-            background-color: #263445;
-          }
+      &.is-active {
+        background: #ecf5ff;
+        color: #409eff;
+        font-weight: 600;
+        
+        .el-icon {
+          color: #409eff;
+        }
+      }
+    }
+    
+    :deep(.el-sub-menu) {
+      margin: 2px 12px;
+      
+      .el-sub-menu__title {
+        color: #606266;
+        border-radius: 6px;
+        height: 44px;
+        line-height: 44px;
+        transition: all 0.2s;
+        
+        .el-icon {
+          font-size: 18px;
+          margin-right: 12px;
+          color: #606266;
+          transition: color 0.2s;
         }
         
-        &.is-opened {
-          .el-sub-menu__title {
+        &:hover {
+          background: #f5f7fa;
+          color: #303133;
+          
+          .el-icon {
+            color: #303133;
+          }
+        }
+      }
+      
+      &.is-opened {
+        .el-sub-menu__title {
+          color: #409eff;
+          background: #f5f7fa;
+          font-weight: 600;
+          
+          .el-icon {
             color: #409eff;
           }
         }
       }
+    }
+    
+    :deep(.el-sub-menu .el-menu-item) {
+      background: #fff;
+      padding-left: 20px !important;
+      margin: 2px 12px;
+      border-radius: 6px;
+      height: 40px;
+      line-height: 40px;
+      transition: all 0.2s;
       
-      :deep(.el-sub-menu .el-menu-item) {
-        background-color: #1f2d3d;
-        padding-left: 50px !important;
+      .el-icon {
+        font-size: 16px;
+        margin-right: 10px;
+        color: #909399;
+      }
+      
+      &:hover {
+        background: #f5f7fa;
+        color: #303133;
         
-        &:hover {
-          background-color: #263445;
-        }
-        
-        &.is-active {
-          background-color: #409eff;
-          color: #fff;
+        .el-icon {
+          color: #606266;
         }
       }
       
-      // 折叠状态下的样式
-      &.el-menu--collapse {
-        :deep(.el-sub-menu__title) {
-          padding-left: 20px !important;
+      &.is-active {
+        background: #ecf5ff;
+        color: #409eff;
+        font-weight: 600;
+        
+        .el-icon {
+          color: #409eff;
         }
       }
     }
+    
+    // 折叠状态下的样式
+    &.el-menu--collapse {
+      :deep(.el-sub-menu__title) {
+        padding-left: 20px !important;
+        justify-content: center;
+      }
+      
+      :deep(.el-menu-item) {
+        padding-left: 20px !important;
+        justify-content: center;
+      }
+    }
   }
+}
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
+  background: #fff;
   border-bottom: 1px solid #e4e7ed;
-  padding: 0 20px;
-  height: 60px;
+  padding: 0 24px;
+  height: 64px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 100;
   
   .header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     flex: 1;
-    min-width: 0; // 允许flex子元素收缩
+    min-width: 0;
     
     .collapse-icon {
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
       flex-shrink: 0;
+      color: #606266;
+      transition: all 0.3s;
+      padding: 8px;
+      border-radius: 6px;
+      
+      &:hover {
+        background: #f5f7fa;
+        color: #409eff;
+        transform: scale(1.1);
+      }
     }
     
     :deep(.el-breadcrumb) {
       flex: 1;
       overflow: hidden;
       
-      .el-breadcrumb__inner {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .el-breadcrumb__item {
+        .el-breadcrumb__inner {
+          color: #909399;
+          font-weight: 500;
+          transition: color 0.3s;
+          
+          &.is-link {
+            color: #606266;
+            
+            &:hover {
+              color: #409eff;
+            }
+          }
+        }
+        
+        &:last-child {
+          .el-breadcrumb__inner {
+            color: #303133;
+            font-weight: 600;
+          }
+        }
+      }
+      
+      .el-breadcrumb__separator {
+        color: #c0c4cc;
+        margin: 0 8px;
       }
     }
   }
@@ -392,23 +514,74 @@ onUnmounted(() => {
   .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     flex-shrink: 0;
+    
+    :deep(.el-tag) {
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-weight: 500;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
     
     .user-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
       white-space: nowrap;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      color: #606266;
+      font-weight: 500;
+      
+      .el-icon {
+        font-size: 18px;
+        transition: transform 0.3s;
+      }
+      
+      &:hover {
+        background: #f5f7fa;
+        color: #409eff;
+        
+        .el-icon:last-child {
+          transform: rotate(180deg);
+        }
+      }
+    }
+    
+    :deep(.el-dropdown-menu) {
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e4e7ed;
+      padding: 8px 0;
+      
+      .el-dropdown-menu__item {
+        padding: 12px 20px;
+        transition: all 0.3s;
+        
+        &:hover {
+          background: #f5f7fa;
+          color: #409eff;
+        }
+      }
     }
   }
 }
 
 .main-content {
-  background-color: #f0f2f5;
-  padding: 20px;
+  background: linear-gradient(180deg, #f5f7fa 0%, #f0f2f5 100%);
+  padding: 24px;
   overflow-y: auto;
+  min-height: calc(100vh - 64px);
 }
 
 // 路由过渡动画
@@ -425,34 +598,78 @@ onUnmounted(() => {
 // 响应式布局
 @media (max-width: 768px) {
   .header {
-    padding: 0 10px;
+    padding: 0 16px;
+    height: 56px;
     
     .header-left {
-      gap: 10px;
+      gap: 12px;
       
       .collapse-icon {
-        font-size: 18px;
+        font-size: 20px;
+        padding: 6px;
+      }
+      
+      :deep(.el-breadcrumb) {
+        font-size: 13px;
+        
+        .el-breadcrumb__separator {
+          margin: 0 4px;
+        }
       }
     }
     
     .header-right {
+      gap: 8px;
+      
       :deep(.el-tag) {
         display: none; // 小屏幕隐藏WebSocket状态
+      }
+      
+      .user-info {
+        padding: 6px 8px;
+        font-size: 14px;
+        
+        span {
+          display: none; // 小屏幕隐藏用户名
+        }
       }
     }
   }
   
   .main-content {
-    padding: 10px;
+    padding: 16px;
   }
   
   .sidebar {
-    :deep(.el-menu-item) {
-      padding-left: 20px !important;
+    .logo {
+      height: 56px;
+      line-height: 56px;
+      font-size: 16px;
     }
     
-    :deep(.el-sub-menu .el-menu-item) {
-      padding-left: 50px !important;
+    .sidebar-menu {
+      :deep(.el-menu-item) {
+        height: 44px;
+        line-height: 44px;
+        margin: 2px 4px;
+        font-size: 14px;
+      }
+      
+      :deep(.el-sub-menu) {
+        margin: 2px 4px;
+        
+        .el-sub-menu__title {
+          height: 44px;
+          line-height: 44px;
+          font-size: 14px;
+        }
+      }
+      
+      :deep(.el-sub-menu .el-menu-item) {
+        height: 40px;
+        line-height: 40px;
+        font-size: 13px;
+      }
     }
   }
 }
