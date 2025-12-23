@@ -1,36 +1,8 @@
 package models
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"time"
-
-	"gorm.io/gorm"
 )
-
-// JSONB 用于处理PostgreSQL的JSONB类型
-type JSONB map[string]interface{}
-
-// Value 实现driver.Valuer接口
-func (j JSONB) Value() (driver.Value, error) {
-	if j == nil {
-		return nil, nil
-	}
-	return json.Marshal(j)
-}
-
-// Scan 实现sql.Scanner接口
-func (j *JSONB) Scan(value interface{}) error {
-	if value == nil {
-		*j = nil
-		return nil
-	}
-	bytes, ok := value.([]byte)
-	if !ok {
-		return nil
-	}
-	return json.Unmarshal(bytes, j)
-}
 
 // LLMPromptTemplate Prompt模板模型
 type LLMPromptTemplate struct {

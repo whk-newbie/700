@@ -12,6 +12,7 @@ import (
 	"line-management/pkg/logger"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // LLMService LLM调用服务

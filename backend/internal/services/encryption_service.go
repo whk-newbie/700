@@ -113,10 +113,10 @@ func (s *EncryptionService) Decrypt(ciphertext string) (string, error) {
 	}
 
 	// 提取nonce和密文
-	nonce, ciphertext := encrypted[:nonceSize], encrypted[nonceSize:]
+	nonce, encryptedData := encrypted[:nonceSize], encrypted[nonceSize:]
 
 	// 解密
-	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+	plaintext, err := aesGCM.Open(nil, nonce, encryptedData, nil)
 	if err != nil {
 		return "", err
 	}
