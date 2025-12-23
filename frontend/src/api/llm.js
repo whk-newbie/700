@@ -2,9 +2,10 @@ import request from '@/utils/request'
 
 /**
  * 获取大模型配置列表（管理员）
+ * @param {object} params - 查询参数
  */
-export const getLLMConfigs = () => {
-  return request.get('/admin/llm/configs')
+export const getLLMConfigs = (params) => {
+  return request.get('/admin/llm/configs', { params })
 }
 
 /**
@@ -42,9 +43,10 @@ export const testLLMConfig = (id) => {
 
 /**
  * 获取Prompt模板列表（管理员）
+ * @param {object} params - 查询参数
  */
-export const getLLMTemplates = () => {
-  return request.get('/admin/llm/templates')
+export const getLLMTemplates = (params) => {
+  return request.get('/admin/llm/templates', { params })
 }
 
 /**
@@ -100,5 +102,13 @@ export const callLLMWithTemplate = (data) => {
  */
 export const getTemplates = () => {
   return request.get('/llm/templates')
+}
+
+/**
+ * 获取大模型调用记录列表（管理员）
+ * @param {object} params - 查询参数
+ */
+export const getLLMCallLogs = (params) => {
+  return request.get('/admin/llm/call-logs', { params })
 }
 
