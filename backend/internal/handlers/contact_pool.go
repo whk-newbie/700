@@ -180,3 +180,37 @@ func GetImportBatchList(c *gin.Context) {
 	utils.SuccessWithPagination(c, list, params.Page, params.PageSize, total)
 }
 
+// DownloadImportTemplate 下载导入模板
+// @Summary 下载导入模板
+// @Description 下载联系人导入模板Excel文件
+// @Tags 底库管理
+// @Security BearerAuth
+// @Accept json
+// @Produce application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+// @Success 200 {file} file "Excel模板文件"
+// @Failure 400 {object} schemas.ErrorResponse
+// @Failure 401 {object} schemas.ErrorResponse
+// @Router /contact-pool/import-template [get]
+func DownloadImportTemplate(c *gin.Context) {
+	service := services.NewContactPoolService()
+	file, err := service.GenerateImportTemplate()
+	if err != nil {
+		logger.Errorf("生成导入模板失败: %v", err)
+		utils.ErrorWithErrorCode(c, 5001, "生成导入模板失败", "internal_error")
+		return
+	}
+	defer file.Close()
+
+	// 设置响应头
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=联系人导入模板.xlsx")
+	c.Header("Content-Transfer-Encoding", "binary")
+
+	// 将Excel文件写入响应
+	if err := file.Write(c.Writer); err != nil {
+		logger.Errorf("写入Excel文件失败: %v", err)
+		utils.ErrorWithErrorCode(c, 5001, "下载模板失败", "internal_error")
+		return
+	}
+}
+

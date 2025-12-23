@@ -84,6 +84,10 @@
                 <el-icon><Upload /></el-icon>
                 导入联系人
               </el-button>
+              <el-button type="success" :disabled="loading" @click="handleDownloadTemplate">
+                <el-icon><Download /></el-icon>
+                下载导入模板
+              </el-button>
             </div>
 
             <!-- 数据表格 -->
@@ -290,6 +294,11 @@
             <template #tip>
               <div class="el-upload__tip">
                 支持 Excel (.xlsx, .xls)、CSV (.csv)、TXT (.txt) 格式，文件大小不超过10MB
+                <br />
+                <el-link type="primary" @click="handleDownloadTemplate" style="margin-top: 8px">
+                  <el-icon><Download /></el-icon>
+                  下载导入模板
+                </el-link>
               </div>
             </template>
           </el-upload>
@@ -335,13 +344,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Upload, UploadFilled } from '@element-plus/icons-vue'
+import { Search, Upload, UploadFilled, Download } from '@element-plus/icons-vue'
 import {
   getContactPoolSummary,
   getContactPoolList,
   getContactPoolDetail,
   importContacts,
-  getImportBatches
+  getImportBatches,
+  downloadImportTemplate
 } from '@/api/contactPool'
 import { getGroups } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
@@ -597,6 +607,30 @@ const handleFileChange = (file) => {
 // 文件移除
 const handleFileRemove = () => {
   importForm.file = null
+}
+
+// 下载导入模板
+const handleDownloadTemplate = async () => {
+  try {
+    const res = await downloadImportTemplate()
+    // 创建blob对象
+    const blob = new Blob([res], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '联系人导入模板.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('模板下载成功')
+  } catch (error) {
+    console.error('下载模板失败:', error)
+    ElMessage.error('下载模板失败')
+  }
 }
 
 // 提交导入

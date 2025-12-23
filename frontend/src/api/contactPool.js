@@ -43,3 +43,12 @@ export const getImportBatches = (params) => {
   return request.get('/contact-pool/import-batches', { params })
 }
 
+/**
+ * 下载导入模板
+ */
+export const downloadImportTemplate = () => {
+  return request.get('/contact-pool/import-template', {
+    responseType: 'blob'
+  })
+}
+

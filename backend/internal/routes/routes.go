@@ -75,6 +75,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			contactPool.GET("/detail", handlers.GetContactPoolDetail)
 			contactPool.POST("/import", handlers.ImportContacts)
 			contactPool.GET("/import-batches", handlers.GetImportBatchList)
+			contactPool.GET("/import-template", handlers.DownloadImportTemplate)
 		}
 
 		// 客户管理路由

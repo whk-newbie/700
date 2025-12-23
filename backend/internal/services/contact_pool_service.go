@@ -668,3 +668,108 @@ func (s *ContactPoolService) GetImportBatchList(c *gin.Context, params *schemas.
 	return list, total, nil
 }
 
+// GenerateImportTemplate 生成导入模板文件
+func (s *ContactPoolService) GenerateImportTemplate() (*excelize.File, error) {
+	// 创建新的Excel文件
+	f := excelize.NewFile()
+
+	// 设置工作表名称
+	sheetName := "联系人导入模板"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		return nil, fmt.Errorf("创建工作表失败: %v", err)
+	}
+
+	// 删除默认的Sheet1
+	f.DeleteSheet("Sheet1")
+
+	// 设置活动工作表
+	f.SetActiveSheet(index)
+
+	// 设置表头
+	headers := []string{"Line ID", "显示名称", "手机号", "备注"}
+	headerStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E6F3FF"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "#000000", Style: 1},
+			{Type: "top", Color: "#000000", Style: 1},
+			{Type: "bottom", Color: "#000000", Style: 1},
+			{Type: "right", Color: "#000000", Style: 1},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("创建表头样式失败: %v", err)
+	}
+
+	// 写入表头
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheetName, cell, header)
+		f.SetCellStyle(sheetName, cell, cell, headerStyle)
+	}
+
+	// 设置列宽
+	f.SetColWidth(sheetName, "A", "A", 25) // Line ID
+	f.SetColWidth(sheetName, "B", "B", 20) // 显示名称
+	f.SetColWidth(sheetName, "C", "C", 15) // 手机号
+	f.SetColWidth(sheetName, "D", "D", 30) // 备注
+
+	// 设置行高
+	f.SetRowHeight(sheetName, 1, 25)
+
+	// 添加示例数据行（可选）
+	exampleStyle, err := f.NewStyle(&excelize.Style{
+		Border: []excelize.Border{
+			{Type: "left", Color: "#CCCCCC", Style: 1},
+			{Type: "top", Color: "#CCCCCC", Style: 1},
+			{Type: "bottom", Color: "#CCCCCC", Style: 1},
+			{Type: "right", Color: "#CCCCCC", Style: 1},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("创建示例行样式失败: %v", err)
+	}
+
+	// 添加一行示例数据（灰色，作为提示）
+	exampleData := []string{"U1234567890abcdefghijklmnopqrstuv", "示例联系人", "13800138000", "这是备注信息"}
+	exampleFontStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Color: "#999999",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "#CCCCCC", Style: 1},
+			{Type: "top", Color: "#CCCCCC", Style: 1},
+			{Type: "bottom", Color: "#CCCCCC", Style: 1},
+			{Type: "right", Color: "#CCCCCC", Style: 1},
+		},
+	})
+	if err == nil {
+		for i, data := range exampleData {
+			cell := fmt.Sprintf("%c2", 'A'+i)
+			f.SetCellValue(sheetName, cell, data)
+			f.SetCellStyle(sheetName, cell, cell, exampleFontStyle)
+		}
+	} else {
+		// 如果创建字体样式失败，使用普通样式
+		for i, data := range exampleData {
+			cell := fmt.Sprintf("%c2", 'A'+i)
+			f.SetCellValue(sheetName, cell, data)
+			f.SetCellStyle(sheetName, cell, cell, exampleStyle)
+		}
+	}
+
+	return f, nil
+}
+
