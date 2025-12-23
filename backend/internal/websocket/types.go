@@ -74,7 +74,6 @@ type IncomingMessage struct {
 type IncomingData struct {
 	LineAccountID  string `json:"line_account_id"`  // Line账号的line_id
 	IncomingLineID string `json:"incoming_line_id"` // 进线客户的Line User ID
-	PlatformType   string `json:"platform_type,omitempty"` // 平台类型（line / line_business）
 	Timestamp      string `json:"timestamp"`
 	DisplayName    string `json:"display_name,omitempty"`
 	AvatarURL      string `json:"avatar_url,omitempty"`

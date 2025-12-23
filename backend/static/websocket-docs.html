@@ -255,7 +255,7 @@
             <h1>🔌 WebSocket 接口文档</h1>
             <div class="meta">
                 <strong>版本:</strong> v1.0 | 
-                <strong>更新日期:</strong> 2025-12-23 | 
+                <strong>更新日期:</strong> 2025-12-21 | 
                 <strong>说明:</strong> Windows客户端与服务器的完整交互协议设计
             </div>
         </header>
@@ -287,14 +287,6 @@
         
         <div class="section" id="connection">
             <h2>🔌 WebSocket 连接</h2>
-            
-            <div class="note">
-                <strong>技术参数:</strong><br>
-                • 心跳间隔：60秒（建议客户端每60秒发送一次心跳）<br>
-                • 心跳超时：65秒（超过65秒未收到心跳，服务器标记为离线）<br>
-                • 消息缓冲区：256条消息<br>
-                • 读写缓冲区：1024字节
-            </div>
             
             <h3>1. Windows客户端连接</h3>
             <div class="endpoint">
@@ -460,7 +452,6 @@
   "data": {
     "line_account_id": "@line001",
     "incoming_line_id": "U123456789",
-    "platform_type": "line",
     "timestamp": "2025-12-21 10:30:00",
     "display_name": "王五",
     "avatar_url": "https://...",
@@ -489,12 +480,6 @@
                             <td>string</td>
                             <td><span class="badge badge-required">必填</span></td>
                             <td>进线客户的Line User ID</td>
-                        </tr>
-                        <tr>
-                            <td><code>platform_type</code></td>
-                            <td>string</td>
-                            <td><span class="badge badge-optional">可选</span></td>
-                            <td>平台类型（line / line_business），用于区分进线来源</td>
                         </tr>
                         <tr>
                             <td><code>timestamp</code></td>
@@ -636,83 +621,19 @@
             
             <div class="message-type">
                 <h4>5. 进线数据接收确认 (incoming_received)</h4>
-                <p><strong>说明:</strong> 服务器收到进线数据后，会立即返回确认消息，并执行以下操作：</p>
-                <ul>
-                    <li>检查底库和历史数据进行去重判断</li>
-                    <li>记录进线日志</li>
-                    <li>更新分组和账号的统计数据</li>
-                    <li>如果是非重复进线，创建客户记录</li>
-                    <li>通知前端看板实时更新</li>
-                </ul>
                 <pre><code>{
   "type": "incoming_received",
   "data": {
     "line_account_id": "@line001",
     "incoming_line_id": "U123456789",
-    "is_duplicate": false,
-    "status": "received",
-    "message": "进线数据已接收并处理"
+    "status": "received"
   }
 }</code></pre>
             </div>
             
             <div class="message-type">
-                <h4>6. 客户同步确认 (customer_sync_received)</h4>
-                <p><strong>说明:</strong> 服务器收到客户信息同步后，返回确认消息</p>
-                <pre><code>{
-  "type": "customer_sync_received",
-  "data": {
-    "customer_id": "U123456789",
-    "customer_db_id": 456,
-    "status": "processed"
-  }
-}</code></pre>
-            </div>
-            
-            <div class="message-type">
-                <h4>7. 跟进记录同步确认 (follow_up_sync_received)</h4>
-                <p><strong>说明:</strong> 服务器收到跟进记录同步后，返回确认消息</p>
-                <pre><code>{
-  "type": "follow_up_sync_received",
-  "data": {
-    "customer_id": "U123456789",
-    "follow_up_id": 789,
-    "status": "processed"
-  }
-}</code></pre>
-            </div>
-            
-            <div class="message-type">
-                <h4>8. 账号状态更新确认 (account_status_updated)</h4>
-                <p><strong>说明:</strong> 服务器收到账号状态变化消息后，返回更新确认</p>
-                <pre><code>{
-  "type": "account_status_updated",
-  "data": {
-    "line_account_id": "@line001",
-    "online_status": "online",
-    "status": "updated"
-  }
-}</code></pre>
-            </div>
-            
-            <div class="message-type">
-                <h4>9. 进线实时更新推送 (incoming_update)</h4>
-                <p><strong>说明:</strong> 服务器在处理进线数据后，实时推送到前端看板，用于更新统计数据和列表</p>
-                <pre><code>{
-  "type": "incoming_update",
-  "data": {
-    "group_id": 1,
-    "line_account_id": 123,
-    "incoming_line_id": "U123456789",
-    "is_duplicate": false,
-    "timestamp": 1703123456
-  }
-}</code></pre>
-            </div>
-            
-            <div class="message-type">
-                <h4>10. 账号状态更新推送 (account_status_change)</h4>
-                <p><strong>说明:</strong> 服务器在账号状态变化后，推送到前端看板，用于实时更新账号在线状态</p>
+                <h4>6. 账号状态更新 (account_status_change)</h4>
+                <p><strong>说明:</strong> 服务器推送账号状态变化到前端看板</p>
                 <pre><code>{
   "type": "account_status_change",
   "data": {
@@ -722,15 +643,10 @@
     "timestamp": 1703123456
   }
 }</code></pre>
-                <div class="note">
-                    <strong>权限说明:</strong><br>
-                    • 普通用户只能接收到所属分组的更新消息<br>
-                    • 管理员（GroupID=0）可以接收到所有分组的更新消息
-                </div>
             </div>
             
             <div class="message-type">
-                <h4>11. 错误消息 (error)</h4>
+                <h4>7. 错误消息 (error)</h4>
                 <pre><code>{
   "type": "error",
   "error": "错误描述信息"
@@ -824,43 +740,6 @@
                 <li>✅ 在线判断：WebSocket连接 = 在线</li>
                 <li>✅ 去重范围：本分组、全局两种</li>
                 <li>✅ 进线数据：最小必填 + 可选扩展</li>
-                <li>✅ 实时推送：进线、状态变化自动推送到前端看板</li>
-                <li>✅ 权限控制：普通用户看所属分组，管理员看全部</li>
-            </ul>
-        </div>
-        
-        <div class="section">
-            <h2>❓ 常见问题</h2>
-            
-            <h3>Q1: 如果客户端断线重连，需要重新同步所有数据吗？</h3>
-            <p><strong>A:</strong> 是的，重新连接成功后，客户端应该发送 <code>sync_line_accounts</code> 消息同步当前所有Line账号。服务器会自动判断是新增还是更新。</p>
-            
-            <h3>Q2: 心跳包必须发送吗？</h3>
-            <p><strong>A:</strong> 是的，心跳包用于保持连接活跃。如果超过65秒未收到心跳，服务器会将该账号标记为离线。建议每60秒发送一次。</p>
-            
-            <h3>Q3: 如果进线数据上报失败怎么办？</h3>
-            <p><strong>A:</strong> 客户端应该实现本地缓存机制，将上报失败的数据保存到本地队列，待网络恢复后重新发送。</p>
-            
-            <h3>Q4: 同一个激活码可以在多个设备上同时登录吗？</h3>
-            <p><strong>A:</strong> 可以。服务器支持同一个激活码建立多个WebSocket连接，每个连接独立管理。</p>
-            
-            <h3>Q5: 前端看板如何接收实时更新？</h3>
-            <p><strong>A:</strong> 前端看板连接到 <code>/api/ws/dashboard</code>，服务器会自动推送账号状态变化、进线数据等实时更新。</p>
-            
-            <h3>Q6: 客户端如何知道服务器是否正常？</h3>
-            <p><strong>A:</strong> 客户端发送心跳后，服务器会立即回复 <code>heartbeat_ack</code> 消息。如果长时间未收到回复，说明网络或服务器可能有问题，应尝试重连。</p>
-            
-            <h3>Q7: 后台管理界面如何接收实时更新？</h3>
-            <p><strong>A:</strong> 前端管理界面连接到 <code>/api/ws/dashboard</code> 后，会自动接收实时推送消息：</p>
-            <ul>
-                <li><code>incoming_update</code> - 进线数据实时更新</li>
-                <li><code>account_status_change</code> - 账号在线状态变化</li>
-                <li><code>stats_update</code> - 统计数据更新</li>
-            </ul>
-            <p><strong>权限控制：</strong></p>
-            <ul>
-                <li>普通用户：只接收所属分组的更新</li>
-                <li>管理员：接收所有分组的更新（GroupID=0）</li>
             </ul>
         </div>
         
