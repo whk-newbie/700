@@ -17,7 +17,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param id path int true "分组ID"
-// @Success 200 {object} utils.Response{data=models.GroupStats}
+// @Success 200 {object} utils.Response{data=object}
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
 // @Router /stats/group/{id} [get]
@@ -47,7 +47,7 @@ func GetGroupStats(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "账号ID"
-// @Success 200 {object} utils.Response{data=models.LineAccountStats}
+// @Success 200 {object} utils.Response{data=object}
 // @Failure 400 {object} utils.Response
 // @Failure 500 {object} utils.Response
 // @Router /stats/account/{id} [get]

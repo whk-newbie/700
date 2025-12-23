@@ -47,7 +47,7 @@ func DailyResetTask() {
 
 		// 检查是否需要重置：
 		// 1. 当前时间已经过了今天的重置时间点
-		// 2. 上次重置日期不是今天，或者上次重置时间在今天重置时间点之前
+		// 2. 今天还未重置过，或者重置时间点被修改且当前时间已过新重置时间点
 		needReset := false
 
 		// 获取分组统计
@@ -63,31 +63,44 @@ func DailyResetTask() {
 
 		if groupStats.LastResetDate == nil {
 			// 从未重置过，如果当前时间已过重置时间点，则重置
+			logger.Infof("[DEBUG] GroupID=%d 从未重置过, now=%v, todayResetTime=%v", 
+				group.ID, now.Format("15:04:05"), todayResetTime.Format("15:04:05"))
 			if now.After(todayResetTime) || now.Equal(todayResetTime) {
 				needReset = true
 			}
 		} else {
+			// 统一使用本地时区进行日期比较，避免时区差异导致的比较错误
 			lastResetDate := time.Date(
 				groupStats.LastResetDate.Year(),
 				groupStats.LastResetDate.Month(),
 				groupStats.LastResetDate.Day(),
 				0, 0, 0, 0,
-				groupStats.LastResetDate.Location(),
+				now.Location(),  // 使用当前时区，而不是数据库时区
 			)
+			
+			logger.Infof("[DEBUG] GroupID=%d, lastResetDate=%v, today=%v, lastResetDate.Equal(today)=%v", 
+				group.ID, lastResetDate.Format("2006-01-02"), today.Format("2006-01-02"), lastResetDate.Equal(today))
 
-			// 如果上次重置日期不是今天，且当前时间已过今天的重置时间点，则需要重置
+			// 如果上次重置日期不是今天，则检查是否需要重置
 			if !lastResetDate.Equal(today) {
+				logger.Infof("[DEBUG] GroupID=%d 上次重置日期不是今天，检查是否需要重置", group.ID)
 				if now.After(todayResetTime) || now.Equal(todayResetTime) {
 					needReset = true
 				}
 			} else {
-				// 上次重置日期是今天，检查上次重置时间是否在今天重置时间点之前
-				// 如果是，且当前时间已过重置时间点，则需要再次重置（防止重置时间点被修改的情况）
+				// 上次重置日期是今天，只有在重置时间点被修改的情况下才再次重置
+				// 即：上次重置时间早于当前重置时间点，且当前时间已过重置时间点
 				if groupStats.LastResetTime != nil {
 					lastResetTime := *groupStats.LastResetTime
+					logger.Infof("[DEBUG] GroupID=%d, lastResetTime=%v, todayResetTime=%v, lastResetTime.Before(todayResetTime)=%v", 
+						group.ID, lastResetTime.Format("15:04:05"), todayResetTime.Format("15:04:05"), lastResetTime.Before(todayResetTime))
 					if lastResetTime.Before(todayResetTime) && (now.After(todayResetTime) || now.Equal(todayResetTime)) {
 						needReset = true
+						logger.Infof("分组重置时间点被修改，重新执行重置 (GroupID=%d, LastResetTime=%v, ResetTime=%s)",
+							group.ID, lastResetTime.Format("15:04:05"), group.ResetTime)
 					}
+				} else {
+					logger.Infof("[DEBUG] GroupID=%d LastResetTime 为 NULL", group.ID)
 				}
 			}
 		}
@@ -197,25 +210,28 @@ func DailyResetTask() {
 					needAccountReset = true
 				}
 			} else {
+				// 统一使用本地时区进行日期比较，避免时区差异导致的比较错误
 				lastResetDate := time.Date(
 					accountStats.LastResetDate.Year(),
 					accountStats.LastResetDate.Month(),
 					accountStats.LastResetDate.Day(),
 					0, 0, 0, 0,
-					accountStats.LastResetDate.Location(),
+					now.Location(),  // 使用当前时区，而不是数据库时区
 				)
 
-				// 如果上次重置日期不是今天，且当前时间已过今天的重置时间点，则需要重置
+				// 如果上次重置日期不是今天，则检查是否需要重置
 				if !lastResetDate.Equal(today) {
 					if now.After(todayAccountResetTime) || now.Equal(todayAccountResetTime) {
 						needAccountReset = true
 					}
 				} else {
-					// 上次重置日期是今天，检查上次重置时间是否在今天重置时间点之前
+					// 上次重置日期是今天，只有在重置时间点被修改的情况下才再次重置
 					if accountStats.LastResetTime != nil {
 						lastResetTime := *accountStats.LastResetTime
 						if lastResetTime.Before(todayAccountResetTime) && (now.After(todayAccountResetTime) || now.Equal(todayAccountResetTime)) {
 							needAccountReset = true
+							logger.Infof("账号重置时间点被修改，重新执行重置 (LineAccountID=%d, LastResetTime=%v, ResetTime=%s)",
+								account.ID, lastResetTime.Format("15:04:05"), *account.ResetTime)
 						}
 					}
 				}

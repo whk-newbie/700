@@ -1,6 +1,16 @@
 basePath: /api/v1
 definitions:
-  schemas.BatchDeleteGroupsRequest:
+  line-management_internal_schemas.BatchCreateFollowUpRequest:
+    properties:
+      records:
+        items:
+          $ref: '#/definitions/line-management_internal_schemas.CreateFollowUpRequest'
+        minItems: 1
+        type: array
+    required:
+    - records
+    type: object
+  line-management_internal_schemas.BatchDeleteGroupsRequest:
     properties:
       ids:
         items:
@@ -10,7 +20,7 @@ definitions:
     required:
     - ids
     type: object
-  schemas.BatchDeleteLineAccountsRequest:
+  line-management_internal_schemas.BatchDeleteLineAccountsRequest:
     properties:
       ids:
         items:
@@ -20,7 +30,7 @@ definitions:
     required:
     - ids
     type: object
-  schemas.BatchOperationResponse:
+  line-management_internal_schemas.BatchOperationResponse:
     properties:
       fail_count:
         example: 0
@@ -33,7 +43,7 @@ definitions:
         example: 3
         type: integer
     type: object
-  schemas.BatchUpdateGroupsRequest:
+  line-management_internal_schemas.BatchUpdateGroupsRequest:
     properties:
       category:
         example: default
@@ -55,7 +65,7 @@ definitions:
     required:
     - ids
     type: object
-  schemas.BatchUpdateLineAccountsRequest:
+  line-management_internal_schemas.BatchUpdateLineAccountsRequest:
     properties:
       ids:
         items:
@@ -73,7 +83,44 @@ definitions:
     required:
     - ids
     type: object
-  schemas.CreateGroupRequest:
+  line-management_internal_schemas.ContactPoolSummaryResponse:
+    properties:
+      import_count:
+        description: 导入原始联系人数量
+        type: integer
+      platform_count:
+        description: 平台工单原始联系人数量
+        type: integer
+      total_count:
+        description: 原始联系人数量汇总
+        type: integer
+    type: object
+  line-management_internal_schemas.CreateFollowUpRequest:
+    properties:
+      content:
+        example: 跟进内容
+        type: string
+      customer_id:
+        example: 1
+        type: integer
+      group_id:
+        example: 1
+        type: integer
+      line_account_id:
+        example: 1
+        type: integer
+      platform_type:
+        enum:
+        - line
+        - line_business
+        example: line
+        type: string
+    required:
+    - content
+    - group_id
+    - platform_type
+    type: object
+  line-management_internal_schemas.CreateGroupRequest:
     properties:
       account_limit:
         example: 10
@@ -109,7 +156,70 @@ definitions:
     required:
     - user_id
     type: object
-  schemas.CreateLineAccountRequest:
+  line-management_internal_schemas.CreateLLMConfigRequest:
+    properties:
+      api_key:
+        type: string
+      api_url:
+        type: string
+      frequency_penalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      is_active:
+        type: boolean
+      max_retries:
+        maximum: 10
+        minimum: 0
+        type: integer
+      max_tokens:
+        maximum: 100000
+        minimum: 1
+        type: integer
+      model:
+        maxLength: 100
+        minLength: 1
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      presence_penalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      provider:
+        enum:
+        - openai
+        - anthropic
+        - aliyun
+        - xunfei
+        - baidu
+        - zhipu
+        - custom
+        type: string
+      system_prompt:
+        type: string
+      temperature:
+        maximum: 2
+        minimum: 0
+        type: number
+      timeout_seconds:
+        maximum: 300
+        minimum: 1
+        type: integer
+      top_p:
+        maximum: 1
+        minimum: 0
+        type: number
+    required:
+    - api_key
+    - api_url
+    - model
+    - name
+    - provider
+    type: object
+  line-management_internal_schemas.CreateLineAccountRequest:
     properties:
       account_remark:
         example: 这是备注
@@ -152,7 +262,196 @@ definitions:
     - line_id
     - platform_type
     type: object
-  schemas.ErrorResponse:
+  line-management_internal_schemas.CreatePromptTemplateRequest:
+    properties:
+      config_id:
+        type: integer
+      description:
+        type: string
+      is_active:
+        type: boolean
+      template_content:
+        type: string
+      template_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      variables:
+        additionalProperties: true
+        type: object
+    required:
+    - config_id
+    - template_content
+    - template_name
+    type: object
+  line-management_internal_schemas.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      is_active:
+        type: boolean
+      max_groups:
+        minimum: 0
+        type: integer
+      password:
+        maxLength: 100
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - admin
+        - user
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - role
+    - username
+    type: object
+  line-management_internal_schemas.CustomerDetailResponse:
+    properties:
+      activation_code:
+        example: ABC12345
+        type: string
+      address:
+        example: 地址信息
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      birthday:
+        example: "1990-01-01"
+        type: string
+      country:
+        example: TW
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      customer_id:
+        example: U1234567890abcdef
+        type: string
+      customer_type:
+        example: friend
+        type: string
+      display_name:
+        example: 客户名称
+        type: string
+      gender:
+        example: male
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      group_remark:
+        example: 分组备注
+        type: string
+      id:
+        example: 1
+        type: integer
+      line_account_display_name:
+        description: 关联信息
+        example: 账号名称
+        type: string
+      line_account_id:
+        example: 1
+        type: integer
+      line_account_line_id:
+        example: U1234567890abcdef
+        type: string
+      nickname_remark:
+        example: 昵称备注
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      platform_type:
+        example: line
+        type: string
+      profile_data:
+        additionalProperties: true
+        type: object
+      remark:
+        example: 备注信息
+        type: string
+      tags:
+        additionalProperties: true
+        type: object
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  line-management_internal_schemas.CustomerListResponse:
+    properties:
+      activation_code:
+        example: ABC12345
+        type: string
+      address:
+        example: 地址信息
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      birthday:
+        example: "1990-01-01"
+        type: string
+      country:
+        example: TW
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      customer_id:
+        example: U1234567890abcdef
+        type: string
+      customer_type:
+        example: friend
+        type: string
+      display_name:
+        example: 客户名称
+        type: string
+      gender:
+        example: male
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      group_remark:
+        example: 分组备注
+        type: string
+      id:
+        example: 1
+        type: integer
+      line_account_display_name:
+        description: 关联信息
+        example: 账号名称
+        type: string
+      line_account_id:
+        example: 1
+        type: integer
+      line_account_line_id:
+        example: U1234567890abcdef
+        type: string
+      nickname_remark:
+        example: 昵称备注
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      platform_type:
+        example: line
+        type: string
+      remark:
+        example: 备注信息
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  line-management_internal_schemas.ErrorResponse:
     properties:
       code:
         example: 400
@@ -164,7 +463,65 @@ definitions:
         example: 用户名或密码错误
         type: string
     type: object
-  schemas.GenerateQRCodeResponse:
+  line-management_internal_schemas.FollowUpListResponse:
+    properties:
+      activation_code:
+        example: ABC12345
+        type: string
+      content:
+        example: 跟进内容
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      created_by:
+        example: 1
+        type: integer
+      created_by_username:
+        example: admin
+        type: string
+      customer_avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      customer_display_name:
+        example: 客户名称
+        type: string
+      customer_id:
+        example: 1
+        type: integer
+      customer_line_id:
+        example: U1234567890abcdef
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      group_remark:
+        description: 关联信息
+        example: 分组备注
+        type: string
+      id:
+        example: 1
+        type: integer
+      line_account_avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      line_account_display_name:
+        example: 账号名称
+        type: string
+      line_account_id:
+        example: 1
+        type: integer
+      line_account_line_id:
+        example: U1234567890abcdef
+        type: string
+      platform_type:
+        example: line
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  line-management_internal_schemas.GenerateQRCodeResponse:
     properties:
       qr_code_path:
         example: /static/qrcodes/1.png
@@ -173,7 +530,7 @@ definitions:
         example: http://localhost:8080/static/qrcodes/1.png
         type: string
     type: object
-  schemas.GroupInfo:
+  line-management_internal_schemas.GroupInfo:
     properties:
       activation_code:
         example: ABC123
@@ -184,8 +541,11 @@ definitions:
       id:
         example: 1
         type: integer
+      remark:
+        example: 测试分组
+        type: string
     type: object
-  schemas.GroupListResponse:
+  line-management_internal_schemas.GroupListResponse:
     properties:
       account_limit:
         example: 10
@@ -256,7 +616,145 @@ definitions:
         example: user001
         type: string
     type: object
-  schemas.LineAccountListResponse:
+  line-management_internal_schemas.ImportContactResponse:
+    properties:
+      batch_id:
+        type: integer
+      duplicate_count:
+        type: integer
+      error_count:
+        type: integer
+      success_count:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  line-management_internal_schemas.LLMCallRequest:
+    properties:
+      activation_code:
+        type: string
+      config_id:
+        type: integer
+      group_id:
+        type: integer
+      max_tokens:
+        type: integer
+      messages:
+        items:
+          additionalProperties: true
+          type: object
+        minItems: 1
+        type: array
+      temperature:
+        type: number
+    required:
+    - config_id
+    - messages
+    type: object
+  line-management_internal_schemas.LLMCallResponse:
+    properties:
+      completion_tokens:
+        type: integer
+      content:
+        type: string
+      prompt_tokens:
+        type: integer
+      response_data:
+        additionalProperties: true
+        type: object
+      tokens_used:
+        type: integer
+    type: object
+  line-management_internal_schemas.LLMCallTemplateRequest:
+    properties:
+      activation_code:
+        type: string
+      config_id:
+        type: integer
+      group_id:
+        type: integer
+      max_tokens:
+        type: integer
+      temperature:
+        type: number
+      template_id:
+        type: integer
+      variables:
+        additionalProperties: true
+        type: object
+    required:
+    - config_id
+    - template_id
+    type: object
+  line-management_internal_schemas.LLMConfigPublicResponse:
+    properties:
+      api_url:
+        type: string
+      frequency_penalty:
+        type: number
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      max_retries:
+        type: integer
+      max_tokens:
+        type: integer
+      model:
+        type: string
+      name:
+        type: string
+      presence_penalty:
+        type: number
+      provider:
+        type: string
+      system_prompt:
+        type: string
+      temperature:
+        type: number
+      timeout_seconds:
+        type: integer
+      top_p:
+        type: number
+    type: object
+  line-management_internal_schemas.LLMConfigResponse:
+    properties:
+      api_url:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      frequency_penalty:
+        type: number
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      max_retries:
+        type: integer
+      max_tokens:
+        type: integer
+      model:
+        type: string
+      name:
+        type: string
+      presence_penalty:
+        type: number
+      provider:
+        type: string
+      system_prompt:
+        type: string
+      temperature:
+        type: number
+      timeout_seconds:
+        type: integer
+      top_p:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  line-management_internal_schemas.LineAccountListResponse:
     properties:
       account_remark:
         example: 这是备注
@@ -336,7 +834,7 @@ definitions:
         example: "2024-01-01T00:00:00Z"
         type: string
     type: object
-  schemas.LoginRequest:
+  line-management_internal_schemas.LoginRequest:
     properties:
       password:
         example: admin123
@@ -348,14 +846,14 @@ definitions:
     - password
     - username
     type: object
-  schemas.LoginResponse:
+  line-management_internal_schemas.LoginResponse:
     properties:
       expires_in:
         example: 86400
         type: integer
       group:
         allOf:
-        - $ref: '#/definitions/schemas.GroupInfo'
+        - $ref: '#/definitions/line-management_internal_schemas.GroupInfo'
         description: 子账号登录时返回
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -364,16 +862,38 @@ definitions:
         example: Bearer
         type: string
       user:
-        $ref: '#/definitions/schemas.UserInfo'
+        $ref: '#/definitions/line-management_internal_schemas.UserInfo'
     type: object
-  schemas.RefreshTokenRequest:
+  line-management_internal_schemas.PromptTemplateResponse:
+    properties:
+      config_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      template_content:
+        type: string
+      template_name:
+        type: string
+      updated_at:
+        type: string
+      variables:
+        additionalProperties: true
+        type: object
+    type: object
+  line-management_internal_schemas.RefreshTokenRequest:
     properties:
       token:
         type: string
     required:
     - token
     type: object
-  schemas.RefreshTokenResponse:
+  line-management_internal_schemas.RefreshTokenResponse:
     properties:
       expires_in:
         example: 86400
@@ -385,7 +905,7 @@ definitions:
         example: Bearer
         type: string
     type: object
-  schemas.SubAccountLoginRequest:
+  line-management_internal_schemas.SubAccountLoginRequest:
     properties:
       activation_code:
         example: ABC123
@@ -397,7 +917,55 @@ definitions:
     - activation_code
     - password
     type: object
-  schemas.UpdateGroupRequest:
+  line-management_internal_schemas.UpdateCustomerRequest:
+    properties:
+      address:
+        example: 地址信息
+        type: string
+      avatar_url:
+        example: https://profile.line-scdn.net/...
+        type: string
+      birthday:
+        example: "1990-01-01"
+        type: string
+      country:
+        example: TW
+        type: string
+      customer_type:
+        example: friend
+        type: string
+      display_name:
+        example: 客户名称
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        - unknown
+        example: male
+        type: string
+      line_account_id:
+        example: 1
+        type: integer
+      nickname_remark:
+        example: 昵称备注
+        type: string
+      phone_number:
+        example: "13800138000"
+        type: string
+      remark:
+        example: 备注信息
+        type: string
+    type: object
+  line-management_internal_schemas.UpdateFollowUpRequest:
+    properties:
+      content:
+        example: 更新后的跟进内容
+        type: string
+    required:
+    - content
+    type: object
+  line-management_internal_schemas.UpdateGroupRequest:
     properties:
       account_limit:
         example: 10
@@ -428,7 +996,64 @@ definitions:
         example: "09:00:00"
         type: string
     type: object
-  schemas.UpdateLineAccountRequest:
+  line-management_internal_schemas.UpdateLLMConfigRequest:
+    properties:
+      api_key:
+        type: string
+      api_url:
+        type: string
+      frequency_penalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      is_active:
+        type: boolean
+      max_retries:
+        maximum: 10
+        minimum: 0
+        type: integer
+      max_tokens:
+        maximum: 100000
+        minimum: 1
+        type: integer
+      model:
+        maxLength: 100
+        minLength: 1
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      presence_penalty:
+        maximum: 2
+        minimum: -2
+        type: number
+      provider:
+        enum:
+        - openai
+        - anthropic
+        - aliyun
+        - xunfei
+        - baidu
+        - zhipu
+        - custom
+        type: string
+      system_prompt:
+        type: string
+      temperature:
+        maximum: 2
+        minimum: 0
+        type: number
+      timeout_seconds:
+        maximum: 300
+        minimum: 1
+        type: integer
+      top_p:
+        maximum: 1
+        minimum: 0
+        type: number
+    type: object
+  line-management_internal_schemas.UpdateLineAccountRequest:
     properties:
       account_remark:
         example: 这是备注
@@ -475,7 +1100,42 @@ definitions:
         example: 这是状态消息
         type: string
     type: object
-  schemas.UserInfo:
+  line-management_internal_schemas.UpdatePromptTemplateRequest:
+    properties:
+      description:
+        type: string
+      is_active:
+        type: boolean
+      template_content:
+        type: string
+      template_name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      variables:
+        additionalProperties: true
+        type: object
+    type: object
+  line-management_internal_schemas.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      is_active:
+        type: boolean
+      max_groups:
+        minimum: 0
+        type: integer
+      password:
+        maxLength: 100
+        minLength: 6
+        type: string
+      role:
+        enum:
+        - admin
+        - user
+        type: string
+    type: object
+  line-management_internal_schemas.UserInfo:
     properties:
       email:
         example: admin@example.com
@@ -490,7 +1150,28 @@ definitions:
         example: admin
         type: string
     type: object
-  utils.Pagination:
+  line-management_internal_schemas.UserListResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      max_groups:
+        type: integer
+      role:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  line-management_internal_utils.Pagination:
     properties:
       page:
         description: 当前页码
@@ -505,11 +1186,28 @@ definitions:
         description: 总页数
         type: integer
     type: object
-  utils.PaginationResponse:
+  line-management_internal_utils.PaginationResponse:
     properties:
       list: {}
       pagination:
-        $ref: '#/definitions/utils.Pagination'
+        $ref: '#/definitions/line-management_internal_utils.Pagination'
+    type: object
+  line-management_internal_utils.Response:
+    properties:
+      code:
+        description: 业务状态码
+        type: integer
+      data:
+        description: 响应数据
+      error:
+        description: 错误代码（仅错误时返回）
+        type: string
+      message:
+        description: 响应消息
+        type: string
+      timestamp:
+        description: 时间戳
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -518,6 +1216,629 @@ info:
   title: Line账号管理系统API
   version: "1.0"
 paths:
+  /admin/llm/call-logs:
+    get:
+      consumes:
+      - application/json
+      description: 获取调用日志列表（管理员专用，支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 配置ID
+        in: query
+        name: config_id
+        type: integer
+      - description: 模板ID
+        in: query
+        name: template_id
+        type: integer
+      - description: 分组ID
+        in: query
+        name: group_id
+        type: integer
+      - description: 激活码
+        in: query
+        name: activation_code
+        type: string
+      - description: 状态
+        enum:
+        - success
+        - error
+        in: query
+        name: status
+        type: string
+      - description: 开始时间
+        in: query
+        name: start_time
+        type: string
+      - description: 结束时间
+        in: query
+        name: end_time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取调用日志列表
+      tags:
+      - 大模型调用记录
+  /admin/llm/configs:
+    get:
+      consumes:
+      - application/json
+      description: 获取LLM配置列表（管理员专用，支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 提供商
+        in: query
+        name: provider
+        type: string
+      - description: 是否激活
+        in: query
+        name: is_active
+        type: boolean
+      - description: 搜索（名称）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取LLM配置列表
+      tags:
+      - 大模型配置
+    post:
+      consumes:
+      - application/json
+      description: 创建LLM配置（管理员专用）
+      parameters:
+      - description: 创建LLM配置请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.CreateLLMConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.LLMConfigResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建LLM配置
+      tags:
+      - 大模型配置
+  /admin/llm/configs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除LLM配置（管理员专用）
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除LLM配置
+      tags:
+      - 大模型配置
+    put:
+      consumes:
+      - application/json
+      description: 更新LLM配置（管理员专用）
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新LLM配置请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.UpdateLLMConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.LLMConfigResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新LLM配置
+      tags:
+      - 大模型配置
+  /admin/llm/configs/{id}/test:
+    post:
+      consumes:
+      - application/json
+      description: 测试LLM配置连接（管理员专用）
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 测试LLM配置连接
+      tags:
+      - 大模型配置
+  /admin/llm/templates:
+    get:
+      consumes:
+      - application/json
+      description: 获取Prompt模板列表（管理员专用，支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 配置ID
+        in: query
+        name: config_id
+        type: integer
+      - description: 是否激活
+        in: query
+        name: is_active
+        type: boolean
+      - description: 搜索（模板名称）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取Prompt模板列表
+      tags:
+      - Prompt模板
+    post:
+      consumes:
+      - application/json
+      description: 创建Prompt模板（管理员专用）
+      parameters:
+      - description: 创建Prompt模板请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.CreatePromptTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.PromptTemplateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建Prompt模板
+      tags:
+      - Prompt模板
+  /admin/llm/templates/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除Prompt模板（管理员专用）
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除Prompt模板
+      tags:
+      - Prompt模板
+    put:
+      consumes:
+      - application/json
+      description: 更新Prompt模板（管理员专用）
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新Prompt模板请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.UpdatePromptTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.PromptTemplateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新Prompt模板
+      tags:
+      - Prompt模板
+  /admin/users:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户列表（管理员专用，支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 角色
+        enum:
+        - admin
+        - user
+        in: query
+        name: role
+        type: string
+      - description: 是否激活
+        in: query
+        name: is_active
+        type: boolean
+      - description: 搜索（用户名或邮箱）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取用户列表
+      tags:
+      - 用户管理
+    post:
+      consumes:
+      - application/json
+      description: 创建普通用户（管理员专用）
+      parameters:
+      - description: 创建用户请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.UserListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建用户
+      tags:
+      - 用户管理
+  /admin/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除用户（软删除，管理员专用）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除用户
+      tags:
+      - 用户管理
+    put:
+      consumes:
+      - application/json
+      description: 更新用户信息（管理员专用）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新用户请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.UserListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新用户
+      tags:
+      - 用户管理
   /auth/login:
     post:
       consumes:
@@ -529,22 +1850,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.LoginRequest'
+          $ref: '#/definitions/line-management_internal_schemas.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.LoginResponse'
+            $ref: '#/definitions/line-management_internal_schemas.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       summary: 用户登录
       tags:
       - 认证
@@ -559,22 +1880,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.SubAccountLoginRequest'
+          $ref: '#/definitions/line-management_internal_schemas.SubAccountLoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.LoginResponse'
+            $ref: '#/definitions/line-management_internal_schemas.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       summary: 子账号登录
       tags:
       - 认证
@@ -603,11 +1924,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.UserInfo'
+            $ref: '#/definitions/line-management_internal_schemas.UserInfo'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取当前用户信息
@@ -624,22 +1945,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.RefreshTokenRequest'
+          $ref: '#/definitions/line-management_internal_schemas.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.RefreshTokenResponse'
+            $ref: '#/definitions/line-management_internal_schemas.RefreshTokenResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       summary: 刷新Token
       tags:
       - 认证
@@ -657,12 +1978,642 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取活跃会话
       tags:
       - 认证
+  /contact-pool/detail:
+    get:
+      consumes:
+      - application/json
+      description: 获取底库详细列表（支持筛选和分页）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 激活码
+        in: query
+        name: activation_code
+        type: string
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      - description: 开始时间
+        format: date-time
+        in: query
+        name: start_time
+        type: string
+      - description: 结束时间
+        format: date-time
+        in: query
+        name: end_time
+        type: string
+      - description: 搜索（用户名或手机号）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取底库详细列表
+      tags:
+      - 底库管理
+  /contact-pool/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 从Excel/CSV/TXT文件导入联系人到底库
+      parameters:
+      - description: 文件（Excel/CSV/TXT）
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: formData
+        name: platform_type
+        required: true
+        type: string
+      - description: 去重范围
+        enum:
+        - current
+        - global
+        in: formData
+        name: dedup_scope
+        required: true
+        type: string
+      - description: 分组ID
+        in: formData
+        name: group_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ImportContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 导入联系人
+      tags:
+      - 底库管理
+  /contact-pool/import-batches:
+    get:
+      consumes:
+      - application/json
+      description: 获取导入批次列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取导入批次列表
+      tags:
+      - 底库管理
+  /contact-pool/import-template:
+    get:
+      consumes:
+      - application/json
+      description: 下载联系人导入模板Excel文件
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel模板文件
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 下载导入模板
+      tags:
+      - 底库管理
+  /contact-pool/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取底库列表（按激活码+平台分组）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      - description: 激活码搜索
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取底库列表
+      tags:
+      - 底库管理
+  /contact-pool/summary:
+    get:
+      consumes:
+      - application/json
+      description: 获取底库统计汇总（导入数量、平台工单数量、总数量）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ContactPoolSummaryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取底库统计汇总
+      tags:
+      - 底库管理
+  /customers:
+    get:
+      consumes:
+      - application/json
+      description: 获取客户列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 分组ID
+        in: query
+        name: group_id
+        type: integer
+      - description: Line账号ID
+        in: query
+        name: line_account_id
+        type: integer
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      - description: 客户类型
+        in: query
+        name: customer_type
+        type: string
+      - description: 搜索（客户ID或显示名称）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取客户列表
+      tags:
+      - 客户管理
+  /customers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除客户（软删除）
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除客户
+      tags:
+      - 客户管理
+    get:
+      consumes:
+      - application/json
+      description: 获取客户详细信息
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.CustomerDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取客户详情
+      tags:
+      - 客户管理
+    put:
+      consumes:
+      - application/json
+      description: 更新客户信息
+      parameters:
+      - description: 客户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新客户请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.UpdateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.CustomerListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新客户信息
+      tags:
+      - 客户管理
+  /follow-ups:
+    get:
+      consumes:
+      - application/json
+      description: 获取跟进记录列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 分组ID
+        in: query
+        name: group_id
+        type: integer
+      - description: Line账号ID
+        in: query
+        name: line_account_id
+        type: integer
+      - description: 客户ID
+        in: query
+        name: customer_id
+        type: integer
+      - description: 平台类型
+        enum:
+        - line
+        - line_business
+        in: query
+        name: platform_type
+        type: string
+      - description: 搜索（跟进内容）
+        in: query
+        name: search
+        type: string
+      - description: 开始时间
+        format: date-time
+        in: query
+        name: start_time
+        type: string
+      - description: 结束时间
+        format: date-time
+        in: query
+        name: end_time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取跟进记录列表
+      tags:
+      - 跟进记录
+    post:
+      consumes:
+      - application/json
+      description: 创建新的跟进记录
+      parameters:
+      - description: 创建跟进记录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.CreateFollowUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.FollowUpListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 创建跟进记录
+      tags:
+      - 跟进记录
+  /follow-ups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除跟进记录（软删除）
+      parameters:
+      - description: 跟进记录ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 删除跟进记录
+      tags:
+      - 跟进记录
+    put:
+      consumes:
+      - application/json
+      description: 更新跟进记录内容
+      parameters:
+      - description: 跟进记录ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新跟进记录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.UpdateFollowUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.FollowUpListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新跟进记录
+      tags:
+      - 跟进记录
+  /follow-ups/batch:
+    post:
+      consumes:
+      - application/json
+      description: 批量创建跟进记录
+      parameters:
+      - description: 批量创建跟进记录请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.BatchCreateFollowUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/line-management_internal_schemas.FollowUpListResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量创建跟进记录
+      tags:
+      - 跟进记录
   /groups:
     get:
       consumes:
@@ -701,15 +2652,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.PaginationResponse'
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取分组列表
@@ -725,22 +2676,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.CreateGroupRequest'
+          $ref: '#/definitions/line-management_internal_schemas.CreateGroupRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GroupListResponse'
+            $ref: '#/definitions/line-management_internal_schemas.GroupListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建分组
@@ -768,15 +2719,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除分组
@@ -797,26 +2748,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.UpdateGroupRequest'
+          $ref: '#/definitions/line-management_internal_schemas.UpdateGroupRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GroupListResponse'
+            $ref: '#/definitions/line-management_internal_schemas.GroupListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新分组
@@ -844,19 +2795,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 生成子账户Token
@@ -884,15 +2835,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 重新生成激活码
@@ -909,22 +2860,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.BatchDeleteGroupsRequest'
+          $ref: '#/definitions/line-management_internal_schemas.BatchDeleteGroupsRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BatchOperationResponse'
+            $ref: '#/definitions/line-management_internal_schemas.BatchOperationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 批量删除分组
@@ -941,22 +2892,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.BatchUpdateGroupsRequest'
+          $ref: '#/definitions/line-management_internal_schemas.BatchUpdateGroupsRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BatchOperationResponse'
+            $ref: '#/definitions/line-management_internal_schemas.BatchOperationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 批量更新分组
@@ -978,7 +2929,7 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取分组分类列表
@@ -1034,15 +2985,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.PaginationResponse'
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 获取Line账号列表
@@ -1058,22 +3009,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.CreateLineAccountRequest'
+          $ref: '#/definitions/line-management_internal_schemas.CreateLineAccountRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.LineAccountListResponse'
+            $ref: '#/definitions/line-management_internal_schemas.LineAccountListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 创建Line账号
@@ -1101,15 +3052,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 删除Line账号
@@ -1130,26 +3081,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.UpdateLineAccountRequest'
+          $ref: '#/definitions/line-management_internal_schemas.UpdateLineAccountRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.LineAccountListResponse'
+            $ref: '#/definitions/line-management_internal_schemas.LineAccountListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 更新Line账号
@@ -1176,19 +3127,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.GenerateQRCodeResponse'
+            $ref: '#/definitions/line-management_internal_schemas.GenerateQRCodeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 生成二维码
@@ -1205,22 +3156,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.BatchDeleteLineAccountsRequest'
+          $ref: '#/definitions/line-management_internal_schemas.BatchDeleteLineAccountsRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BatchOperationResponse'
+            $ref: '#/definitions/line-management_internal_schemas.BatchOperationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 批量删除Line账号
@@ -1237,27 +3188,386 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/schemas.BatchUpdateLineAccountsRequest'
+          $ref: '#/definitions/line-management_internal_schemas.BatchUpdateLineAccountsRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BatchOperationResponse'
+            $ref: '#/definitions/line-management_internal_schemas.BatchOperationResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/schemas.ErrorResponse'
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
       security:
       - BearerAuth: []
       summary: 批量更新Line账号
       tags:
       - Line账号管理
+  /llm/call:
+    post:
+      consumes:
+      - application/json
+      description: 调用大模型
+      parameters:
+      - description: 调用请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.LLMCallRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.LLMCallResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 调用大模型
+      tags:
+      - 大模型调用
+  /llm/call-template:
+    post:
+      consumes:
+      - application/json
+      description: 使用模板调用大模型
+      parameters:
+      - description: 调用请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/line-management_internal_schemas.LLMCallTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.LLMCallResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 使用模板调用大模型
+      tags:
+      - 大模型调用
+  /llm/configs:
+    get:
+      consumes:
+      - application/json
+      description: 获取可用配置（不返回API Key）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/line-management_internal_schemas.LLMConfigPublicResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取可用配置
+      tags:
+      - 大模型调用
+  /llm/templates:
+    get:
+      consumes:
+      - application/json
+      description: 获取模板列表
+      parameters:
+      - description: 配置ID
+        in: query
+        name: config_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/line-management_internal_schemas.PromptTemplateResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/line-management_internal_schemas.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: 获取模板列表
+      tags:
+      - 大模型调用
+  /stats/account/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定Line账号的统计数据
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/line-management_internal_utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取账号统计
+      tags:
+      - 统计
+  /stats/account/{id}/trend:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定账号最近N天的进线趋势数据
+      parameters:
+      - description: 账号ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 7
+        description: 天数（默认7天，最多30天）
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/line-management_internal_utils.Response'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取账号进线趋势
+      tags:
+      - 统计
+  /stats/group/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定分组的统计数据
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/line-management_internal_utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取分组统计
+      tags:
+      - 统计
+  /stats/group/{id}/trend:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定分组最近N天的进线趋势数据
+      parameters:
+      - description: 分组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 7
+        description: 天数（默认7天，最多30天）
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/line-management_internal_utils.Response'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取分组进线趋势
+      tags:
+      - 统计
+  /stats/incoming-logs:
+    get:
+      consumes:
+      - application/json
+      description: 获取进线日志列表（支持分页和筛选）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 分组ID
+        in: query
+        name: group_id
+        type: integer
+      - description: 账号ID
+        in: query
+        name: line_account_id
+        type: integer
+      - description: 是否重复
+        in: query
+        name: is_duplicate
+        type: boolean
+      - description: 开始时间（ISO 8601格式）
+        in: query
+        name: start_time
+        type: string
+      - description: 结束时间（ISO 8601格式）
+        in: query
+        name: end_time
+        type: string
+      - description: 搜索（进线Line ID或显示名称）
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.PaginationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取进线日志列表
+      tags:
+      - 统计
+  /stats/overview:
+    get:
+      consumes:
+      - application/json
+      description: 获取系统总览统计数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/line-management_internal_utils.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/line-management_internal_utils.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取总览统计
+      tags:
+      - 统计
 securityDefinitions:
   BearerAuth:
     description: JWT Token，格式：Bearer {token}

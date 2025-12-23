@@ -17,6 +17,7 @@ import (
 type IncomingData struct {
 	LineAccountID  string `json:"line_account_id"`  // Line账号的line_id
 	IncomingLineID string `json:"incoming_line_id"` // 进线客户的Line User ID
+	PlatformType   string `json:"platform_type,omitempty"` // 平台类型（line / line_business）
 	Timestamp      string `json:"timestamp"`
 	DisplayName    string `json:"display_name,omitempty"`
 	AvatarURL      string `json:"avatar_url,omitempty"`
@@ -47,15 +48,19 @@ func NewIncomingService(updateCallback IncomingUpdateCallback) *IncomingService 
 // 2. 记录incoming_logs
 // 3. 增量更新统计表
 // 4. 添加到底库（如果不重复）
-func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint, groupID uint, dedupScope string) error {
+// 返回值: isDuplicate, error
+func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint, groupID uint, dedupScope string) (bool, error) {
+	var isDuplicateResult bool
+	
 	// 使用事务处理
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 1. 去重判断
 		isDuplicate, duplicateScope, err := s.dedupService.CheckDuplicate(groupID, data.IncomingLineID, dedupScope)
 		if err != nil {
 			logger.Errorf("去重检查失败: %v", err)
 			return err
 		}
+		isDuplicateResult = isDuplicate
 
 		// 2. 记录进线日志
 		incomingLog := models.IncomingLog{
@@ -170,6 +175,8 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 
 		return nil
 	})
+	
+	return isDuplicateResult, err
 }
 
 // GetIncomingLogList 获取进线日志列表（带分页和筛选）

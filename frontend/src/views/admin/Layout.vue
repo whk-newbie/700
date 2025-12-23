@@ -104,17 +104,6 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <!-- WebSocket连接状态 -->
-          <el-tag 
-            :type="wsConnected ? 'success' : 'danger'" 
-            size="small" 
-            style="margin-right: 12px"
-          >
-            <el-icon style="margin-right: 4px">
-              <component :is="wsConnected ? 'CircleCheck' : 'CircleClose'" />
-            </el-icon>
-            {{ wsConnected ? '已连接' : '未连接' }}
-          </el-tag>
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-icon><Avatar /></el-icon>
@@ -160,9 +149,7 @@ import {
   DataAnalysis,
   Expand,
   Fold,
-  ArrowDown,
-  CircleCheck,
-  CircleClose
+  ArrowDown
 } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { useWebSocketStore } from '@/store/websocket'
@@ -175,7 +162,6 @@ const wsStore = useWebSocketStore()
 const isCollapse = ref(false)
 const user = computed(() => authStore.user)
 const isAdmin = computed(() => authStore.isAdmin)
-const wsConnected = computed(() => wsStore.connected)
 
 // 计算当前激活的菜单项（支持二级菜单）
 const activeMenu = computed(() => {
@@ -620,10 +606,6 @@ onUnmounted(() => {
     
     .header-right {
       gap: 8px;
-      
-      :deep(.el-tag) {
-        display: none; // 小屏幕隐藏WebSocket状态
-      }
       
       .user-info {
         padding: 6px 8px;

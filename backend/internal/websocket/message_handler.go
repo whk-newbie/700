@@ -252,6 +252,7 @@ func (h *MessageHandler) handleIncoming(client *Client, message []byte) error {
 	incomingData := services.IncomingData{
 		LineAccountID:  incomingMsg.Data.LineAccountID,
 		IncomingLineID: incomingMsg.Data.IncomingLineID,
+		PlatformType:   incomingMsg.Data.PlatformType,
 		Timestamp:      incomingMsg.Data.Timestamp,
 		DisplayName:    incomingMsg.Data.DisplayName,
 		AvatarURL:      incomingMsg.Data.AvatarURL,
@@ -259,18 +260,27 @@ func (h *MessageHandler) handleIncoming(client *Client, message []byte) error {
 	}
 	
 	// 调用进线处理服务
-	if err := h.incomingService.ProcessIncoming(&incomingData, lineAccount.ID, group.ID, group.DedupScope); err != nil {
+	isDuplicate, err := h.incomingService.ProcessIncoming(&incomingData, lineAccount.ID, group.ID, group.DedupScope)
+	if err != nil {
 		logger.Errorf("处理进线数据失败: %v", err)
 		return fmt.Errorf("处理进线数据失败: %w", err)
+	}
+
+	// 生成响应消息
+	message := "进线数据已接收并处理"
+	if isDuplicate {
+		message = "进线数据已接收并处理（检测到重复）"
 	}
 
 	// 发送确认消息
 	response := Message{
 		Type: "incoming_received",
 		Data: map[string]interface{}{
-			"line_account_id": incomingMsg.Data.LineAccountID,
+			"line_account_id":  incomingMsg.Data.LineAccountID,
 			"incoming_line_id": incomingMsg.Data.IncomingLineID,
-			"status": "processed",
+			"is_duplicate":     isDuplicate,
+			"status":          "received",
+			"message":         message,
 		},
 	}
 	return h.sendMessage(client, response)
