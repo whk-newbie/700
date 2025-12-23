@@ -113,14 +113,15 @@ func DailyResetTask() {
 
 			// 重置该分组下所有账号的统计（仅重置没有独立重置时间的账号）
 			var accounts []models.LineAccount
-			if err := db.Where("group_id = ? AND deleted_at IS NULL AND (reset_time IS NULL OR reset_time = '')", group.ID).Find(&accounts).Error; err != nil {
+			if err := db.Where("group_id = ? AND deleted_at IS NULL AND reset_time IS NULL", group.ID).Find(&accounts).Error; err != nil {
 				logger.Errorf("查询账号列表失败 (GroupID=%d): %v", group.ID, err)
 				continue
 			}
 
 			for _, account := range accounts {
 				// 跳过有独立重置时间的账号（这些账号会在后面单独处理）
-				if account.ResetTime != nil && *account.ResetTime != "" {
+				// ResetTime为nil表示使用分组的重置时间
+				if account.ResetTime != nil {
 					continue
 				}
 
