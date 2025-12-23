@@ -22,6 +22,7 @@ type LineAccount struct {
 	AddFriendLink   string         `gorm:"type:varchar(500)" json:"add_friend_link"`
 	QRCodePath      string         `gorm:"type:varchar(255)" json:"qr_code_path"`
 	OnlineStatus    string         `gorm:"type:varchar(20);default:'offline';check:online_status IN ('online', 'offline', 'user_logout', 'abnormal_offline')" json:"online_status"`
+	ResetTime       *string        `gorm:"type:time" json:"reset_time"` // 账号重置时间，为空时使用分组的重置时间
 	LastActiveAt    *time.Time     `gorm:"type:timestamp" json:"last_active_at"`
 	LastOnlineTime  *time.Time     `gorm:"type:timestamp" json:"last_online_time"`
 	FirstLoginAt    *time.Time     `gorm:"type:timestamp" json:"first_login_at"`

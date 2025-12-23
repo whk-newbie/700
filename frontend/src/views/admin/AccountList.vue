@@ -184,6 +184,16 @@
             </div>
           </template>
         </el-table-column>
+        <el-table-column prop="reset_time" label="重置时间" width="120">
+          <template #default="{ row }">
+            <el-tag 
+              :type="row.reset_time ? 'success' : 'info'" 
+              size="small"
+            >
+              {{ row.reset_time || '使用分组' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="last_active_at" label="最后活跃" width="180">
           <template #default="{ row }">
             {{ row.last_active_at ? formatDateTime(row.last_active_at) : '-' }}
@@ -314,6 +324,19 @@
             show-word-limit
           />
         </el-form-item>
+        <el-form-item label="重置时间">
+          <el-time-picker
+            v-model="formData.reset_time"
+            format="HH:mm:ss"
+            value-format="HH:mm:ss"
+            placeholder="选择重置时间（留空则使用分组的重置时间）"
+            style="width: 100%"
+            clearable
+          />
+          <div style="font-size: 12px; color: #909399; margin-top: 4px">
+            留空则使用所属分组的重置时间
+          </div>
+        </el-form-item>
         <el-form-item v-if="formData.id" label="在线状态">
           <el-select v-model="formData.online_status" style="width: 100%">
             <el-option label="在线" value="online" />
@@ -344,13 +367,26 @@
         </div>
         <div v-else class="qr-placeholder">
           <el-empty description="暂无二维码" />
-          <el-button type="primary" @click="handleGenerateQR" :loading="generatingQR">
-            生成二维码
-          </el-button>
         </div>
       </div>
       <template #footer>
         <el-button @click="qrDialogVisible = false">关闭</el-button>
+        <el-button 
+          v-if="currentQRCode" 
+          type="danger" 
+          @click="handleDeleteQR" 
+          :loading="deletingQR"
+        >
+          删除二维码
+        </el-button>
+        <el-button 
+          v-if="currentQRCode" 
+          type="warning" 
+          @click="handleRegenerateQR" 
+          :loading="generatingQR"
+        >
+          重新生成
+        </el-button>
         <el-button v-if="currentQRCode" type="primary" @click="handleDownloadQR">
           下载
         </el-button>
@@ -390,7 +426,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, DocumentCopy } from '@element-plus/icons-vue'
@@ -412,6 +448,7 @@ const route = useRoute()
 const loading = ref(false)
 const submitting = ref(false)
 const generatingQR = ref(false)
+const deletingQR = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
 const groupList = ref([])
@@ -455,6 +492,7 @@ const formData = reactive({
   status_message: '',
   add_friend_link: '',
   account_remark: '',
+  reset_time: null, // 重置时间，为空时使用分组的重置时间
   online_status: 'offline'
 })
 
@@ -590,6 +628,7 @@ const handleEdit = (row) => {
   formData.status_message = row.status_message || ''
   formData.add_friend_link = row.add_friend_link || ''
   formData.account_remark = row.account_remark || ''
+  formData.reset_time = row.reset_time || null
   formData.online_status = row.online_status || 'offline'
   dialogVisible.value = true
 }
@@ -731,6 +770,107 @@ const handleGenerateQR = async () => {
   }
 }
 
+// 重新生成二维码
+const handleRegenerateQR = async () => {
+  if (!currentAccountForQR.value) return
+
+  // 确认对话框
+  try {
+    await ElMessageBox.confirm(
+      '确定要重新生成二维码吗？旧的二维码将被替换。',
+      '确认重新生成',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 执行生成
+    generatingQR.value = true
+    try {
+      const res = await generateQRCode(currentAccountForQR.value.id)
+      if (res.code === 1000) {
+        // 更新二维码路径（强制刷新图片）
+        const newQRPath = res.data?.qr_code_path || null
+        currentQRCode.value = null // 先清空，强制刷新
+        // 使用 nextTick 确保图片重新加载
+        await nextTick()
+        currentQRCode.value = newQRPath
+        
+        // 更新当前账号的二维码路径
+        if (currentAccountForQR.value) {
+          currentAccountForQR.value.qr_code_path = newQRPath
+        }
+        
+        ElMessage.success('二维码重新生成成功')
+        // 刷新列表
+        loadAccounts()
+      }
+    } catch (error) {
+      console.error('重新生成二维码失败:', error)
+      ElMessage.error('重新生成二维码失败')
+    } finally {
+      generatingQR.value = false
+    }
+  } catch (error) {
+    // 用户取消
+    if (error !== 'cancel') {
+      console.error('确认对话框错误:', error)
+    }
+  }
+}
+
+// 删除二维码
+const handleDeleteQR = async () => {
+  if (!currentAccountForQR.value) return
+
+  // 确认对话框
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除二维码吗？删除后可以重新生成。',
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 执行删除（通过更新接口将 qr_code_path 设置为空）
+    deletingQR.value = true
+    try {
+      const res = await updateLineAccount(currentAccountForQR.value.id, {
+        qr_code_path: ''
+      })
+      
+      if (res.code === 1000) {
+        // 清空当前显示的二维码
+        currentQRCode.value = null
+        
+        // 更新当前账号的二维码路径
+        if (currentAccountForQR.value) {
+          currentAccountForQR.value.qr_code_path = ''
+        }
+        
+        ElMessage.success('二维码删除成功')
+        // 刷新列表
+        loadAccounts()
+      }
+    } catch (error) {
+      console.error('删除二维码失败:', error)
+      ElMessage.error('删除二维码失败')
+    } finally {
+      deletingQR.value = false
+    }
+  } catch (error) {
+    // 用户取消
+    if (error !== 'cancel') {
+      console.error('确认对话框错误:', error)
+    }
+  }
+}
+
 // 下载二维码
 const handleDownloadQR = () => {
   if (!qrImageUrl.value) return
@@ -775,16 +915,22 @@ const handleSubmit = async () => {
       delete data.id
 
       // 对于空字符串，保留它们以便可以清空字段
-      // 只移除 null 和 undefined
+      // 对于 reset_time，如果是 null，在更新时需要提交 null 以便清空；在创建时则不提交
+      // 其他字段如果是 null 或 undefined，则移除
       Object.keys(data).forEach(key => {
-        if (data[key] === null || data[key] === undefined) {
+        if (key === 'reset_time') {
+          // reset_time 特殊处理：更新时保留 null，创建时如果是 null 则移除
+          if (!formData.id && (data[key] === null || data[key] === undefined)) {
+            delete data[key]
+          }
+        } else if (data[key] === null || data[key] === undefined) {
           delete data[key]
         }
       })
 
       let res
       if (formData.id) {
-        // 更新 - 允许更新所有字段
+        // 更新 - 允许更新所有字段（包括 reset_time 为 null）
         res = await updateLineAccount(formData.id, data)
       } else {
         // 创建 - 移除空字符串（创建时不需要空字段）
@@ -846,6 +992,7 @@ const resetForm = () => {
   formData.status_message = ''
   formData.add_friend_link = ''
   formData.account_remark = ''
+  formData.reset_time = null
   formData.online_status = 'offline'
   if (formRef.value) {
     formRef.value.clearValidate()

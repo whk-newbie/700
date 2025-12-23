@@ -13,12 +13,12 @@ import (
 	"line-management/internal/handlers"
 	"line-management/internal/middleware"
 	"line-management/internal/routes"
+	"line-management/internal/scheduler"
 	"line-management/pkg/database"
 	"line-management/pkg/logger"
 	"line-management/pkg/redis"
 
 	"github.com/gin-gonic/gin"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 )
 
@@ -94,10 +94,10 @@ func main() {
 		routes.SetupSwagger(r)
 	}
 
-	// 启动定时任务
-	cron := cron.New()
-	// TODO: 添加定时任务
-	cron.Start()
+	// 启动定时任务调度器
+	taskScheduler := scheduler.NewScheduler()
+	taskScheduler.Start()
+	defer taskScheduler.Stop()
 
 	// 启动服务器
 	port := viper.GetString("server.port")
@@ -123,17 +123,6 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	fmt.Println("正在关闭服务器...")
-
-	// 停止定时任务
-	ctx := cron.Stop()
-
-	// 等待定时任务停止
-	select {
-	case <-ctx.Done():
-		fmt.Println("定时任务已停止")
-	case <-time.After(time.Second * 10):
-		fmt.Println("等待定时任务停止超时")
-	}
 
 	// 关闭服务器
 	if err := srv.Close(); err != nil {

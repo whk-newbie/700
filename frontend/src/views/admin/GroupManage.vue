@@ -132,6 +132,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="reset_time" label="重置时间" width="120">
+          <template #default="{ row }">
+            <el-tag type="info" size="small">
+              {{ row.reset_time || '09:00:00' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="{ row }">
             {{ row.created_at ? formatDateTime(row.created_at) : '-' }}
