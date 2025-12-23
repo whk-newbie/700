@@ -24,9 +24,8 @@ func ApplyDataFilter(c *gin.Context, query *gorm.DB, tableName string) *gorm.DB 
 		if userID, ok := filterMap["user_id"].(uint); ok {
 			query = query.Where("user_id = ?", userID)
 		}
-		if gID, ok := filterMap["group_id"].(uint); ok {
-			query = query.Where("id = ?", gID)
-		}
+		// 子账号不能查看分组数据（只设置了group_id但不应用过滤条件）
+		// 这样会导致查询无结果，相当于子账号无权限查看分组
 	case "line_accounts", "customers", "follow_up_records", "contact_pool":
 		if gID, ok := filterMap["group_id"].(uint); ok {
 			query = query.Where("group_id = ?", gID)

@@ -44,6 +44,28 @@ func (suite *StatsServiceTestSuite) createTestContext() *gin.Context {
 	return c
 }
 
+// createUserContext 创建测试用的普通用户gin context
+func (suite *StatsServiceTestSuite) createUserContext(userID uint) *gin.Context {
+	c, _ := gin.CreateTestContext(nil)
+	c.Set("role", "user")
+	c.Set("user_id", userID)
+	c.Set("data_filter", map[string]interface{}{
+		"user_id": userID,
+	})
+	return c
+}
+
+// createSubAccountContext 创建测试用的子账号gin context
+func (suite *StatsServiceTestSuite) createSubAccountContext(groupID uint) *gin.Context {
+	c, _ := gin.CreateTestContext(nil)
+	c.Set("role", "subaccount")
+	c.Set("group_id", groupID)
+	c.Set("data_filter", map[string]interface{}{
+		"group_id": groupID,
+	})
+	return c
+}
+
 // TestGetGroupStats_Exists 测试获取分组统计 - 存在的分组
 func (suite *StatsServiceTestSuite) TestGetGroupStats_Exists() {
 	// 创建测试数据
@@ -371,6 +393,71 @@ func (suite *StatsServiceTestSuite) TestGetAccountIncomingTrend_DifferentDays() 
 		assert.NotNil(suite.T(), trend)
 		assert.Len(suite.T(), trend, days, "应该返回%d天的数据", days)
 	}
+}
+
+// TestGetOverviewStats_UserFilter 测试获取总览统计 - 用户过滤
+func (suite *StatsServiceTestSuite) TestGetOverviewStats_UserFilter() {
+	// 创建两个用户
+	user1 := CreateTestUser(suite.T(), TestDB, "user")
+	user2 := CreateTestUser(suite.T(), TestDB, "user")
+
+	// 为user1创建2个分组，为user2创建1个分组
+	group1_1 := CreateTestGroup(suite.T(), TestDB, user1.ID, "GROUP1_1")
+	group1_2 := CreateTestGroup(suite.T(), TestDB, user1.ID, "GROUP1_2")
+	group2_1 := CreateTestGroup(suite.T(), TestDB, user2.ID, "GROUP2_1")
+
+	// 为每个分组创建账号
+	account1_1 := CreateTestLineAccount(suite.T(), TestDB, group1_1.ID, "line1_1", "line")
+	account1_2 := CreateTestLineAccount(suite.T(), TestDB, group1_2.ID, "line1_2", "line")
+	account2_1 := CreateTestLineAccount(suite.T(), TestDB, group2_1.ID, "line2_1", "line")
+
+	// 设置账号状态
+	TestDB.Model(account1_1).Update("online_status", "online")
+	TestDB.Model(account2_1).Update("online_status", "online")
+
+	// 创建进线记录
+	CreateTestIncomingLog(suite.T(), TestDB, account1_1.ID, group1_1.ID, "line_id_1", false, "line")
+	CreateTestIncomingLog(suite.T(), TestDB, account1_2.ID, group1_2.ID, "line_id_2", true, "line")
+
+	// 创建联系人记录
+	CreateTestContactPool(suite.T(), TestDB, group1_1.ID, "contact1", "line")
+	CreateTestContactPool(suite.T(), TestDB, group1_2.ID, "contact2", "line")
+
+	// 测试管理员权限（可以看到所有数据）
+	adminStats, err := suite.statsService.GetOverviewStats(suite.createTestContext())
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(3), adminStats["total_groups"], "管理员应该看到3个分组")
+	assert.Equal(suite.T(), int64(3), adminStats["total_accounts"], "管理员应该看到3个账号")
+	assert.Equal(suite.T(), int64(2), adminStats["online_accounts"], "管理员应该看到2个在线账号")
+	assert.Equal(suite.T(), int64(2), adminStats["total_incoming"], "管理员应该看到2条进线")
+	assert.Equal(suite.T(), int64(2), adminStats["total_contacts"], "管理员应该看到2条联系人")
+
+	// 测试普通用户user1的权限（只能看到自己的数据）
+	user1Stats, err := suite.statsService.GetOverviewStats(suite.createUserContext(user1.ID))
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(2), user1Stats["total_groups"], "user1应该看到2个分组")
+	assert.Equal(suite.T(), int64(2), user1Stats["total_accounts"], "user1应该看到2个账号")
+	assert.Equal(suite.T(), int64(1), user1Stats["online_accounts"], "user1应该看到1个在线账号")
+	assert.Equal(suite.T(), int64(2), user1Stats["total_incoming"], "user1应该看到2条进线")
+	assert.Equal(suite.T(), int64(2), user1Stats["total_contacts"], "user1应该看到2条联系人")
+
+	// 测试普通用户user2的权限（只能看到自己的数据）
+	user2Stats, err := suite.statsService.GetOverviewStats(suite.createUserContext(user2.ID))
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(1), user2Stats["total_groups"], "user2应该看到1个分组")
+	assert.Equal(suite.T(), int64(1), user2Stats["total_accounts"], "user2应该看到1个账号")
+	assert.Equal(suite.T(), int64(1), user2Stats["online_accounts"], "user2应该看到1个在线账号")
+	assert.Equal(suite.T(), int64(0), user2Stats["total_incoming"], "user2应该看到0条进线")
+	assert.Equal(suite.T(), int64(0), user2Stats["total_contacts"], "user2应该看到0条联系人")
+
+	// 测试子账号权限（不能查看分组数据，其他数据按分组过滤）
+	subAccountStats, err := suite.statsService.GetOverviewStats(suite.createSubAccountContext(group1_1.ID))
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(0), subAccountStats["total_groups"], "子账号应该看到0个分组")
+	assert.Equal(suite.T(), int64(1), subAccountStats["total_accounts"], "子账号应该看到1个账号")
+	assert.Equal(suite.T(), int64(1), subAccountStats["online_accounts"], "子账号应该看到1个在线账号")
+	assert.Equal(suite.T(), int64(1), subAccountStats["total_incoming"], "子账号应该看到1条进线")
+	assert.Equal(suite.T(), int64(1), subAccountStats["total_contacts"], "子账号应该看到1条联系人")
 }
 
 // TestStatsServiceTestSuite 运行测试套件

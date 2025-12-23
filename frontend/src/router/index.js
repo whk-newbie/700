@@ -93,6 +93,24 @@ const routes = [
         name: 'SubAccountDashboard',
         component: () => import('@/views/admin/Dashboard.vue'),
         meta: { title: '首页' }
+      },
+      {
+        path: '/accounts',
+        name: 'SubAccountList',
+        component: () => import('@/views/admin/AccountList.vue'),
+        meta: { title: '账号列表' }
+      },
+      {
+        path: '/leads',
+        name: 'SubAccountLeads',
+        component: () => import('@/views/admin/LeadsList.vue'),
+        meta: { title: '线索列表' }
+      },
+      {
+        path: '/customers',
+        name: 'SubAccountCustomers',
+        component: () => import('@/views/admin/CustomerList.vue'),
+        meta: { title: '客户列表' }
       }
     ]
   },
@@ -125,9 +143,21 @@ router.beforeEach((to, from, next) => {
       return
     }
 
+    // 检查普通用户权限（普通用户不能访问分组管理）
+    if (authStore.user?.role === 'user' && to.path === '/groups') {
+      next({ name: 'Dashboard' })
+      return
+    }
+
     // 检查子账号权限
     if (to.meta.requiresSubAccount && authStore.user?.role !== 'subaccount') {
       next({ name: 'Dashboard' })
+      return
+    }
+
+    // 子账号不能访问分组管理
+    if (authStore.user?.role === 'subaccount' && to.path === '/groups') {
+      next({ name: 'SubAccountDashboard' })
       return
     }
   } else {

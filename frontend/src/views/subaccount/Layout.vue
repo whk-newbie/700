@@ -10,10 +10,29 @@
         :collapse="isCollapse"
         router
         class="sidebar-menu"
+        :unique-opened="true"
       >
         <el-menu-item index="/subaccount/dashboard">
           <el-icon><HomeFilled /></el-icon>
           <template #title>首页</template>
+        </el-menu-item>
+
+        <!-- 账号管理 -->
+        <el-menu-item index="/accounts">
+          <el-icon><User /></el-icon>
+          <template #title>账号列表</template>
+        </el-menu-item>
+
+        <!-- 数据统计 -->
+        <el-menu-item index="/leads">
+          <el-icon><List /></el-icon>
+          <template #title>线索列表</template>
+        </el-menu-item>
+
+        <!-- 客户管理 -->
+        <el-menu-item index="/customers">
+          <el-icon><Avatar /></el-icon>
+          <template #title>客户列表</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -25,7 +44,7 @@
             <Fold v-else />
           </el-icon>
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/subaccount' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/subaccount/dashboard' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
@@ -58,6 +77,8 @@ import { useAuthStore } from '@/store/auth'
 import {
   HomeFilled,
   Avatar,
+  User,
+  List,
   Expand,
   Fold,
   ArrowDown

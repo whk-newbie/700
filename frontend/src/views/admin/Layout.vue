@@ -25,7 +25,7 @@
             <el-icon><Folder /></el-icon>
             <span>基础管理</span>
           </template>
-          <el-menu-item index="/groups">
+          <el-menu-item v-if="isAdmin" index="/groups">
             <el-icon><FolderOpened /></el-icon>
             <template #title>分组管理</template>
           </el-menu-item>
@@ -175,6 +175,8 @@ const wsStore = useWebSocketStore()
 const isCollapse = ref(false)
 const user = computed(() => authStore.user)
 const isAdmin = computed(() => authStore.isAdmin)
+const isUser = computed(() => authStore.user?.role === 'user')
+const isSubAccount = computed(() => authStore.isSubAccount)
 const wsConnected = computed(() => wsStore.connected)
 
 // 计算当前激活的菜单项（支持二级菜单）

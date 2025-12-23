@@ -81,22 +81,31 @@ func (s *StatsService) GetAccountStats(accountID uint) (*models.LineAccountStats
 // GetOverviewStats 获取总览统计
 func (s *StatsService) GetOverviewStats(c *gin.Context) (map[string]interface{}, error) {
 	var result map[string]interface{} = make(map[string]interface{})
-	
+
 	// 总分组数
 	var totalGroups int64
-	s.db.Model(&models.Group{}).Where("deleted_at IS NULL").Count(&totalGroups)
+	// 检查用户角色，子账号不能查看分组数据
+	role, roleExists := c.Get("role")
+	if roleExists && role == "subaccount" {
+		totalGroups = 0
+	} else {
+		groupsQuery := utils.ApplyDataFilter(c, s.db.Model(&models.Group{}), "groups")
+		groupsQuery.Where("deleted_at IS NULL").Count(&totalGroups)
+	}
 	result["total_groups"] = totalGroups
-	
+
 	// 总账号数
 	var totalAccounts int64
-	s.db.Model(&models.LineAccount{}).Where("deleted_at IS NULL").Count(&totalAccounts)
+	accountsQuery := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
+	accountsQuery.Where("deleted_at IS NULL").Count(&totalAccounts)
 	result["total_accounts"] = totalAccounts
-	
+
 	// 在线账号数
 	var onlineAccounts int64
-	s.db.Model(&models.LineAccount{}).Where("deleted_at IS NULL AND online_status = ?", "online").Count(&onlineAccounts)
+	onlineAccountsQuery := utils.ApplyDataFilter(c, s.db.Model(&models.LineAccount{}), "line_accounts")
+	onlineAccountsQuery.Where("deleted_at IS NULL AND online_status = ?", "online").Count(&onlineAccounts)
 	result["online_accounts"] = onlineAccounts
-	
+
 	// 总进线数（实时计算）
 	var totalIncoming int64
 	incomingQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
@@ -122,12 +131,13 @@ func (s *StatsService) GetOverviewStats(c *gin.Context) (map[string]interface{},
 	todayDuplicateQuery := utils.ApplyDataFilter(c, s.db.Model(&models.IncomingLog{}), "incoming_logs")
 	todayDuplicateQuery.Where("DATE(incoming_time) = ? AND is_duplicate = ?", today, true).Count(&todayDuplicate)
 	result["today_duplicate"] = todayDuplicate
-	
+
 	// 底库总数（GORM会自动处理软删除）
 	var totalContacts int64
-	s.db.Model(&models.ContactPool{}).Count(&totalContacts)
+	contactsQuery := utils.ApplyDataFilter(c, s.db.Model(&models.ContactPool{}), "contact_pool")
+	contactsQuery.Count(&totalContacts)
 	result["total_contacts"] = totalContacts
-	
+
 	return result, nil
 }
 
