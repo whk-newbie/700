@@ -9,7 +9,7 @@ type LoginRequest struct {
 // SubAccountLoginRequest 子账号登录请求
 type SubAccountLoginRequest struct {
 	ActivationCode string `json:"activation_code" binding:"required" example:"ABC123"`
-	Password       string `json:"password" binding:"required" example:"password123"`
+	Password       string `json:"password" binding:"omitempty" example:"password123"`
 }
 
 // LoginResponse 登录响应

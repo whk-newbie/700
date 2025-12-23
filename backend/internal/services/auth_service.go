@@ -102,12 +102,17 @@ func (s *AuthService) LoginSubAccount(req *schemas.SubAccountLoginRequest, ipAdd
 	}
 
 	// 验证密码
+	// 如果分组没有设置密码，允许空密码登录（子账号特性）
 	if group.LoginPassword == "" {
-		return nil, errors.New("该分组未设置登录密码")
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(group.LoginPassword), []byte(req.Password)); err != nil {
-		return nil, errors.New("激活码或密码错误")
+		if req.Password != "" {
+			return nil, errors.New("该分组未设置登录密码，请使用空密码登录")
+		}
+		// 空密码登录成功
+	} else {
+		// 如果设置了密码，需要验证
+		if err := bcrypt.CompareHashAndPassword([]byte(group.LoginPassword), []byte(req.Password)); err != nil {
+			return nil, errors.New("激活码或密码错误")
+		}
 	}
 
 	// 更新最后登录时间
