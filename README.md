@@ -98,20 +98,91 @@ npm run dev
 
 ### Docker部署
 
-1. **使用docker-compose启动所有服务**
+#### 快速部署（推荐）
+
+**使用部署脚本（自动配置数据库密码123456，Redis无密码）：**
+
 ```bash
-docker-compose up -d
+# Linux/macOS
+./deploy.sh
+
+# Windows
+deploy.bat
 ```
 
-2. **查看服务状态**
+#### 手动部署
+
+1. **配置环境变量**
+```bash
+# 创建.env文件
+cat > .env << EOF
+# 数据库配置
+POSTGRES_PASSWORD=123456
+
+# Redis配置（无密码）
+REDIS_PASSWORD=
+
+# JWT配置
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-please
+EOF
+```
+
+2. **启动服务**
+```bash
+# 开发环境
+docker-compose up -d postgres redis backend frontend
+
+# 生产环境
+docker-compose --profile production up -d
+```
+
+#### 生产环境部署
+
+1. **配置环境变量**
+```bash
+# 复制部署环境变量模板
+cp env.deployment.example .env
+
+# 编辑.env文件，设置数据库密码和其他敏感信息
+# 重要：生产环境请修改默认密码！
+```
+
+2. **启动生产环境服务**
+```bash
+docker-compose --profile production up -d
+```
+
+3. **查看服务状态**
 ```bash
 docker-compose ps
 ```
 
-3. **查看日志**
+4. **查看日志**
 ```bash
+# 查看所有服务日志
 docker-compose logs -f
+
+# 查看特定服务日志
+docker-compose logs -f backend
 ```
+
+#### 访问地址
+
+- **开发环境**：
+  - 前端：http://localhost
+  - 后端API：http://localhost:8080
+  - Swagger文档：http://localhost:8080/swagger/index.html
+
+- **生产环境**：
+  - 前端：https://yourdomain.com
+  - 后端API：https://yourdomain.com/api/
+  - Swagger文档：https://yourdomain.com/swagger/index.html
+
+#### 默认管理员账号
+
+- 用户名：`admin`
+- 密码：`admin123`
+- ⚠️ **重要**：首次部署后请立即修改默认密码！
 
 ## 📁 项目结构
 
