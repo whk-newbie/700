@@ -42,6 +42,9 @@ func (h *MessageHandler) SetManager(manager *Manager) {
 
 // HandleMessage 处理消息
 func (h *MessageHandler) HandleMessage(client *Client, message []byte) error {
+	// 收到任何消息都更新心跳时间，表示连接活跃
+	h.manager.UpdateHeartbeat(client.ID, client.Type)
+
 	var msg Message
 	if err := json.Unmarshal(message, &msg); err != nil {
 		return fmt.Errorf("解析消息失败: %w", err)

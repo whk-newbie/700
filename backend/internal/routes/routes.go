@@ -148,11 +148,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	}
 
 	// 健康检查（不需要认证）
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
+	r.GET("/health", handlers.HealthCheck)
 }
 
 // SetupWebSocketRoutes 设置WebSocket路由
