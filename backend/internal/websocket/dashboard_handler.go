@@ -48,7 +48,7 @@ func HandleDashboardConnection(c *gin.Context, manager *Manager) error {
 		UserID:        userClaims.UserID,
 		GroupID:       groupID,
 		Conn:          conn,
-		Send:          make(chan []byte, 256),
+		Send:          make(chan []byte, 1024),
 		LastHeartbeat: time.Now(),
 	}
 

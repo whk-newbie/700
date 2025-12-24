@@ -60,7 +60,7 @@ func HandleClientConnection(c *gin.Context, manager *Manager) error {
 		ActivationCode: activationCode,
 		GroupID:        group.ID,
 		Conn:           conn,
-		Send:           make(chan []byte, 256),
+		Send:           make(chan []byte, 1024),
 		LastHeartbeat:  time.Now(),
 	}
 
@@ -145,13 +145,18 @@ func (c *Client) readPump(manager *Manager) {
 		// 处理消息
 		if err := handler.HandleMessage(c, message); err != nil {
 			logger.Errorf("处理消息失败: %v", err)
-			// 发送错误消息
+			// 通过Send通道发送错误消息，避免并发写入
 			errorMsg := Message{
 				Type:  "error",
 				Error: err.Error(),
 			}
 			errorBytes, _ := json.Marshal(errorMsg)
-			c.Conn.WriteMessage(websocket.TextMessage, errorBytes)
+			select {
+			case c.Send <- errorBytes:
+			default:
+				// 如果Send通道已满，记录错误但不阻塞
+				logger.Warnf("发送错误消息失败，通道已满: %v", err)
+			}
 		}
 	}
 }
