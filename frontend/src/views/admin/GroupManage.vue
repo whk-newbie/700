@@ -317,8 +317,7 @@ import {
   deleteGroup,
   regenerateCode,
   batchDeleteGroups,
-  batchUpdateGroups,
-  generateSubAccountToken
+  batchUpdateGroups
 } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
 import { useAuthStore } from '@/store/auth'
@@ -459,23 +458,15 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-// 查看
-const handleView = async (row) => {
-  try {
-    // 调用接口生成子账户token
-    const res = await generateSubAccountToken(row.id)
-    if (res.code === 1000 && res.data?.token) {
-      // 在新标签页打开子账户登录页面，通过URL参数传递token
-      const baseUrl = window.location.origin
-      const subAccountUrl = `${baseUrl}/subaccount-login?token=${encodeURIComponent(res.data.token)}`
-      window.open(subAccountUrl, '_blank')
-    } else {
-      ElMessage.error(res.message || '生成登录Token失败')
+// 查看 - 跳转到账号列表并筛选对应分组
+const handleView = (row) => {
+  // 跳转到账号列表页面，并传递分组ID作为查询参数
+  router.push({
+    path: '/accounts',
+    query: {
+      group_id: row.id
     }
-  } catch (error) {
-    console.error('打开子账户界面失败:', error)
-    ElMessage.error(error.message || '打开子账户界面失败')
-  }
+  })
 }
 
 // 编辑

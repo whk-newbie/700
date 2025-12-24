@@ -510,6 +510,23 @@ func (h *MessageHandler) pushAccountStatusUpdate(groupID uint, account models.Li
 	logger.Debugf("账号状态更新消息已广播: %s", string(messageBytes))
 }
 
+// PushAccountDelete 推送账号删除消息到前端
+func (h *MessageHandler) PushAccountDelete(groupID uint, accountID uint, lineAccountID string) {
+	logger.Infof("推送账号删除到前端: group_id=%d, account_id=%d, line_account_id=%s", groupID, accountID, lineAccountID)
+	deleteMsg := Message{
+		Type: "account_deleted",
+		Data: map[string]interface{}{
+			"group_id":       groupID,
+			"account_id":     accountID,
+			"line_account_id": lineAccountID,
+			"timestamp":      time.Now().Unix(),
+		},
+	}
+	messageBytes, _ := json.Marshal(deleteMsg)
+	h.manager.BroadcastToGroup(groupID, messageBytes)
+	logger.Debugf("账号删除消息已广播: %s", string(messageBytes))
+}
+
 // pushGroupStatsUpdate 推送分组统计更新到前端看板
 func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
 	logger.Infof("推送分组统计更新到前端: group_id=%d", groupID)

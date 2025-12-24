@@ -255,7 +255,7 @@
             <h1>🔌 WebSocket 接口文档</h1>
             <div class="meta">
                 <strong>版本:</strong> v1.0 | 
-                <strong>更新日期:</strong> 2025-12-21 | 
+                <strong>更新日期:</strong> 2025-12-23 | 
                 <strong>说明:</strong> Windows客户端与服务器的完整交互协议设计
             </div>
         </header>
@@ -452,7 +452,7 @@
   "data": {
     "line_account_id": "@line001",
     "incoming_line_id": "U123456789",
-    "timestamp": "2025-12-21 10:30:00",
+    "timestamp": "2025-12-21T10:30:00Z",
     "display_name": "王五",
     "avatar_url": "https://...",
     "phone_number": "+886999888777"
@@ -578,6 +578,9 @@
     "message": "心跳正常"
   }
 }</code></pre>
+                <div class="note">
+                    <strong>注意:</strong> 前端看板发送的心跳确认消息中不包含 <code>activation_code</code> 字段。
+                </div>
             </div>
             
             <div class="message-type">
@@ -626,13 +629,64 @@
   "data": {
     "line_account_id": "@line001",
     "incoming_line_id": "U123456789",
-    "status": "received"
+    "status": "processed"
   }
 }</code></pre>
             </div>
-            
+
             <div class="message-type">
-                <h4>6. 账号状态更新 (account_status_change)</h4>
+                <h4>6. 客户同步接收确认 (customer_sync_received)</h4>
+                <pre><code>{
+  "type": "customer_sync_received",
+  "data": {
+    "customer_id": "U123456789",
+    "customer_db_id": 1,
+    "status": "processed"
+  }
+}</code></pre>
+            </div>
+
+            <div class="message-type">
+                <h4>7. 跟进记录同步接收确认 (follow_up_sync_received)</h4>
+                <pre><code>{
+  "type": "follow_up_sync_received",
+  "data": {
+    "customer_id": "U123456789",
+    "follow_up_id": 1,
+    "status": "processed"
+  }
+}</code></pre>
+            </div>
+
+            <div class="message-type">
+                <h4>8. 账号状态更新确认 (account_status_updated)</h4>
+                <pre><code>{
+  "type": "account_status_updated",
+  "data": {
+    "line_account_id": "@line001",
+    "online_status": "online",
+    "status": "updated"
+  }
+}</code></pre>
+            </div>
+
+            <div class="message-type">
+                <h4>9. 进线更新广播 (incoming_update)</h4>
+                <p><strong>说明:</strong> 服务器推送新进线客户信息到前端看板</p>
+                <pre><code>{
+  "type": "incoming_update",
+  "data": {
+    "group_id": 1,
+    "line_account_id": 1,
+    "incoming_line_id": "U123456789",
+    "is_duplicate": false,
+    "timestamp": 1703123456
+  }
+}</code></pre>
+            </div>
+
+            <div class="message-type">
+                <h4>10. 账号状态变化广播 (account_status_change)</h4>
                 <p><strong>说明:</strong> 服务器推送账号状态变化到前端看板</p>
                 <pre><code>{
   "type": "account_status_change",
@@ -644,9 +698,27 @@
   }
 }</code></pre>
             </div>
-            
+
             <div class="message-type">
-                <h4>7. 错误消息 (error)</h4>
+                <h4>11. 分组统计更新广播 (group_stats_update)</h4>
+                <p><strong>说明:</strong> 服务器推送分组统计数据更新到前端看板</p>
+                <pre><code>{
+  "type": "group_stats_update",
+  "data": {
+    "group_id": 1,
+    "total_accounts": 10,
+    "online_accounts": 8,
+    "total_incoming": 100,
+    "today_incoming": 50,
+    "duplicate_incoming": 20,
+    "today_duplicate": 5,
+    "timestamp": 1703123456
+  }
+}</code></pre>
+            </div>
+
+            <div class="message-type">
+                <h4>12. 错误消息 (error)</h4>
                 <pre><code>{
   "type": "error",
   "error": "错误描述信息"

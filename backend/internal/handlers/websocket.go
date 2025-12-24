@@ -9,11 +9,12 @@ import (
 )
 
 var wsManager *websocket.Manager
+var messageHandler *websocket.MessageHandler
 
 // InitWebSocketManager 初始化WebSocket管理器
 func InitWebSocketManager() {
 	// 创建消息处理器
-	messageHandler := websocket.NewMessageHandler(nil) // 暂时传nil，后面会设置manager
+	messageHandler = websocket.NewMessageHandler(nil) // 暂时传nil，后面会设置manager
 
 	// 创建客户端断开连接回调函数
 	onClientDisconnect := func(groupID uint, activationCode string) {
@@ -27,6 +28,11 @@ func InitWebSocketManager() {
 	go wsManager.Run()
 	websocket.InitHub(wsManager)
 	logger.Info("WebSocket管理器已启动")
+}
+
+// GetMessageHandler 获取消息处理器
+func GetMessageHandler() *websocket.MessageHandler {
+	return messageHandler
 }
 
 // GetWebSocketManager 获取WebSocket管理器

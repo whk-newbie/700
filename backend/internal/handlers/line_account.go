@@ -5,9 +5,11 @@ import (
 	"strings"
 	"time"
 
+	"line-management/internal/models"
 	"line-management/internal/schemas"
 	"line-management/internal/services"
 	"line-management/internal/utils"
+	"line-management/pkg/database"
 	"line-management/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -260,6 +262,15 @@ func DeleteLineAccount(c *gin.Context) {
 	}
 
 	utils.SuccessWithMessage(c, "删除成功", nil)
+
+	// 获取账号信息用于推送删除消息
+	var deletedAccount models.LineAccount
+	if err := database.GetDB().Unscoped().Where("id = ?", id).First(&deletedAccount).Error; err == nil {
+		// 推送账号删除消息到前端
+		if messageHandler := GetMessageHandler(); messageHandler != nil {
+			messageHandler.PushAccountDelete(deletedAccount.GroupID, deletedAccount.ID, deletedAccount.LineID)
+		}
+	}
 }
 
 // GenerateQRCode 生成二维码

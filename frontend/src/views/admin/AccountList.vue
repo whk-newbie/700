@@ -426,7 +426,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, DocumentCopy } from '@element-plus/icons-vue'
@@ -441,8 +441,12 @@ import {
 } from '@/api/lineAccount'
 import { getGroups } from '@/api/group'
 import { formatDateTime } from '@/utils/format'
+import { useWebSocketStore } from '@/store/websocket'
 
 const route = useRoute()
+
+// WebSocket Store
+const wsStore = useWebSocketStore()
 
 // 数据
 const loading = ref(false)
@@ -999,16 +1003,91 @@ const resetForm = () => {
   }
 }
 
+// 初始化WebSocket消息处理器
+const initWebSocket = () => {
+  wsStore.registerMessageHandler('account-list', (message) => {
+    if (message.type === 'account_status_change') {
+      handleAccountStatusChange(message.data)
+    } else if (message.type === 'incoming_update') {
+      handleIncomingUpdate(message.data)
+    } else if (message.type === 'account_deleted') {
+      handleAccountDeleted(message.data)
+    }
+  })
+}
+
+// 处理账号状态变化消息
+const handleAccountStatusChange = (data) => {
+  const { line_account_id, online_status, group_id } = data
+
+  // 查找对应的账号并更新状态
+  const accountIndex = tableData.value.findIndex(account => account.line_id === line_account_id)
+
+  if (accountIndex !== -1) {
+    // 更新账号状态
+    tableData.value[accountIndex].online_status = online_status
+
+    // 如果状态变为online，更新last_active_at
+    if (online_status === 'online') {
+      tableData.value[accountIndex].last_active_at = new Date().toISOString()
+    }
+
+    console.log(`账号状态已更新: ${line_account_id} -> ${online_status}`)
+  }
+}
+
+// 处理进线更新消息
+const handleIncomingUpdate = (data) => {
+  const { group_id, line_account_id, incoming_line_id, is_duplicate } = data
+
+  // 查找对应的账号并更新进线统计
+  const accountIndex = tableData.value.findIndex(account => account.id === line_account_id)
+
+  if (accountIndex !== -1) {
+    // 更新进线统计
+    const account = tableData.value[accountIndex]
+    account.total_incoming = (account.total_incoming || 0) + 1
+    account.today_incoming = (account.today_incoming || 0) + 1
+    if (is_duplicate) {
+      account.duplicate_incoming = (account.duplicate_incoming || 0) + 1
+    }
+
+    console.log(`账号进线统计已更新: ${account.line_id}, 总进线: ${account.total_incoming}, 今日: ${account.today_incoming}, 重复: ${account.duplicate_incoming}`)
+  }
+}
+
+// 处理账号删除消息
+const handleAccountDeleted = (data) => {
+  const { group_id, account_id, line_account_id } = data
+
+  // 从列表中移除对应的账号
+  const accountIndex = tableData.value.findIndex(account => account.id === account_id)
+  if (accountIndex !== -1) {
+    const deletedAccount = tableData.value[accountIndex]
+    tableData.value.splice(accountIndex, 1)
+
+    // 更新分页总数
+    pagination.total = Math.max(0, pagination.total - 1)
+
+    console.log(`账号已删除并从列表移除: ${deletedAccount.line_id} (ID: ${account_id})`)
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadGroups()
-  
+
   // 如果从分组管理页面跳转过来，自动筛选该分组
   if (route.query.group_id) {
     filterForm.group_id = Number(route.query.group_id)
   }
-  
+
   loadAccounts()
+  initWebSocket()
+})
+
+onUnmounted(() => {
+  wsStore.unregisterMessageHandler('account-list')
 })
 </script>
 

@@ -1,5 +1,7 @@
 # WebSocket功能总结
 
+**最后更新时间：2025-12-23**
+
 ## 概述
 
 本系统的WebSocket模块提供了实时通信功能，支持两种客户端类型（Windows客户端和前端看板）的连接，并实现了多种消息类型的处理和广播机制。
@@ -28,9 +30,9 @@
 
 | 消息类型 | 接收者 | 描述 | 数据结构 |
 |---------|--------|------|----------|
-| `heartbeat_ack` | 所有客户端 | 心跳响应确认 | `{type: "heartbeat_ack", timestamp: 1234567890, data: {status: "ok", message: "心跳正常"}}` |
-| `auth_success` | Windows客户端 | 认证成功 | `{type: "auth_success", data: {group_id: 1, activation_code: "...", message: "..."}}` |
-| `connected` | 前端看板 | 连接成功 | `{type: "connected", data: {user_id: 1, group_id: 1, message: "..."}}` |
+| `heartbeat_ack` | 所有客户端 | 心跳响应确认 | `{type: "heartbeat_ack", activation_code: "...", timestamp: 1234567890, data: {status: "ok", message: "心跳正常"}}` |
+| `auth_success` | Windows客户端 | 认证成功 | `{type: "auth_success", data: {group_id: 1, activation_code: "...", message: "认证成功，请同步Line账号列表"}}` |
+| `connected` | 前端看板 | 连接成功 | `{type: "connected", data: {user_id: 1, group_id: 1, message: "WebSocket连接成功"}}` |
 | `sync_result` | Windows客户端 | 同步结果反馈 | `{type: "sync_result", data: {success: true, created_count: 1, updated_count: 2, accounts: [...]}}` |
 | `incoming_received` | Windows客户端 | 进线消息已接收 | `{type: "incoming_received", data: {line_account_id: "...", incoming_line_id: "...", status: "processed"}}` |
 | `customer_sync_received` | Windows客户端 | 客户同步已接收 | `{type: "customer_sync_received", data: {customer_id: "...", customer_db_id: 1, status: "processed"}}` |
@@ -39,6 +41,7 @@
 | `incoming_update` | 前端看板 | 进线更新广播 | `{type: "incoming_update", data: {group_id: 1, line_account_id: 1, incoming_line_id: "...", is_duplicate: false, timestamp: 1234567890}}` |
 | `account_status_change` | 前端看板 | 账号状态变化广播 | `{type: "account_status_change", data: {line_account_id: "...", online_status: "online", group_id: 1, timestamp: 1234567890}}` |
 | `group_stats_update` | 前端看板 | 分组统计更新 | `{type: "group_stats_update", data: {group_id: 1, total_accounts: 10, online_accounts: 8, total_incoming: 100, today_incoming: 50, duplicate_incoming: 20, today_duplicate: 5, timestamp: 1234567890}}` |
+| `error` | 所有客户端 | 错误消息 | `{type: "error", error: "错误描述信息"}` |
 
 ## 核心功能模块
 
