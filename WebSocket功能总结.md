@@ -38,7 +38,6 @@
 | `customer_sync_received` | Windows客户端 | 客户同步已接收 | `{type: "customer_sync_received", data: {customer_id: "...", customer_db_id: 1, status: "processed"}}` |
 | `follow_up_sync_received` | Windows客户端 | 跟进记录同步已接收 | `{type: "follow_up_sync_received", data: {customer_id: "...", follow_up_id: 1, status: "processed"}}` |
 | `account_status_updated` | Windows客户端 | 账号状态更新确认 | `{type: "account_status_updated", data: {line_account_id: "...", online_status: "online", status: "updated"}}` |
-| `incoming_update` | 前端看板 | 进线更新广播 | `{type: "incoming_update", data: {group_id: 1, line_account_id: 1, incoming_line_id: "...", is_duplicate: false, timestamp: 1234567890}}` |
 | `account_status_change` | 前端看板 | 账号状态变化广播 | `{type: "account_status_change", data: {line_account_id: "...", online_status: "online", group_id: 1, timestamp: 1234567890}}` |
 | `group_stats_update` | 前端看板 | 分组统计更新 | `{type: "group_stats_update", data: {activation_code: "HG66OP88", total_accounts: 10, online_accounts: 8, total_incoming: 100, today_incoming: 50, duplicate_incoming: 20, today_duplicate: 5, timestamp: 1234567890}}` |
 | `account_stats_update` | 前端看板 | 账号统计更新 | `{type: "account_stats_update", data: {line_id: "line_account_123", total_incoming: 50, today_incoming: 25, duplicate_incoming: 10, today_duplicate: 3, timestamp: 1234567890}}` |

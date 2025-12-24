@@ -670,20 +670,6 @@
 }</code></pre>
             </div>
 
-            <div class="message-type">
-                <h4>9. 进线更新广播 (incoming_update)</h4>
-                <p><strong>说明:</strong> 服务器推送新进线客户信息到前端看板</p>
-                <pre><code>{
-  "type": "incoming_update",
-  "data": {
-    "group_id": 1,
-    "line_account_id": 1,
-    "incoming_line_id": "U123456789",
-    "is_duplicate": false,
-    "timestamp": 1703123456
-  }
-}</code></pre>
-            </div>
 
             <div class="message-type">
                 <h4>10. 账号状态变化广播 (account_status_change)</h4>
@@ -700,7 +686,7 @@
             </div>
 
             <div class="message-type">
-                <h4>11. 分组统计更新广播 (group_stats_update)</h4>
+                <h4>10. 分组统计更新广播 (group_stats_update)</h4>
                 <p><strong>说明:</strong> 服务器推送分组统计数据更新到前端看板</p>
                 <pre><code>{
   "type": "group_stats_update",
@@ -718,7 +704,7 @@
             </div>
 
             <div class="message-type">
-                <h4>12. 错误消息 (error)</h4>
+                <h4>11. 错误消息 (error)</h4>
                 <pre><code>{
   "type": "error",
   "error": "错误描述信息"

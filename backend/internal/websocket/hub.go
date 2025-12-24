@@ -43,14 +43,6 @@ func (h *Hub) BroadcastAccountStatusChange(groupID uint, lineAccountID string, o
 	h.broadcast(message)
 }
 
-// BroadcastIncomingUpdate 广播进线更新
-func (h *Hub) BroadcastIncomingUpdate(groupID uint, data map[string]interface{}) {
-	message := Message{
-		Type: "incoming_update",
-		Data: data,
-	}
-	h.broadcast(message)
-}
 
 // BroadcastStatsUpdate 广播统计更新
 func (h *Hub) BroadcastStatsUpdate(groupID uint, stats map[string]interface{}) {

@@ -26,26 +26,11 @@ type MessageHandler struct {
 
 // NewMessageHandler 创建消息处理器
 func NewMessageHandler(manager *Manager) *MessageHandler {
-	// 创建进线更新回调函数
-	updateCallback := func(groupID uint, lineAccountID uint, incomingLineID string, isDuplicate bool) {
-		hub := GetHub()
-		if hub != nil {
-			updateData := map[string]interface{}{
-				"group_id":        groupID,
-				"line_account_id": lineAccountID,
-				"incoming_line_id": incomingLineID,
-				"is_duplicate":    isDuplicate,
-				"timestamp":       time.Now().Unix(),
-			}
-			hub.BroadcastToGroup(groupID, "incoming_update", updateData)
-		}
-	}
-
 	return &MessageHandler{
 		db:               database.GetDB(),
 		groupService:     services.NewGroupService(),
 		lineAccountService: services.NewLineAccountService(),
-		incomingService:  services.NewIncomingService(updateCallback),
+		incomingService:  services.NewIncomingService(nil), // 移除incoming_update回调
 		manager:          manager,
 	}
 }

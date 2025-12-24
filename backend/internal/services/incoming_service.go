@@ -206,10 +206,10 @@ func (s *IncomingService) ProcessIncoming(data *IncomingData, lineAccountID uint
 			}
 		}
 
-		// 6. 推送实时更新到前端看板
-		if s.updateCallback != nil {
-			s.updateCallback(groupID, lineAccountID, data.IncomingLineID, isDuplicate)
-		}
+		// 6. 推送实时更新到前端看板 (已移除incoming_update，使用统计更新替代)
+		// if s.updateCallback != nil {
+		// 	s.updateCallback(groupID, lineAccountID, data.IncomingLineID, isDuplicate)
+		// }
 
 		logger.Infof("进线数据处理完成: GroupID=%d, LineAccountID=%d, IncomingLineID=%s, IsDuplicate=%v",
 			groupID, lineAccountID, data.IncomingLineID, isDuplicate)

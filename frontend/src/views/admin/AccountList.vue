@@ -1008,8 +1008,6 @@ const initWebSocket = () => {
   wsStore.registerMessageHandler('account-list', (message) => {
     if (message.type === 'account_status_change') {
       handleAccountStatusChange(message.data)
-    } else if (message.type === 'incoming_update') {
-      handleIncomingUpdate(message.data)
     } else if (message.type === 'account_stats_update') {
       handleAccountStatsUpdate(message.data)
     } else if (message.type === 'account_deleted') {
@@ -1035,26 +1033,6 @@ const handleAccountStatusChange = (data) => {
     }
 
     console.log(`账号状态已更新: ${line_account_id} -> ${online_status}`)
-  }
-}
-
-// 处理进线更新消息
-const handleIncomingUpdate = (data) => {
-  const { group_id, line_account_id, incoming_line_id, is_duplicate } = data
-
-  // 查找对应的账号并更新进线统计
-  const accountIndex = tableData.value.findIndex(account => account.line_id === line_account_id)
-
-  if (accountIndex !== -1) {
-    // 更新进线统计
-    const account = tableData.value[accountIndex]
-    account.total_incoming = (account.total_incoming || 0) + 1
-    account.today_incoming = (account.today_incoming || 0) + 1
-    if (is_duplicate) {
-      account.duplicate_incoming = (account.duplicate_incoming || 0) + 1
-    }
-
-    console.log(`账号进线统计已更新: ${account.line_id}, 总进线: ${account.total_incoming}, 今日: ${account.today_incoming}, 重复: ${account.duplicate_incoming}`)
   }
 }
 
