@@ -269,6 +269,12 @@ func (h *MessageHandler) handleIncoming(client *Client, message []byte) error {
 		return fmt.Errorf("处理进线数据失败: %w", err)
 	}
 
+	// 推送分组统计更新
+	h.pushGroupStatsUpdate(group.ID)
+
+	// 推送账号统计更新
+	h.pushAccountStatsUpdate(group.ID, lineAccount.ID)
+
 	// 发送确认消息
 	response := Message{
 		Type: "incoming_received",
@@ -531,6 +537,13 @@ func (h *MessageHandler) PushAccountDelete(groupID uint, accountID uint, lineAcc
 func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
 	logger.Infof("推送分组统计更新到前端: group_id=%d", groupID)
 
+	// 获取分组的activation_code
+	var group models.Group
+	if err := h.db.Select("activation_code").Where("id = ? AND deleted_at IS NULL", groupID).First(&group).Error; err != nil {
+		logger.Errorf("获取分组activation_code失败: %v", err)
+		return
+	}
+
 	// 实时计算统计数据
 	stats := h.calculateGroupStats(groupID)
 
@@ -539,7 +552,7 @@ func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
 	updateMsg := Message{
 		Type: "group_stats_update",
 		Data: map[string]interface{}{
-			"group_id":          groupID,
+			"activation_code":   group.ActivationCode,
 			"total_accounts":    stats["total_accounts"],
 			"online_accounts":   stats["online_accounts"],
 			"total_incoming":    stats["total_incoming"],
@@ -552,6 +565,38 @@ func (h *MessageHandler) pushGroupStatsUpdate(groupID uint) {
 	messageBytes, _ := json.Marshal(updateMsg)
 	h.manager.BroadcastToGroup(groupID, messageBytes)
 	logger.Debugf("分组统计更新消息已广播: %s", string(messageBytes))
+}
+
+// pushAccountStatsUpdate 推送账号统计更新到前端看板
+func (h *MessageHandler) pushAccountStatsUpdate(groupID uint, lineAccountID uint) {
+	logger.Infof("推送账号统计更新到前端: group_id=%d, line_account_id=%d", groupID, lineAccountID)
+
+	// 获取账号的line_id
+	var lineAccount models.LineAccount
+	if err := h.db.Select("line_id").Where("id = ? AND deleted_at IS NULL", lineAccountID).First(&lineAccount).Error; err != nil {
+		logger.Errorf("获取账号line_id失败: %v", err)
+		return
+	}
+
+	// 实时计算统计数据
+	stats := h.calculateAccountStats(lineAccountID)
+
+	logger.Infof("账号统计: line_account_id=%d, total_incoming=%d, today_incoming=%d", lineAccountID, stats["total_incoming"], stats["today_incoming"])
+
+	updateMsg := Message{
+		Type: "account_stats_update",
+		Data: map[string]interface{}{
+			"line_id":           lineAccount.LineID,
+			"total_incoming":    stats["total_incoming"],
+			"today_incoming":    stats["today_incoming"],
+			"duplicate_incoming": stats["duplicate_incoming"],
+			"today_duplicate":   stats["today_duplicate"],
+			"timestamp":         time.Now().Unix(),
+		},
+	}
+	messageBytes, _ := json.Marshal(updateMsg)
+	h.manager.BroadcastToGroup(groupID, messageBytes)
+	logger.Debugf("账号统计更新消息已广播: %s", string(messageBytes))
 }
 
 // calculateGroupStats 实时计算分组统计数据
@@ -596,6 +641,49 @@ func (h *MessageHandler) calculateGroupStats(groupID uint) map[string]int64 {
 	// 今日重复数
 	h.db.Model(&models.IncomingLog{}).
 		Where("group_id = ? AND incoming_time >= ? AND is_duplicate = ?", groupID, todayStartTime, true).
+		Count(&count)
+	stats["today_duplicate"] = count
+
+	return stats
+}
+
+// calculateAccountStats 实时计算账号统计数据
+func (h *MessageHandler) calculateAccountStats(lineAccountID uint) map[string]int64 {
+	stats := make(map[string]int64)
+
+	var count int64
+
+	// 获取该账号所属的分组ID，用于计算今日时间范围
+	var lineAccount models.LineAccount
+	if err := h.db.Where("id = ? AND deleted_at IS NULL", lineAccountID).First(&lineAccount).Error; err != nil {
+		logger.Errorf("获取Line账号信息失败: %v", err)
+		return stats
+	}
+
+	// 总进线数
+	h.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ?", lineAccountID).
+		Count(&count)
+	stats["total_incoming"] = count
+
+	// 计算今日时间范围（从重置时间开始）
+	todayStartTime := h.getTodayStartTime(lineAccount.GroupID)
+
+	// 今日进线数（从重置时间开始）
+	h.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND incoming_time >= ?", lineAccountID, todayStartTime).
+		Count(&count)
+	stats["today_incoming"] = count
+
+	// 总重复数
+	h.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND is_duplicate = ?", lineAccountID, true).
+		Count(&count)
+	stats["duplicate_incoming"] = count
+
+	// 今日重复数
+	h.db.Model(&models.IncomingLog{}).
+		Where("line_account_id = ? AND incoming_time >= ? AND is_duplicate = ?", lineAccountID, todayStartTime, true).
 		Count(&count)
 	stats["today_duplicate"] = count
 

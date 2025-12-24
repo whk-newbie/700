@@ -1010,6 +1010,8 @@ const initWebSocket = () => {
       handleAccountStatusChange(message.data)
     } else if (message.type === 'incoming_update') {
       handleIncomingUpdate(message.data)
+    } else if (message.type === 'account_stats_update') {
+      handleAccountStatsUpdate(message.data)
     } else if (message.type === 'account_deleted') {
       handleAccountDeleted(message.data)
     }
@@ -1041,7 +1043,7 @@ const handleIncomingUpdate = (data) => {
   const { group_id, line_account_id, incoming_line_id, is_duplicate } = data
 
   // 查找对应的账号并更新进线统计
-  const accountIndex = tableData.value.findIndex(account => account.id === line_account_id)
+  const accountIndex = tableData.value.findIndex(account => account.line_id === line_account_id)
 
   if (accountIndex !== -1) {
     // 更新进线统计
@@ -1053,6 +1055,24 @@ const handleIncomingUpdate = (data) => {
     }
 
     console.log(`账号进线统计已更新: ${account.line_id}, 总进线: ${account.total_incoming}, 今日: ${account.today_incoming}, 重复: ${account.duplicate_incoming}`)
+  }
+}
+
+// 处理账号统计更新消息
+const handleAccountStatsUpdate = (data) => {
+  const { line_id, total_incoming, today_incoming, duplicate_incoming, today_duplicate } = data
+
+  // 查找对应的账号并更新统计信息
+  const accountIndex = tableData.value.findIndex(account => account.line_id === line_id)
+
+  if (accountIndex !== -1) {
+    // 更新账号的统计信息
+    tableData.value[accountIndex].total_incoming = total_incoming
+    tableData.value[accountIndex].today_incoming = today_incoming
+    tableData.value[accountIndex].duplicate_incoming = duplicate_incoming
+    tableData.value[accountIndex].today_duplicate = today_duplicate
+
+    console.log(`账号统计已更新: ${line_id}`)
   }
 }
 

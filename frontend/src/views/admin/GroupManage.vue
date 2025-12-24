@@ -704,7 +704,7 @@ const initWebSocket = () => {
 // 处理分组统计更新
 const handleGroupStatsUpdate = (data) => {
   // 在表格数据中找到对应的分组并更新统计信息
-  const groupIndex = tableData.value.findIndex(group => group.id === data.group_id)
+  const groupIndex = tableData.value.findIndex(group => group.activation_code === data.activation_code)
   if (groupIndex !== -1) {
     // 更新分组的统计信息
     tableData.value[groupIndex].total_accounts = data.total_accounts
