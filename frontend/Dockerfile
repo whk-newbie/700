@@ -1,6 +1,6 @@
 # 多阶段构建
 # 第一阶段：构建阶段
-FROM node:18-alpine AS builder
+FROM node:latest AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -8,8 +8,8 @@ WORKDIR /app
 # 复制package.json和package-lock.json（如果存在）
 COPY package*.json ./
 
-# 安装依赖
-RUN npm ci --only=production
+# 安装依赖（构建需要dev依赖）
+RUN npm ci
 
 # 复制源代码
 COPY . .
@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # 第二阶段：运行阶段
-FROM nginx:alpine
+FROM nginx:latest
 
 # 复制自定义nginx配置（可选）
 # COPY nginx.conf /etc/nginx/nginx.conf

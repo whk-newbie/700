@@ -23,11 +23,28 @@ cd line-management-system
 
 2. **配置环境变量**
 ```bash
-cp backend/env.example.txt backend/.env
-# 编辑backend/.env文件，设置数据库密码和其他敏感信息
+cp env.deployment.example .env
+# 编辑.env文件，设置：
+# - 数据库密码
+# - 域名（NGINX_DOMAIN=your-domain.com）
+# - 其他敏感信息
 ```
 
-3. **启动服务**
+3. **配置域名（生产环境必需）**
+```bash
+# 在.env文件中设置你的域名
+NGINX_DOMAIN=your-domain.com
+SSL_DOMAIN=your-domain.com  # 可选，默认使用NGINX_DOMAIN
+```
+
+4. **SSL证书（自动生成）**
+```bash
+# SSL证书会在nginx容器启动时自动生成
+# 无需手动操作，系统会自动检测并生成自签名证书
+# 如需使用Let's Encrypt证书，请参考 scripts/generate_ssl.sh
+```
+
+4. **启动服务**
 ```bash
 # 开发环境（前端直接访问）
 docker-compose up -d postgres redis backend frontend
@@ -37,10 +54,14 @@ docker-compose --profile production up -d
 ```
 
 4. **访问应用**
-- 前端：http://localhost
-- 后端API：http://localhost:8080
-- Swagger文档：http://localhost:8080/swagger/index.html
-- WebSocket文档：http://localhost:8080/docs/websocket
+- **开发环境**：
+  - 前端：http://localhost:8081
+  - 后端API：http://localhost:8080
+- **生产环境**（需要配置NGINX_DOMAIN环境变量）：
+  - 前端：https://${NGINX_DOMAIN}
+  - 后端API：https://${NGINX_DOMAIN}/api/v1
+  - Swagger文档：https://${NGINX_DOMAIN}/swagger/index.html
+  - WebSocket文档：https://${NGINX_DOMAIN}/docs/websocket
 
 ### 服务说明
 
@@ -118,12 +139,34 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 ### SSL证书配置
 
-1. 获取Let's Encrypt证书或商业证书
-2. 将证书文件放置在`nginx/ssl/`目录：
+#### 自动生成（推荐，默认方式）
+
+**系统会在nginx容器启动时自动检测并生成自签名证书：**
+- 如果 `nginx/ssl/` 目录中没有证书，会自动生成
+- 证书有效期：365天
+- 域名：从环境变量 `NGINX_DOMAIN` 或 `SSL_DOMAIN` 读取
+
+**⚠️ 注意：** 自签名证书会在浏览器中显示安全警告，这是正常的。点击"高级" -> "继续访问"即可。
+
+#### 使用Let's Encrypt证书（生产环境推荐）
+
+如果需要使用免费的Let's Encrypt证书：
+
+```bash
+# 1. 运行证书生成脚本
+./scripts/generate_ssl.sh
+
+# 2. 选择选项1（Let's Encrypt）
+# 3. 确保域名已解析到服务器IP
+# 4. 证书会自动复制到 nginx/ssl/ 目录
+```
+
+#### 手动配置证书
+
+1. 将证书文件放置在`nginx/ssl/`目录：
    - `fullchain.pem`：完整证书链
    - `privkey.pem`：私钥文件
-3. 更新`nginx/nginx.conf`中的域名配置
-4. 重启nginx服务
+2. 重启nginx服务：`docker-compose --profile production restart nginx`
 
 ## 📈 监控和维护
 

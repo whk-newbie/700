@@ -169,14 +169,15 @@ docker-compose logs -f backend
 #### 访问地址
 
 - **开发环境**：
-  - 前端：http://localhost
+  - 前端：http://localhost:8081
   - 后端API：http://localhost:8080
   - Swagger文档：http://localhost:8080/swagger/index.html
 
-- **生产环境**：
-  - 前端：https://yourdomain.com
-  - 后端API：https://yourdomain.com/api/
-  - Swagger文档：https://yourdomain.com/swagger/index.html
+- **生产环境**（需要配置NGINX_DOMAIN环境变量）：
+  - 前端：https://${NGINX_DOMAIN}
+  - 后端API：https://${NGINX_DOMAIN}/api/v1
+  - Swagger文档：https://${NGINX_DOMAIN}/swagger/index.html
+  - WebSocket文档：https://${NGINX_DOMAIN}/docs/websocket
 
 #### 默认管理员账号
 

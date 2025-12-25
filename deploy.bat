@@ -1,94 +1,94 @@
 @echo off
-REM Line账号管理系统 - Windows部署脚本
-REM 数据库密码: 123456, Redis无密码
+REM Line�˺Ź���ϵͳ - Windows����ű�
+REM ���ݿ�����: 123456, Redis������
 
-echo 🚀 Line账号管理系统部署脚本
-echo 数据库密码: 123456
-echo Redis密码: 无
+echo ?? Line�˺Ź���ϵͳ����ű�
+echo ���ݿ�����: 123456
+echo Redis����: ��
 echo.
 
-REM 检查Docker是否安装
+REM ���Docker�Ƿ�װ
 docker --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Docker 未安装，请先安装 Docker
+    echo ? Docker δ��װ�����Ȱ�װ Docker
     pause
     exit /b 1
 )
 
-REM 检查docker-compose是否安装
+REM ���docker-compose�Ƿ�װ
 docker-compose --version >nul 2>&1
 if errorlevel 1 (
-    echo ❌ docker-compose 未安装，请先安装 docker-compose
+    echo ? docker-compose δ��װ�����Ȱ�װ docker-compose
     pause
     exit /b 1
 )
 
-echo ✅ Docker 环境检查通过
+echo ? Docker �������ͨ��
 
-REM 创建.env文件（如果不存在）
+REM ����.env�ļ�����������ڣ�
 if not exist ".env" (
-    echo 📝 创建 .env 配置文件...
+    echo ?? ���� .env �����ļ�...
     (
-        echo # 数据库配置
+        echo # ���ݿ�����
         echo POSTGRES_PASSWORD=123456
         echo.
-        echo # Redis配置（无密码）
+        echo # Redis���ã������룩
         echo REDIS_PASSWORD=
         echo.
-        echo # JWT配置
+        echo # JWT����
         echo JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-please
         echo.
-        echo # 其他配置
+        echo # ��������
         echo GIN_MODE=release
         echo SERVER_PORT=8080
     ) > .env
-    echo ✅ .env 文件已创建
+    echo ? .env �ļ��Ѵ���
 ) else (
-    echo ℹ️ .env 文件已存在，跳过创建
+    echo ?? .env �ļ��Ѵ��ڣ���������
 )
 
 echo.
-echo 🔧 启动服务...
+echo ?? ��������...
 
-REM 询问用户选择环境
-echo 请选择部署环境：
-echo 1^) 开发环境（前端直接访问）
-echo 2^) 生产环境（带Nginx反向代理）
-set /p choice="请输入选择 (1或2): "
+REM ѯ���û�ѡ�񻷾�
+echo ��ѡ���𻷾���
+echo 1^) ����������ǰ��ֱ�ӷ��ʣ�
+echo 2^) ������������Nginx���������
+set /p choice="������ѡ�� (1��2): "
 
 if "%choice%"=="1" (
-    echo 🚀 启动开发环境...
+    echo ?? ������������...
     docker-compose up -d postgres redis backend frontend
     goto :success
 ) else if "%choice%"=="2" (
-    echo 🚀 启动生产环境...
+    echo ?? ������������...
     docker-compose --profile production up -d
     goto :success
 ) else (
-    echo ❌ 无效选择，退出
+    echo ? ��Чѡ���˳�
     pause
     exit /b 1
 )
 
 :success
 echo.
-echo ✅ 服务启动完成！
-echo ⏳ 等待服务启动...
+echo ? ����������ɣ�
+echo ? �ȴ���������...
 timeout /t 10 /nobreak >nul
 
 echo.
-echo 🔍 检查服务状态...
+echo ?? ������״̬...
 docker-compose ps
 
 echo.
-echo 📋 默认管理员账号：
-echo    用户名: admin
-echo    密码: admin123
-echo ⚠️  重要: 请立即登录并修改默认密码！
+echo ?? Ĭ�Ϲ���Ա�˺ţ�
+echo    �û���: admin
+echo    ����: admin123
+echo ??  ��Ҫ: ��������¼���޸�Ĭ�����룡
 
 echo.
-echo 📖 查看日志: docker-compose logs -f
-echo 🛑 停止服务: docker-compose down
+echo ?? �鿴��־: docker-compose logs -f
+echo ?? ֹͣ����: docker-compose down
 echo.
-echo 🎉 部署完成！
+echo ?? ������ɣ�
 pause

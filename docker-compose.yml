@@ -1,16 +1,16 @@
 services:
   # PostgreSQL数据库
   postgres:
-    image: postgres:15-alpine
-    container_name: line-postgres
+    image: postgres:latest
+    container_name: line-mgmt-postgres
     environment:
       POSTGRES_DB: line_management
       POSTGRES_USER: lineuser
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-linepass}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql
+      - ./backend/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -23,8 +23,8 @@ services:
 
   # Redis缓存
   redis:
-    image: redis:7-alpine
-    container_name: line-redis
+    image: redis:latest
+    container_name: line-mgmt-redis
     command: >
       sh -c "if [ -n \"$REDIS_PASSWORD\" ]; then
         redis-server --appendonly yes --requirepass $REDIS_PASSWORD
@@ -48,7 +48,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: line-backend
+    container_name: line-mgmt-backend
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -83,9 +83,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: line-frontend
+    container_name: line-mgmt-frontend
     ports:
-      - "80:80"
+      - "8081:80"  # 开发环境使用8081端口，生产环境通过nginx访问
     depends_on:
       - backend
     restart: unless-stopped
@@ -94,14 +94,18 @@ services:
 
   # Nginx反向代理（可选，用于生产环境）
   nginx:
-    image: nginx:alpine
-    container_name: line-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: line-mgmt-nginx
+    environment:
+      NGINX_DOMAIN: ${NGINX_DOMAIN:-localhost}
+      SSL_DOMAIN: ${SSL_DOMAIN:-${NGINX_DOMAIN:-localhost}}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/ssl:/etc/nginx/ssl
       - nginx_logs:/var/log/nginx
     depends_on:
       - backend

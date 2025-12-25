@@ -12,6 +12,7 @@ import (
 	"line-management/internal/config"
 	"line-management/internal/handlers"
 	"line-management/internal/middleware"
+	"line-management/internal/models"
 	"line-management/internal/routes"
 	"line-management/internal/scheduler"
 	"line-management/pkg/database"
@@ -19,6 +20,8 @@ import (
 	"line-management/pkg/redis"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"github.com/spf13/viper"
 )
 
@@ -51,6 +54,9 @@ func main() {
 	if err := database.InitDB(); err != nil {
 		log.Fatalf("初始化数据库失败: %v", err)
 	}
+
+	// 初始化admin用户
+	initAdminUser()
 
 	// 初始化Redis
 	if err := redis.InitRedis(); err != nil {
@@ -130,4 +136,44 @@ func main() {
 	}
 
 	fmt.Println("服务器已关闭")
+}
+
+// initAdminUser 初始化admin用户
+func initAdminUser() {
+	db := database.GetDB()
+	
+	var user models.User
+	result := db.Where("username = ?", "admin").First(&user)
+
+	password := "admin123"
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		logger.Errorf("生成密码哈希失败: %v", err)
+		return
+	}
+
+	if result.Error == nil {
+		// admin用户已存在，更新密码
+		if err := db.Model(&user).Update("password_hash", string(hash)).Error; err != nil {
+			logger.Errorf("更新admin用户密码失败: %v", err)
+			return
+		}
+		logger.Infof("Admin用户密码已更新 (用户名: admin, 密码: admin123)")
+	} else if result.Error == gorm.ErrRecordNotFound {
+		// admin用户不存在，创建新用户
+		adminUser := models.User{
+			Username:     "admin",
+			PasswordHash: string(hash),
+			Role:         "admin",
+			IsActive:     true,
+		}
+
+		if err := db.Create(&adminUser).Error; err != nil {
+			logger.Errorf("创建admin用户失败: %v", err)
+			return
+		}
+		logger.Infof("Admin用户创建成功 (用户名: admin, 密码: admin123)")
+	} else {
+		logger.Errorf("查询admin用户失败: %v", result.Error)
+	}
 }

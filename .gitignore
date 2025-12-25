@@ -47,6 +47,9 @@ backend/.env
 backend/.env.local
 backend/.env.*.local
 backend/env.example.txt
+.env
+.env.local
+.env.*.local
 
 # 日志文件
 backend/logs/

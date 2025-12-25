@@ -1,18 +1,22 @@
 # 多阶段构建
 # 第一阶段：构建阶段
-FROM golang:1.21-alpine AS builder
+FROM golang:alpine AS builder
+
+# 设置Go代理（使用国内镜像源）
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=sum.golang.google.cn
 
 # 设置工作目录
 WORKDIR /app
 
 # 安装构建依赖
-RUN apk add --no-cache git
+RUN apk add --no-cache git ca-certificates
 
 # 复制go mod文件
 COPY go.mod go.sum ./
 
-# 下载依赖
-RUN go mod download
+# 下载依赖（增加超时和重试）
+RUN go mod download || go mod download
 
 # 复制源代码
 COPY . .
@@ -40,9 +44,9 @@ RUN mkdir -p /root/logs
 # 暴露端口
 EXPOSE 8080
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+# 健康检查（使用wget或curl）
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health 2>/dev/null || exit 1
 
 # 启动应用
 CMD ["./main"]
