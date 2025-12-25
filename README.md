@@ -104,10 +104,10 @@ npm run dev
 
 ```bash
 # Linux/macOS
-./deploy.sh
+./scripts/deploy.sh
 
 # Windows
-deploy.bat
+scripts/deploy.bat
 ```
 
 #### 手动部署
