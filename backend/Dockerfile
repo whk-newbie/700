@@ -18,8 +18,14 @@ COPY go.mod go.sum ./
 # 下载依赖（增加超时和重试）
 RUN go mod download || go mod download
 
+# 安装swag工具用于生成Swagger文档
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # 复制源代码
 COPY . .
+
+# 生成Swagger文档
+RUN swag init -g cmd/server/main.go -o docs || echo "Warning: swag init failed, using existing docs"
 
 # 构建应用
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
