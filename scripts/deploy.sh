@@ -14,13 +14,21 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# 检查docker-compose是否安装
-if ! command -v docker-compose &> /dev/null; then
+# 检查docker-compose是否安装（支持新旧版本）
+DOCKER_COMPOSE_CMD=""
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+else
     echo "[错误] docker-compose 未安装，请先安装 docker-compose"
+    echo "   安装方法: sudo apt-get install docker-compose"
+    echo "   或使用新版本: Docker Desktop 已包含 docker compose 插件"
     exit 1
 fi
 
 echo "[成功] Docker 环境检查通过"
+echo "[信息] 使用命令: $DOCKER_COMPOSE_CMD"
 
 # 创建.env文件（如果不存在）
 if [ ! -f ".env" ]; then
@@ -79,7 +87,7 @@ read -p "请输入选择 (1或2): " choice
 case $choice in
     1)
         echo "[信息] 启动开发环境..."
-        docker-compose up -d --build postgres redis backend frontend
+        $DOCKER_COMPOSE_CMD up -d --build postgres redis backend frontend
         echo ""
         echo "[成功] 开发环境启动完成！"
         echo "前端访问: http://localhost:8081"
@@ -101,7 +109,7 @@ case $choice in
         echo "[信息] 启动生产环境..."
         echo "   - 自动生成SSL证书"
         echo "   - 配置Nginx反向代理"
-        docker-compose --profile production up -d --build
+        $DOCKER_COMPOSE_CMD --profile production up -d --build
         echo ""
         echo "[成功] 生产环境启动完成！"
         
@@ -135,7 +143,7 @@ sleep 15
 
 echo ""
 echo "[信息] 检查服务状态..."
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 
 echo ""
 echo "默认管理员账号："
@@ -145,10 +153,10 @@ echo "[重要] 请立即登录并修改默认密码！"
 
 echo ""
 echo "常用命令："
-echo "   查看日志: docker-compose logs -f"
-echo "   查看特定服务日志: docker-compose logs -f backend"
-echo "   重启服务: docker-compose restart [service_name]"
-echo "   停止服务: docker-compose down"
-echo "   停止并删除数据: docker-compose down -v"
+echo "   查看日志: $DOCKER_COMPOSE_CMD logs -f"
+echo "   查看特定服务日志: $DOCKER_COMPOSE_CMD logs -f backend"
+echo "   重启服务: $DOCKER_COMPOSE_CMD restart [service_name]"
+echo "   停止服务: $DOCKER_COMPOSE_CMD down"
+echo "   停止并删除数据: $DOCKER_COMPOSE_CMD down -v"
 echo ""
 echo "[成功] 部署完成！"
