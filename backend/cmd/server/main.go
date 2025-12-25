@@ -30,9 +30,14 @@ import (
 // @version 1.0
 // @description Line账号分组管理与进线统计系统API
 //
-// ## WebSocket 接口文档
-// 由于 Swagger 主要支持 REST API，WebSocket 接口无法在此界面直接测试。
-// 详细的 WebSocket 接口文档请访问：http://localhost:8080/docs/websocket
+// ## 📚 相关文档
+//
+// - **WebSocket 接口文档**: 由于 Swagger 主要支持 REST API，WebSocket 接口无法在此界面直接测试。
+//   详细的 WebSocket 接口文档请访问：[WebSocket文档](/docs/websocket) 或 [静态文档](/static/websocket-docs.html)
+//
+//   WebSocket 连接端点：
+//   - Windows客户端: `ws://{host}/api/ws/client?activation_code={code}&token={token}`
+//   - 前端看板: `ws://{host}/api/ws/dashboard` (需要在Header中传递JWT Token)
 //
 // @host localhost:8080
 // @BasePath /api/v1
