@@ -38,6 +38,9 @@ WORKDIR /root/
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/main .
 
+# 复制static目录（包含websocket文档和二维码等）
+COPY --from=builder /app/static ./static
+
 # 创建日志目录
 RUN mkdir -p /root/logs
 

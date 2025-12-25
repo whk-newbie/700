@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"line-management/docs"
 	"line-management/internal/config"
 	"line-management/internal/handlers"
 	"line-management/internal/middleware"
@@ -97,6 +98,18 @@ func main() {
 
 	// Swagger文档
 	if viper.GetBool("swagger.enable") {
+		// 动态设置Swagger Host（根据环境变量或请求头）
+		swaggerHost := viper.GetString("swagger.host")
+		if swaggerHost == "" || swaggerHost == "localhost:8080" {
+			// 尝试从环境变量获取域名
+			if domain := os.Getenv("NGINX_DOMAIN"); domain != "" && domain != "localhost" {
+				swaggerHost = domain
+			} else {
+				swaggerHost = "localhost:8080"
+			}
+		}
+		// 更新SwaggerInfo的Host
+		docs.SwaggerInfo.Host = swaggerHost
 		routes.SetupSwagger(r)
 	}
 
