@@ -15,7 +15,7 @@ import (
 // @Tags 系统
 // @Accept json
 // @Produce json
-// @Success 200 {object} response.Response{data=HealthStatus}
+// @Success 200 {object} utils.Response{data=HealthStatus}
 // @Router /health [get]
 func HealthCheck(c *gin.Context) {
 	status := HealthStatus{

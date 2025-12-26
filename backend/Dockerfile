@@ -24,6 +24,9 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 # 复制源代码
 COPY . .
 
+# 下载Go依赖（确保所有依赖都可用）
+RUN go mod download
+
 # 生成Swagger文档
 RUN swag init -g cmd/server/main.go -o docs || echo "Warning: swag init failed, using existing docs"
 
@@ -38,6 +41,11 @@ RUN apk --no-cache add ca-certificates tzdata go
 
 # 设置时区
 ENV TZ=Asia/Shanghai
+
+# 设置Go环境变量
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GOSUMDB=sum.golang.google.cn
+ENV GO111MODULE=on
 
 WORKDIR /root/
 
