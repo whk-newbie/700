@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -193,6 +194,7 @@ func (s *RSAService) Decrypt(encryptedData string) (string, error) {
 
 	// RSA解密（使用OAEP填充）
 	plaintext, err := rsa.DecryptOAEP(
+		sha256.New(),
 		rand.Reader,
 		s.privateKey,
 		ciphertext,

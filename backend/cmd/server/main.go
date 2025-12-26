@@ -61,6 +61,9 @@ func main() {
 		log.Fatalf("初始化数据库失败: %v", err)
 	}
 
+	// 注意：数据库迁移已在 Docker 容器启动时通过 db-migrate 服务自动执行
+	// 迁移文件位于 backend/migrations/ 目录
+
 	// 初始化admin用户
 	initAdminUser()
 

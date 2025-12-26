@@ -53,3 +53,20 @@ export const proxyOpenAIAPI = (data) => {
   return request.post('/llm/proxy/openai', data)
 }
 
+/**
+ * 获取LLM调用日志列表
+ * @param {object} params - 查询参数
+ * @param {number} params.page - 页码
+ * @param {number} params.page_size - 每页数量
+ * @param {number} params.config_id - 配置ID（可选）
+ * @param {number} params.template_id - 模板ID（可选）
+ * @param {number} params.group_id - 分组ID（可选）
+ * @param {string} params.activation_code - 激活码（可选）
+ * @param {string} params.status - 状态：success/error（可选）
+ * @param {string} params.start_time - 开始时间（可选）
+ * @param {string} params.end_time - 结束时间（可选）
+ */
+export const getLLMCallLogs = (params) => {
+  return request.get('/admin/llm/call-logs', { params })
+}
+

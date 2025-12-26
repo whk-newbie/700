@@ -93,6 +93,9 @@ case $choice in
         $DOCKER_COMPOSE_CMD up -d --build postgres redis backend frontend
         echo ""
         echo "[成功] 开发环境启动完成！"
+        echo ""
+        echo "[提示] 数据库迁移会在后端服务启动时自动执行"
+        echo "   查看迁移日志: docker-compose logs backend | grep -i migration"
         echo "前端访问: http://localhost:8081"
         echo "后端API: http://localhost:8080"
         echo "API文档: http://localhost:8080/swagger/index.html"
@@ -112,9 +115,13 @@ case $choice in
         echo "[信息] 启动生产环境..."
         echo "   - 自动生成SSL证书"
         echo "   - 配置Nginx反向代理"
+        echo "   - 自动执行数据库迁移"
         $DOCKER_COMPOSE_CMD --profile production up -d --build
         echo ""
         echo "[成功] 生产环境启动完成！"
+        echo ""
+        echo "[提示] 数据库迁移会在后端服务启动时自动执行"
+        echo "   查看迁移日志: docker-compose logs backend | grep -i migration"
         
         # 显示访问地址
         if [ -f ".env" ]; then

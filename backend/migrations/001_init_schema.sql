@@ -265,9 +265,10 @@ CREATE INDEX IF NOT EXISTS idx_llm_configs_provider ON llm_configs(provider);
 CREATE INDEX IF NOT EXISTS idx_llm_configs_is_active ON llm_configs(is_active);
 
 -- 1.11 llm_prompt_templates table
+-- 注意：此表已废弃，保留用于历史数据兼容，不再使用外键约束
 CREATE TABLE IF NOT EXISTS llm_prompt_templates (
     id SERIAL PRIMARY KEY,
-    config_id INTEGER NOT NULL REFERENCES llm_configs(id) ON DELETE CASCADE,
+    config_id INTEGER,
     template_name VARCHAR(100) NOT NULL,
     template_content TEXT NOT NULL,
     variables JSONB,
@@ -281,10 +282,11 @@ CREATE INDEX IF NOT EXISTS idx_prompt_templates_config ON llm_prompt_templates(c
 CREATE INDEX IF NOT EXISTS idx_prompt_templates_active ON llm_prompt_templates(is_active);
 
 -- 1.12 llm_call_logs table
+-- 注意：config_id 和 template_id 不使用外键约束，以支持简化的配置管理
 CREATE TABLE IF NOT EXISTS llm_call_logs (
     id BIGSERIAL PRIMARY KEY,
-    config_id INTEGER REFERENCES llm_configs(id),
-    template_id INTEGER REFERENCES llm_prompt_templates(id),
+    config_id INTEGER,
+    template_id INTEGER,
     group_id INTEGER REFERENCES groups(id),
     activation_code VARCHAR(32),
     request_messages JSONB NOT NULL,

@@ -44,38 +44,6 @@
       <!-- 筛选区域 -->
       <div class="filter-section">
         <el-form :model="filterForm" :inline="true" class="filter-form">
-          <el-form-item label="配置">
-            <el-select
-              v-model="filterForm.config_id"
-              placeholder="全部"
-              clearable
-              filterable
-              style="width: 200px"
-            >
-              <el-option
-                v-for="config in configList"
-                :key="config.id"
-                :label="config.name"
-                :value="config.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="模板">
-            <el-select
-              v-model="filterForm.template_id"
-              placeholder="全部"
-              clearable
-              filterable
-              style="width: 200px"
-            >
-              <el-option
-                v-for="template in templateList"
-                :key="template.id"
-                :label="template.template_name"
-                :value="template.id"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item label="激活码">
             <el-input
               v-model="filterForm.activation_code"
@@ -131,14 +99,14 @@
         empty-text="暂无数据"
       >
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="config_id" label="配置" width="150" show-overflow-tooltip>
+        <el-table-column prop="config_id" label="配置ID" width="100">
           <template #default="{ row }">
-            {{ getConfigName(row.config_id) }}
+            {{ row.config_id || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="template_id" label="模板" width="150" show-overflow-tooltip>
+        <el-table-column prop="template_id" label="模板ID" width="100">
           <template #default="{ row }">
-            {{ row.template_id ? getTemplateName(row.template_id) : '-' }}
+            {{ row.template_id || '-' }}
           </template>
         </el-table-column>
         <el-table-column prop="activation_code" label="激活码" width="120">
@@ -208,11 +176,11 @@
               <el-descriptions-item label="ID">
                 {{ currentLog.id }}
               </el-descriptions-item>
-              <el-descriptions-item label="配置">
-                {{ getConfigName(currentLog.config_id) }}
+              <el-descriptions-item label="配置ID">
+                {{ currentLog.config_id || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="模板">
-                {{ currentLog.template_id ? getTemplateName(currentLog.template_id) : '-' }}
+              <el-descriptions-item label="模板ID">
+                {{ currentLog.template_id || '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="激活码">
                 <el-tag v-if="currentLog.activation_code" type="info" size="small">
@@ -291,17 +259,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
-import { getLLMCallLogs, getLLMConfigs, getLLMTemplates } from '@/api/llm'
+import { getLLMCallLogs } from '@/api/llm'
 import { formatDateTime, formatNumber } from '@/utils/format'
 
 // 数据
 const loading = ref(false)
 const tableData = ref([])
-const configList = ref([])
-const templateList = ref([])
 const pagination = reactive({
   page: 1,
   pageSize: 10,
@@ -319,8 +285,6 @@ const stats = reactive({
 
 // 筛选表单
 const filterForm = reactive({
-  config_id: null,
-  template_id: null,
   activation_code: '',
   status: '',
   start_time: '',
@@ -336,43 +300,6 @@ const requestMessagesText = ref('')
 const requestParamsText = ref('')
 const responseDataText = ref('')
 
-// 获取配置名称
-const getConfigName = (configId) => {
-  if (!configId) return '-'
-  const config = configList.value.find(c => c.id === configId)
-  return config ? config.name : `配置ID: ${configId}`
-}
-
-// 获取模板名称
-const getTemplateName = (templateId) => {
-  if (!templateId) return '-'
-  const template = templateList.value.find(t => t.id === templateId)
-  return template ? template.template_name : `模板ID: ${templateId}`
-}
-
-// 获取配置列表
-const fetchConfigs = async () => {
-  try {
-    const res = await getLLMConfigs({ page: 1, page_size: 100 })
-    if (res.code === 1000) {
-      configList.value = res.data.list || []
-    }
-  } catch (error) {
-    console.error('获取配置列表失败:', error)
-  }
-}
-
-// 获取模板列表
-const fetchTemplates = async () => {
-  try {
-    const res = await getLLMTemplates({ page: 1, page_size: 100 })
-    if (res.code === 1000) {
-      templateList.value = res.data.list || []
-    }
-  } catch (error) {
-    console.error('获取模板列表失败:', error)
-  }
-}
 
 // 获取调用记录列表
 const fetchLogs = async () => {
@@ -448,8 +375,6 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
-  filterForm.config_id = null
-  filterForm.template_id = null
   filterForm.activation_code = ''
   filterForm.status = ''
   filterForm.start_time = ''
@@ -530,8 +455,6 @@ const handleViewDetail = (row) => {
 
 // 初始化
 onMounted(() => {
-  fetchConfigs()
-  fetchTemplates()
   fetchLogs()
 })
 </script>

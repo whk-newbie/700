@@ -121,11 +121,18 @@ echo ✅ 开发环境启动完成！
 echo 📱 前端访问: http://localhost:8081
 echo 🔗 后端API: http://localhost:8080
 echo 📖 API文档: http://localhost:8080/swagger/index.html
+echo.
+echo 💡 提示: 数据库迁移会在后端服务启动时自动执行
+echo    查看迁移日志: docker-compose logs backend ^| findstr /i migration
 goto :end
 
 :success_prod
 echo.
 echo ✅ 生产环境启动完成！
+echo.
+echo 💡 提示: 数据库迁移会在后端服务启动时自动执行
+echo    查看迁移日志: docker-compose logs backend ^| findstr /i migration
+echo.
 
 REM 显示访问地址
 if exist ".env" (

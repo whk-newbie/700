@@ -10,8 +10,7 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./backend/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql:ro
-      - ./backend/migrations/003_simplify_llm_configs.sql:/docker-entrypoint-initdb.d/003_simplify_llm_configs.sql:ro
+      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -21,6 +20,40 @@ services:
       retries: 5
     networks:
       - line-network
+
+  # 数据库迁移执行器（每次启动都执行）
+  db-migrate:
+    image: postgres:latest
+    container_name: line-mgmt-db-migrate
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: line_management
+      PGUSER: lineuser
+      PGPASSWORD: ${POSTGRES_PASSWORD:-linepass}
+    volumes:
+      - ./backend/migrations:/migrations:ro
+    command: >
+      sh -c "
+        echo '等待 PostgreSQL 启动...';
+        until pg_isready -h postgres -U lineuser -d line_management; do
+          sleep 1;
+        done;
+        echo 'PostgreSQL 已就绪，开始执行迁移...';
+        for sql_file in /migrations/*.sql; do
+          if [ -f \"$$sql_file\" ]; then
+            echo \"执行迁移文件: $$sql_file\";
+            psql -h postgres -U lineuser -d line_management -f \"$$sql_file\" || echo \"警告: 迁移文件执行失败或已存在，继续执行下一个\";
+          fi;
+        done;
+        echo '所有迁移执行完成';
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - line-network
+    restart: "no"  # 只执行一次，不重启
 
   # Redis缓存
   redis:
@@ -72,6 +105,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     volumes:

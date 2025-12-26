@@ -7,6 +7,7 @@ import (
 	"line-management/internal/utils"
 	"line-management/pkg/logger"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -220,10 +221,21 @@ func ProxyOpenAIAPI(c *gin.Context) {
 		return
 	}
 
+	// 记录开始时间
+	startTime := time.Now()
+
 	// 转发请求到OpenAI API（使用默认的OpenAI API URL和超时时间）
 	apiURL := "https://api.openai.com/v1"
 	timeoutSeconds := 30
 	response, err := services.ProxyToOpenAI(apiURL, apiKey, requestBody, timeoutSeconds)
+	
+	// 计算耗时
+	duration := time.Since(startTime)
+
+	// 记录调用日志
+	llmService := services.NewLLMService()
+	llmService.RecordProxyCallLog(c, config, req, response, err, duration)
+
 	if err != nil {
 		logger.Errorf("转发OpenAI API请求失败: %v", err)
 		utils.ErrorWithErrorCode(c, 7001, "转发请求失败: "+err.Error(), "proxy_failed")

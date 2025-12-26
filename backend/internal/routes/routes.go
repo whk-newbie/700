@@ -124,6 +124,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 			llmConfigs.GET("/openai-key", handlers.GetOpenAIAPIKey)
 			llmConfigs.PUT("/openai-key", handlers.UpdateOpenAIAPIKey)
 			llmConfigs.GET("/rsa-public-key", handlers.GetRSAPublicKey) // 获取RSA公钥用于前端加密
+			llmConfigs.GET("/call-logs", handlers.GetLLMCallLogs)        // 获取调用日志列表
 		}
 
 	}
