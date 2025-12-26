@@ -31,10 +31,10 @@ export const updateOpenAIAPIKey = async (apiKey) => {
     if (!publicKeyPEM || !validatePublicKey(publicKeyPEM)) {
       throw new Error('获取的RSA公钥格式无效')
     }
-    
+
     // 2. 使用RSA公钥加密API Key
     const encryptedAPIKey = await encryptWithRSA(apiKey, publicKeyPEM)
-    
+
     // 3. 发送加密后的API Key
     return request.put('/admin/llm/openai-key', {
       encrypted_api_key: encryptedAPIKey
