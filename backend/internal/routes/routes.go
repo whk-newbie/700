@@ -100,10 +100,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 		// 大模型调用路由（所有认证用户可用）
 		llm := api.Group("/llm")
 		{
-			llm.GET("/configs", handlers.GetLLMConfigsPublic)
-			llm.POST("/call", handlers.CallLLM)
-			llm.POST("/call-template", handlers.CallLLMWithTemplate)
-			llm.GET("/templates", handlers.GetTemplatesPublic)
+			llm.POST("/proxy/openai", handlers.ProxyOpenAIAPI) // OpenAI API转发接口
 		}
 	}
 
@@ -121,30 +118,14 @@ func SetupRoutes(r *gin.RouterGroup) {
 			users.DELETE("/:id", handlers.DeleteUser)
 		}
 
-		// 大模型配置管理路由
-		llmConfigs := admin.Group("/llm/configs")
+		// 大模型配置管理路由（简化版，只管理OpenAI API Key）
+		llmConfigs := admin.Group("/llm")
 		{
-			llmConfigs.GET("", handlers.GetLLMConfigs)
-			llmConfigs.POST("", handlers.CreateLLMConfig)
-			llmConfigs.PUT("/:id", handlers.UpdateLLMConfig)
-			llmConfigs.DELETE("/:id", handlers.DeleteLLMConfig)
-			llmConfigs.POST("/:id/test", handlers.TestLLMConfig)
+			llmConfigs.GET("/openai-key", handlers.GetOpenAIAPIKey)
+			llmConfigs.PUT("/openai-key", handlers.UpdateOpenAIAPIKey)
+			llmConfigs.GET("/rsa-public-key", handlers.GetRSAPublicKey) // 获取RSA公钥用于前端加密
 		}
 
-		// Prompt模板管理路由
-		llmTemplates := admin.Group("/llm/templates")
-		{
-			llmTemplates.GET("", handlers.GetPromptTemplates)
-			llmTemplates.POST("", handlers.CreatePromptTemplate)
-			llmTemplates.PUT("/:id", handlers.UpdatePromptTemplate)
-			llmTemplates.DELETE("/:id", handlers.DeletePromptTemplate)
-		}
-
-		// 大模型调用记录路由
-		llmLogs := admin.Group("/llm/call-logs")
-		{
-			llmLogs.GET("", handlers.GetLLMCallLogs)
-		}
 	}
 
 	// 健康检查（不需要认证）

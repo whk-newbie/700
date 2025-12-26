@@ -11,6 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./backend/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_init_schema.sql:ro
+      - ./backend/migrations/003_simplify_llm_configs.sql:/docker-entrypoint-initdb.d/003_simplify_llm_configs.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -62,6 +63,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       REDIS_DB: 0
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-default-encryption-key-32-bytes-long!!}
+      RSA_KEYS_DIR: /root/keys  # RSA密钥目录（Docker环境）
       GIN_MODE: release
       SERVER_PORT: 8080
     ports:
@@ -73,6 +76,7 @@ services:
         condition: service_healthy
     volumes:
       - backend_static:/app/static
+      - backend_keys:/root/keys  # RSA密钥目录，持久化存储
       - ./backend/.env:/app/.env:ro
     restart: unless-stopped
     networks:
@@ -123,6 +127,8 @@ volumes:
     driver: local
   backend_static:
     driver: local
+  backend_keys:
+    driver: local  # RSA密钥持久化存储
   nginx_logs:
     driver: local
 

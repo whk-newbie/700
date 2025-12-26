@@ -48,6 +48,9 @@ if not exist ".env" (
         echo SSL_DOMAIN=%domain%
         if "%domain%"=="" echo SSL_DOMAIN=localhost
         echo.
+        echo # 加密配置
+        echo ENCRYPTION_KEY=your-32-byte-encryption-key-here-change-this!!
+        echo.
         echo # 其他配置
         echo GIN_MODE=release
         echo SERVER_PORT=8080
@@ -153,10 +156,21 @@ echo 🔍 检查服务状态...
 docker-compose ps
 
 echo.
+echo 🔐 RSA密钥说明：
+echo    - RSA密钥会在首次启动时自动生成
+echo    - 密钥存储在Docker volume中，容器重启不会丢失
+echo    - 如需查看密钥，请参考 DOCKER_RSA_KEYS.md
+
+echo.
 echo 📋 默认管理员账号：
 echo    用户名: admin
 echo    密码: admin123
 echo ⚠️  重要: 请立即登录并修改默认密码！
+
+echo.
+echo 🤖 OpenAI API Key配置：
+echo    - 登录管理后台后，在"大模型配置"中配置OpenAI API Key
+echo    - API Key使用RSA加密传输，确保安全
 
 echo.
 echo 📖 查看日志: docker-compose logs -f

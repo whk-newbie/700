@@ -47,8 +47,11 @@ COPY --from=builder /app/main .
 # 复制static目录（包含websocket文档和二维码等）
 COPY --from=builder /app/static ./static
 
-# 创建日志目录
-RUN mkdir -p /root/logs
+# 创建日志目录和RSA密钥目录
+RUN mkdir -p /root/logs /root/keys
+
+# 设置keys目录权限（确保应用可以写入）
+RUN chmod 755 /root/keys
 
 # 暴露端口
 EXPOSE 8080

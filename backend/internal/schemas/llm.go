@@ -1,87 +1,19 @@
 package schemas
 
-// LLMConfigQueryParams LLM配置查询参数
-type LLMConfigQueryParams struct {
-	Page     int    `form:"page" binding:"omitempty,min=1"`
-	PageSize int    `form:"page_size" binding:"omitempty,min=1,max=100"`
-	Provider string `form:"provider" binding:"omitempty"`
-	IsActive *bool  `form:"is_active"`
-	Search   string `form:"search"`
+// UpdateOpenAIAPIKeyRequest 更新OpenAI API Key请求（API Key已使用RSA加密）
+type UpdateOpenAIAPIKeyRequest struct {
+	EncryptedAPIKey string `json:"encrypted_api_key" binding:"required"` // RSA加密后的API Key（Base64编码）
 }
 
-// CreateLLMConfigRequest 创建LLM配置请求
-type CreateLLMConfigRequest struct {
-	Name            string  `json:"name" binding:"required,min=1,max=100"`
-	Provider        string  `json:"provider" binding:"required,oneof=openai anthropic aliyun xunfei baidu zhipu custom"`
-	APIURL          string  `json:"api_url" binding:"required,url"`
-	APIKey          string  `json:"api_key" binding:"required"`
-	Model           string  `json:"model" binding:"required,min=1,max=100"`
-	MaxTokens       int     `json:"max_tokens" binding:"omitempty,min=1,max=100000"`
-	Temperature     float64 `json:"temperature" binding:"omitempty,min=0,max=2"`
-	TopP            float64 `json:"top_p" binding:"omitempty,min=0,max=1"`
-	FrequencyPenalty float64 `json:"frequency_penalty" binding:"omitempty,min=-2,max=2"`
-	PresencePenalty  float64 `json:"presence_penalty" binding:"omitempty,min=-2,max=2"`
-	SystemPrompt    string  `json:"system_prompt"`
-	TimeoutSeconds  int     `json:"timeout_seconds" binding:"omitempty,min=1,max=300"`
-	MaxRetries      int     `json:"max_retries" binding:"omitempty,min=0,max=10"`
-	IsActive        bool    `json:"is_active"`
+// RSAPublicKeyResponse RSA公钥响应
+type RSAPublicKeyResponse struct {
+	PublicKey string `json:"public_key"` // PEM格式的公钥
 }
 
-// UpdateLLMConfigRequest 更新LLM配置请求
-type UpdateLLMConfigRequest struct {
-	Name            string  `json:"name" binding:"omitempty,min=1,max=100"`
-	Provider        string  `json:"provider" binding:"omitempty,oneof=openai anthropic aliyun xunfei baidu zhipu custom"`
-	APIURL          string  `json:"api_url" binding:"omitempty,url"`
-	APIKey          string  `json:"api_key"`
-	Model           string  `json:"model" binding:"omitempty,min=1,max=100"`
-	MaxTokens       *int    `json:"max_tokens" binding:"omitempty,min=1,max=100000"`
-	Temperature     *float64 `json:"temperature" binding:"omitempty,min=0,max=2"`
-	TopP            *float64 `json:"top_p" binding:"omitempty,min=0,max=1"`
-	FrequencyPenalty *float64 `json:"frequency_penalty" binding:"omitempty,min=-2,max=2"`
-	PresencePenalty  *float64 `json:"presence_penalty" binding:"omitempty,min=-2,max=2"`
-	SystemPrompt    string  `json:"system_prompt"`
-	TimeoutSeconds  *int    `json:"timeout_seconds" binding:"omitempty,min=1,max=300"`
-	MaxRetries      *int    `json:"max_retries" binding:"omitempty,min=0,max=10"`
-	IsActive        *bool   `json:"is_active"`
-}
-
-// LLMConfigResponse LLM配置响应
-type LLMConfigResponse struct {
-	ID              uint    `json:"id"`
-	Name            string  `json:"name"`
-	Provider        string  `json:"provider"`
-	APIURL          string  `json:"api_url"`
-	Model           string  `json:"model"`
-	MaxTokens       int     `json:"max_tokens"`
-	Temperature     float64 `json:"temperature"`
-	TopP            float64 `json:"top_p"`
-	FrequencyPenalty float64 `json:"frequency_penalty"`
-	PresencePenalty  float64 `json:"presence_penalty"`
-	SystemPrompt    string  `json:"system_prompt"`
-	TimeoutSeconds  int     `json:"timeout_seconds"`
-	MaxRetries      int     `json:"max_retries"`
-	IsActive        bool    `json:"is_active"`
-	CreatedBy       *uint   `json:"created_by"`
-	CreatedAt       string  `json:"created_at"`
-	UpdatedAt       string  `json:"updated_at"`
-}
-
-// LLMConfigPublicResponse LLM配置公开响应（不包含API Key）
-type LLMConfigPublicResponse struct {
-	ID              uint    `json:"id"`
-	Name            string  `json:"name"`
-	Provider        string  `json:"provider"`
-	APIURL          string  `json:"api_url"`
-	Model           string  `json:"model"`
-	MaxTokens       int     `json:"max_tokens"`
-	Temperature     float64 `json:"temperature"`
-	TopP            float64 `json:"top_p"`
-	FrequencyPenalty float64 `json:"frequency_penalty"`
-	PresencePenalty  float64 `json:"presence_penalty"`
-	SystemPrompt    string  `json:"system_prompt"`
-	TimeoutSeconds  int     `json:"timeout_seconds"`
-	MaxRetries      int     `json:"max_retries"`
-	IsActive        bool    `json:"is_active"`
+// OpenAIAPIKeyResponse OpenAI API Key响应
+type OpenAIAPIKeyResponse struct {
+	HasKey   bool   `json:"has_key"`   // 是否已配置API Key
+	UpdatedAt string `json:"updated_at,omitempty"` // 更新时间
 }
 
 // PromptTemplateQueryParams Prompt模板查询参数
@@ -192,5 +124,24 @@ type LLMCallLogResponse struct {
 type TestLLMConfigRequest struct {
 	ConfigID    uint   `json:"config_id" binding:"required"`
 	TestMessage string `json:"test_message" binding:"required"`
+}
+
+// OpenAIProxyRequest OpenAI API转发请求
+// 前端传参格式与OpenAI文档一致，所有字段都会原样转发给OpenAI API
+// 后端会自动从配置中获取API Key并添加到请求头
+type OpenAIProxyRequest struct {
+	// 以下字段与OpenAI API文档一致，支持所有OpenAI API参数
+	Model       string                   `json:"model" binding:"required"`
+	Messages    []map[string]interface{} `json:"messages" binding:"required,min=1"`
+	Temperature *float64                 `json:"temperature,omitempty"`
+	TopP        *float64                 `json:"top_p,omitempty"`
+	MaxTokens   *int                     `json:"max_tokens,omitempty"`
+	Stream      *bool                    `json:"stream,omitempty"`
+	N           *int                     `json:"n,omitempty"`
+	Stop        interface{}              `json:"stop,omitempty"` // string or []string
+	PresencePenalty *float64             `json:"presence_penalty,omitempty"`
+	FrequencyPenalty *float64            `json:"frequency_penalty,omitempty"`
+	LogitBias   map[string]interface{}   `json:"logit_bias,omitempty"`
+	User        string                   `json:"user,omitempty"`
 }
 

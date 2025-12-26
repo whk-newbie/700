@@ -48,6 +48,9 @@ REDIS_PASSWORD=
 # JWT配置
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-please
 
+# 加密配置
+ENCRYPTION_KEY=your-32-byte-encryption-key-here-change-this!!
+
 # 域名配置（生产环境）
 NGINX_DOMAIN=${domain:-localhost}
 SSL_DOMAIN=${domain:-localhost}
@@ -146,10 +149,21 @@ echo "[信息] 检查服务状态..."
 $DOCKER_COMPOSE_CMD ps
 
 echo ""
+echo "[信息] RSA密钥说明："
+echo "   - RSA密钥会在首次启动时自动生成"
+echo "   - 密钥存储在Docker volume中，容器重启不会丢失"
+echo "   - 如需查看密钥，请参考 DOCKER_RSA_KEYS.md"
+
+echo ""
 echo "默认管理员账号："
 echo "   用户名: admin"
 echo "   密码: admin123"
 echo "[重要] 请立即登录并修改默认密码！"
+
+echo ""
+echo "[信息] OpenAI API Key配置："
+echo "   - 登录管理后台后，在'大模型配置'中配置OpenAI API Key"
+echo "   - API Key使用RSA加密传输，确保安全"
 
 echo ""
 echo "常用命令："
