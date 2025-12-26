@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"time"
 
 	"line-management/internal/models"
@@ -139,10 +140,13 @@ func (s *LLMService) GetCallLogList(c *gin.Context, params *schemas.LLMCallLogQu
 
 // RecordProxyCallLog 记录代理调用的日志
 func (s *LLMService) RecordProxyCallLog(c *gin.Context, config *models.LLMConfig, req schemas.OpenAIProxyRequest, response map[string]interface{}, err error, duration time.Duration) {
-	// 获取分组ID和激活码（从上下文）
+	// 获取用户和分组信息（从上下文）
 	var groupID *uint
 	var activationCode string
+	var userID *uint
+	var username string
 
+	// 获取分组信息（子账号才有）
 	if gid, exists := c.Get("group_id"); exists {
 		if gidUint, ok := gid.(uint); ok {
 			groupID = &gidUint
@@ -151,6 +155,18 @@ func (s *LLMService) RecordProxyCallLog(c *gin.Context, config *models.LLMConfig
 	if ac, exists := c.Get("activation_code"); exists {
 		if acStr, ok := ac.(string); ok {
 			activationCode = acStr
+		}
+	}
+
+	// 获取用户信息
+	if uid, exists := c.Get("user_id"); exists {
+		if uidUint, ok := uid.(uint); ok {
+			userID = &uidUint
+		}
+	}
+	if uname, exists := c.Get("username"); exists {
+		if unameStr, ok := uname.(string); ok {
+			username = unameStr
 		}
 	}
 
@@ -235,6 +251,11 @@ func (s *LLMService) RecordProxyCallLog(c *gin.Context, config *models.LLMConfig
 		CompletionTokens: completionTokens,
 		CallTime:         time.Now(),
 		DurationMs:       intPtr(int(duration.Milliseconds())),
+	}
+
+	// 如果没有分组信息（可能是管理员调用），在ActivationCode字段记录用户信息
+	if groupID == nil && userID != nil && activationCode == "" {
+		log.ActivationCode = fmt.Sprintf("ADMIN:%s(ID:%d)", username, *userID)
 	}
 
 	// 保存日志
