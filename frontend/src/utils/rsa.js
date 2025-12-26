@@ -9,15 +9,16 @@ import JSEncrypt from 'jsencrypt'
 export function encryptWithRSA(plaintext, publicKeyPEM) {
   return new Promise((resolve, reject) => {
     try {
-      const encrypt = new JSEncrypt()
+      const encrypt = new JSEncrypt({ default_key_size: 2048 })
       encrypt.setPublicKey(publicKeyPEM)
-      
+
+      // 使用PKCS1填充（与后端匹配）
       const encrypted = encrypt.encrypt(plaintext)
       if (!encrypted) {
         reject(new Error('RSA加密失败'))
         return
       }
-      
+
       resolve(encrypted)
     } catch (error) {
       reject(error)

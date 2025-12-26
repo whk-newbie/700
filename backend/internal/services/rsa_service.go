@@ -192,13 +192,11 @@ func (s *RSAService) Decrypt(encryptedData string) (string, error) {
 		return "", err
 	}
 
-	// RSA解密（使用OAEP填充）
-	plaintext, err := rsa.DecryptOAEP(
-		sha256.New(),
+	// RSA解密（使用PKCS1 v1.5填充，与前端jsencrypt兼容）
+	plaintext, err := rsa.DecryptPKCS1v15(
 		rand.Reader,
 		s.privateKey,
 		ciphertext,
-		nil,
 	)
 	if err != nil {
 		return "", err
