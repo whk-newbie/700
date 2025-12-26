@@ -113,6 +113,7 @@ services:
       - backend_static:/app/static
       - backend_keys:/root/keys  # RSA密钥目录，持久化存储
       - ./backend/.env:/app/.env:ro
+      - ./backend/logs:/app/logs  # 日志目录映射到本地
     restart: unless-stopped
     networks:
       - line-network
