@@ -25,20 +25,28 @@ export const updateOpenAIAPIKey = async (apiKey) => {
   try {
     // 1. 获取RSA公钥
     const publicKeyResponse = await getRSAPublicKey()
-    // 响应格式可能是 { data: { data: { public_key: ... } } } 或 { data: { public_key: ... } }
-    const publicKeyPEM = publicKeyResponse.data?.data?.public_key || publicKeyResponse.data?.public_key
-    
+    console.log('RSA公钥响应:', publicKeyResponse)
+
+    // 后端响应格式: { code: 1000, data: { public_key: "..." } }
+    const publicKeyPEM = publicKeyResponse.data?.public_key
+
     if (!publicKeyPEM || !validatePublicKey(publicKeyPEM)) {
-      throw new Error('获取的RSA公钥格式无效')
+      throw new Error(`获取的RSA公钥格式无效，公钥: ${publicKeyPEM?.substring(0, 50)}...`)
     }
+
+    console.log('使用RSA公钥加密API Key')
 
     // 2. 使用RSA公钥加密API Key
     const encryptedAPIKey = await encryptWithRSA(apiKey, publicKeyPEM)
+    console.log('API Key加密完成')
 
     // 3. 发送加密后的API Key
-    return request.put('/admin/llm/openai-key', {
+    const result = await request.put('/admin/llm/openai-key', {
       encrypted_api_key: encryptedAPIKey
     })
+
+    console.log('API Key更新成功')
+    return result
   } catch (error) {
     console.error('更新OpenAI API Key失败:', error)
     throw error
