@@ -33,16 +33,23 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
 # 第二阶段：运行阶段
 FROM alpine:latest
 
-# 安装ca-certificates用于HTTPS请求
-RUN apk --no-cache add ca-certificates tzdata
+# 安装ca-certificates用于HTTPS请求和Go运行时
+RUN apk --no-cache add ca-certificates tzdata go
 
 # 设置时区
 ENV TZ=Asia/Shanghai
 
 WORKDIR /root/
 
-# 从构建阶段复制二进制文件
+# 从构建阶段复制二进制文件和Go模块
 COPY --from=builder /app/main .
+COPY --from=builder /go/bin/swag /usr/local/bin/swag
+
+# 复制源代码（用于运行时生成swagger文档）
+COPY --from=builder /app/cmd ./cmd
+COPY --from=builder /app/internal ./internal
+COPY --from=builder /app/go.mod ./go.mod
+COPY --from=builder /app/go.sum ./go.sum
 
 # 复制static目录（包含websocket文档和二维码等）
 COPY --from=builder /app/static ./static
