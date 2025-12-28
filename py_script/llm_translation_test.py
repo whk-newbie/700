@@ -19,10 +19,47 @@ import time
 from datetime import datetime
 
 # ===== 配置区域 =====
-API_BASE_URL = "https://3xui.meline.me/api/v1"  # 后端API基础地址
-ADMIN_USERNAME = "admin"  # 管理员用户名
-ADMIN_PASSWORD = "admin123"  # 管理员密码
+# 这些变量将在运行时通过输入获取
+API_BASE_URL = None
+ADMIN_USERNAME = None
+ADMIN_PASSWORD = None
 TEST_TEXT = "Hello, this is a test message for translation. I hope you can understand it and translate it correctly."  # 要翻译的文本
+
+def get_config():
+    """获取API配置"""
+    print("="*80)
+    print("请输入API配置信息")
+    print("="*80)
+    
+    domain = input("请输入域名: ").strip()
+    if not domain:
+        print("❌ 域名不能为空")
+        return None, None, None
+    
+    # 处理域名，自动拼接为完整的API地址
+    # 如果用户输入的是完整URL，则使用；否则拼接
+    if domain.startswith("http://") or domain.startswith("https://"):
+        # 如果已经包含 /api/v1，则直接使用
+        if "/api/v1" in domain:
+            base_url = domain
+        else:
+            # 移除末尾的斜杠，然后拼接 /api/v1
+            base_url = domain.rstrip("/") + "/api/v1"
+    else:
+        # 只有域名，添加 https:// 和 /api/v1
+        base_url = f"https://{domain.rstrip('/')}/api/v1"
+    
+    username = input("请输入管理员用户名: ").strip()
+    if not username:
+        username = "admin"
+        print("使用默认用户名: admin")
+    
+    password = input("请输入管理员密码: ").strip()
+    if not password:
+        print("❌ 密码不能为空")
+        return None, None, None
+    
+    return base_url, username, password
 
 class LLMTranslationTest:
     """大模型翻译测试客户端"""
@@ -30,18 +67,18 @@ class LLMTranslationTest:
     def __init__(self):
         self.admin_token = None
 
-    def test_connection(self):
+    def test_connection(self, api_base_url):
         """测试API服务器连接"""
         try:
-            print(f"🔍 测试连接到: {API_BASE_URL}")
-            response = requests.get(f"{API_BASE_URL.replace('/api/v1', '/health')}", verify=False, timeout=10)
+            print("🔍 正在测试API服务器连接...")
+            response = requests.get(f"{api_base_url.replace('/api/v1', '/health')}", verify=False, timeout=10)
             print(f"✅ 服务器响应: {response.status_code}")
             return True
         except requests.exceptions.RequestException as e:
             print(f"⚠️ 无法访问健康检查端点: {e}")
             # 尝试直接测试登录端点
             try:
-                response = requests.options(f"{API_BASE_URL}/auth/login", verify=False, timeout=10)
+                response = requests.options(f"{api_base_url}/auth/login", verify=False, timeout=10)
                 print(f"✅ 登录端点可达: {response.status_code}")
                 return True
             except:
@@ -51,7 +88,7 @@ class LLMTranslationTest:
             print(f"❌ 连接测试出错: {e}")
             return False
 
-    def login_admin(self, username, password):
+    def login_admin(self, api_base_url, username, password):
         """管理员登录获取token"""
         try:
             login_data = {
@@ -59,7 +96,7 @@ class LLMTranslationTest:
                 "password": password
             }
             # 忽略SSL证书验证（处理自签名证书）
-            response = requests.post(f"{API_BASE_URL}/auth/login", json=login_data, verify=False)
+            response = requests.post(f"{api_base_url}/auth/login", json=login_data, verify=False)
             response.raise_for_status()
             data = response.json()
 
@@ -76,7 +113,7 @@ class LLMTranslationTest:
             print(f"❌ 管理员登录出错: {e}")
             return False
 
-    def check_openai_config(self):
+    def check_openai_config(self, api_base_url):
         """检查OpenAI API配置状态"""
         if not self.admin_token:
             print("❌ 未登录，无法检查配置")
@@ -84,7 +121,7 @@ class LLMTranslationTest:
 
         headers = {"Authorization": f"Bearer {self.admin_token}"}
         try:
-            response = requests.get(f"{API_BASE_URL}/admin/llm/openai-key", headers=headers, verify=False)
+            response = requests.get(f"{api_base_url}/admin/llm/openai-key", headers=headers, verify=False)
             response.raise_for_status()
             data = response.json()
 
@@ -105,7 +142,7 @@ class LLMTranslationTest:
             print(f"❌ 检查配置时出错: {e}")
             return False
 
-    def call_llm_translation(self, text, target_language, model="gpt-3.5-turbo"):
+    def call_llm_translation(self, api_base_url, text, target_language, model="gpt-3.5-turbo"):
         """调用LLM翻译API"""
         if not self.admin_token:
             print("❌ 未登录，无法调用API")
@@ -141,7 +178,7 @@ class LLMTranslationTest:
             start_time = time.time()
 
             response = requests.post(
-                f"{API_BASE_URL}/llm/proxy/openai",
+                f"{api_base_url}/llm/proxy/openai",
                 json=request_data,
                 headers=headers,
                 timeout=60,
@@ -193,7 +230,7 @@ class LLMTranslationTest:
             print(f"❌ 调用API时出错: {e}")
             return None
 
-    def test_translations(self):
+    def test_translations(self, api_base_url, test_text):
         """测试多种语言翻译"""
         if not self.admin_token:
             print("❌ 未登录，无法进行测试")
@@ -201,7 +238,7 @@ class LLMTranslationTest:
 
         print("🚀 开始大模型翻译测试")
         print("=" * 80)
-        print(f"原文: {TEST_TEXT}")
+        print(f"原文: {test_text}")
         print("=" * 80)
 
         # 要测试的语言列表
@@ -214,7 +251,7 @@ class LLMTranslationTest:
 
         for lang_name, lang_code in languages:
             print(f"\n🌐 正在翻译为{lang_name} ({lang_code})")
-            result = self.call_llm_translation(TEST_TEXT, lang_code)
+            result = self.call_llm_translation(api_base_url, test_text, lang_code)
             if result:
                 results.append(result)
             else:
@@ -244,8 +281,15 @@ def main():
     """主函数"""
     print("大模型翻译功能测试脚本")
     print("=" * 80)
-    print(f"API服务器: {API_BASE_URL}")
-    print(f"管理员账号: {ADMIN_USERNAME}")
+    
+    # 获取配置
+    api_base_url, admin_username, admin_password = get_config()
+    if not api_base_url or not admin_password:
+        print("❌ 配置获取失败，退出测试")
+        return
+    
+    print("=" * 80)
+    print(f"管理员账号: {admin_username}")
     print(f"测试文本: {TEST_TEXT}")
     print("=" * 80)
 
@@ -254,25 +298,25 @@ def main():
 
     # 测试连接
     print("🔍 正在测试API服务器连接...")
-    if not tester.test_connection():
+    if not tester.test_connection(api_base_url):
         print("❌ 无法连接到API服务器，请检查网络和服务器状态")
         return
 
     # 登录
     print("\n🔐 正在登录管理员账号...")
-    if not tester.login_admin(ADMIN_USERNAME, ADMIN_PASSWORD):
+    if not tester.login_admin(api_base_url, admin_username, admin_password):
         print("❌ 登录失败，退出测试")
         return
 
     # 检查OpenAI配置
     print("\n🔧 检查OpenAI API配置...")
-    if not tester.check_openai_config():
+    if not tester.check_openai_config(api_base_url):
         print("❌ OpenAI API未正确配置，请先在管理后台配置API Key")
         return
 
     # 运行翻译测试
     print("\n🚀 开始翻译测试...")
-    results = tester.test_translations()
+    results = tester.test_translations(api_base_url, TEST_TEXT)
 
     # 测试完成
     if results:
