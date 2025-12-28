@@ -145,3 +145,19 @@ type OpenAIProxyRequest struct {
 	User        string                   `json:"user,omitempty"`
 }
 
+// TranslateRequest 翻译请求
+type TranslateRequest struct {
+	Text string `json:"text" binding:"required,min=1"` // 要翻译的文本
+}
+
+// TranslateResponse 翻译响应
+type TranslateResponse struct {
+	OriginalText    string `json:"original_text"`     // 原文
+	TranslatedText  string `json:"translated_text"`   // 译文
+	SourceLanguage  string `json:"source_language"`   // 源语言（zh/ja）
+	TargetLanguage  string `json:"target_language"`   // 目标语言（zh/ja）
+	TokensUsed      *int   `json:"tokens_used,omitempty"`
+	PromptTokens    *int   `json:"prompt_tokens,omitempty"`
+	CompletionTokens *int  `json:"completion_tokens,omitempty"`
+}
+

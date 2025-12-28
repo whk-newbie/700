@@ -100,6 +100,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 		// 大模型调用路由（所有认证用户可用）
 		llm := api.Group("/llm")
 		{
+			llm.POST("/translate", handlers.TranslateText)     // 中日文翻译接口
 			llm.POST("/proxy/openai", handlers.ProxyOpenAIAPI) // OpenAI API转发接口
 		}
 	}

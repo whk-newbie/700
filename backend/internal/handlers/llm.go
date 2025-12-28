@@ -166,6 +166,44 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
+// TranslateText 文本翻译接口（中日互译）
+// @Summary 文本翻译（中日互译）
+// @Description 自动检测语言并翻译（中文翻译成日文，日文翻译成中文），支持对话历史复用
+// @Tags 大模型调用
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body schemas.TranslateRequest true "翻译请求"
+// @Success 200 {object} schemas.TranslateResponse
+// @Failure 400 {object} schemas.ErrorResponse
+// @Failure 401 {object} schemas.ErrorResponse
+// @Failure 500 {object} schemas.ErrorResponse
+// @Router /llm/translate [post]
+func TranslateText(c *gin.Context) {
+	var req schemas.TranslateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorWithErrorCode(c, 1001, "请求参数错误: "+err.Error(), "invalid_params")
+		return
+	}
+
+	// 调用翻译服务
+	translationService := services.GetTranslationService()
+	result, err := translationService.Translate(c, &req)
+	if err != nil {
+		logger.Errorf("翻译失败: %v", err)
+		
+		// 根据错误类型返回不同的错误码
+		if err.Error() == "未配置OpenAI API Key，请先配置" {
+			utils.ErrorWithErrorCode(c, 4001, err.Error(), "key_not_configured")
+		} else {
+			utils.ErrorWithErrorCode(c, 7001, "翻译失败: "+err.Error(), "translation_failed")
+		}
+		return
+	}
+
+	utils.Success(c, result)
+}
+
 // ProxyOpenAIAPI OpenAI API转发接口
 // @Summary OpenAI API转发
 // @Description 转发OpenAI API请求，前端传参格式与OpenAI文档一致，后端自动添加授权码
