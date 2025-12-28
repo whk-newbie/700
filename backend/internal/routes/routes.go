@@ -41,6 +41,10 @@ func SetupRoutes(r *gin.RouterGroup) {
 			// 批量操作
 			groups.POST("/batch/delete", handlers.BatchDeleteGroups)
 			groups.POST("/batch/update", handlers.BatchUpdateGroups)
+			// 分享功能
+			groups.POST("/:id/share", handlers.CreateGroupShare)
+			groups.GET("/:id/share", handlers.GetGroupShareByGroupID)
+			groups.DELETE("/:id/share", handlers.DeleteGroupShare)
 		}
 
 		// Line账号管理路由
@@ -132,6 +136,13 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 	// 健康检查（不需要认证）
 	r.GET("/health", handlers.HealthCheck)
+
+	// 分享功能公开接口（不需要认证）
+	share := r.Group("/share")
+	{
+		share.GET("/info", handlers.GetGroupShareInfo)       // 获取分享基本信息
+		share.POST("/verify", handlers.VerifySharePassword) // 验证分享密码
+	}
 }
 
 // SetupWebSocketRoutes 设置WebSocket路由
@@ -141,6 +152,9 @@ func SetupWebSocketRoutes(r *gin.Engine) {
 
 	// 前端看板WebSocket连接（需要JWT认证，支持URL参数中的token）
 	r.GET("/api/ws/dashboard", middleware.WebSocketAuthRequired(), handlers.HandleDashboardWebSocket)
+
+	// 分享页面WebSocket连接（不需要JWT认证，使用分享码认证）
+	r.GET("/api/ws/share", handlers.HandleShareWebSocket)
 }
 
 // SetupSwagger 设置Swagger文档

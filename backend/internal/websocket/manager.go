@@ -34,6 +34,8 @@ type Manager struct {
 	clientClients map[string]*Client
 	// 前端看板连接池 key: user_id + conn_id
 	dashboardClients map[string]*Client
+	// 分享页面连接池 key: share_code + conn_id
+	shareClients map[string]*Client
 	// 注册通道
 	register chan *Client
 	// 注销通道
@@ -53,6 +55,7 @@ func NewManager(onClientDisconnect ClientDisconnectCallback) *Manager {
 	return &Manager{
 		clientClients:      make(map[string]*Client),
 		dashboardClients:   make(map[string]*Client),
+		shareClients:       make(map[string]*Client),
 		register:           make(chan *Client),
 		unregister:         make(chan *Client),
 		broadcast:          make(chan []byte, 256),
@@ -102,11 +105,12 @@ func (m *Manager) BroadcastToDashboards(message []byte) {
 	}
 }
 
-// BroadcastToGroup 广播消息到指定分组的所有前端看板
+// BroadcastToGroup 广播消息到指定分组的所有前端看板和分享页面
 func (m *Manager) BroadcastToGroup(groupID uint, message []byte) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	// 发送给前端看板
 	for _, client := range m.dashboardClients {
 		if client.GroupID == groupID || client.GroupID == 0 {
 			select {
@@ -118,13 +122,26 @@ func (m *Manager) BroadcastToGroup(groupID uint, message []byte) {
 			}
 		}
 	}
+
+	// 发送给分享页面
+	for _, client := range m.shareClients {
+		if client.GroupID == groupID {
+			select {
+			case client.Send <- message:
+			default:
+				// 发送失败，关闭连接
+				close(client.Send)
+				delete(m.shareClients, client.ID)
+			}
+		}
+	}
 }
 
 // GetClientCount 获取客户端数量
 func (m *Manager) GetClientCount() (clientCount, dashboardCount int) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	return len(m.clientClients), len(m.dashboardClients)
+	return len(m.clientClients), len(m.dashboardClients) + len(m.shareClients)
 }
 
 // GetClientsByActivationCode 根据激活码获取客户端列表
@@ -155,6 +172,9 @@ func (m *Manager) registerClient(client *Client) {
 	} else if client.Type == ClientTypeDashboard {
 		m.dashboardClients[client.ID] = client
 		logger.Infof("前端看板已注册: ID=%s, UserID=%d, GroupID=%d", client.ID, client.UserID, client.GroupID)
+	} else if client.Type == ClientTypeShare {
+		m.shareClients[client.ID] = client
+		logger.Infof("分享页面已注册: ID=%s, ShareCode=%s, GroupID=%d", client.ID, client.ShareCode, client.GroupID)
 	}
 }
 
@@ -177,6 +197,11 @@ func (m *Manager) unregisterClient(client *Client) {
 		if _, ok := m.dashboardClients[client.ID]; ok {
 			delete(m.dashboardClients, client.ID)
 			logger.Infof("前端看板已注销: ID=%s, UserID=%d", client.ID, client.UserID)
+		}
+	} else if client.Type == ClientTypeShare {
+		if _, ok := m.shareClients[client.ID]; ok {
+			delete(m.shareClients, client.ID)
+			logger.Infof("分享页面已注销: ID=%s, ShareCode=%s, GroupID=%d", client.ID, client.ShareCode, client.GroupID)
 		}
 	}
 
@@ -241,6 +266,16 @@ func (m *Manager) checkHeartbeats() {
 			client.Conn.Close()
 		}
 	}
+
+	// 检查分享页面
+	for id, client := range m.shareClients {
+		if now.Sub(client.LastHeartbeat) > timeout {
+			logger.Warnf("分享页面心跳超时，断开连接: ID=%s, ShareCode=%s", client.ID, client.ShareCode)
+			delete(m.shareClients, id)
+			close(client.Send)
+			client.Conn.Close()
+		}
+	}
 }
 
 // UpdateHeartbeat 更新客户端心跳时间
@@ -254,6 +289,10 @@ func (m *Manager) UpdateHeartbeat(clientID string, clientType ClientType) {
 		}
 	} else if clientType == ClientTypeDashboard {
 		if client, ok := m.dashboardClients[clientID]; ok {
+			client.LastHeartbeat = time.Now()
+		}
+	} else if clientType == ClientTypeShare {
+		if client, ok := m.shareClients[clientID]; ok {
 			client.LastHeartbeat = time.Now()
 		}
 	}
@@ -272,6 +311,10 @@ func (m *Manager) Close() {
 		client.Conn.Close()
 	}
 	for _, client := range m.dashboardClients {
+		close(client.Send)
+		client.Conn.Close()
+	}
+	for _, client := range m.shareClients {
 		close(client.Send)
 		client.Conn.Close()
 	}

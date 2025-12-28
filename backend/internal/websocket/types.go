@@ -12,6 +12,7 @@ type ClientType string
 const (
 	ClientTypeWindows  ClientType = "windows"  // Windows客户端
 	ClientTypeDashboard ClientType = "dashboard" // 前端看板
+	ClientTypeShare    ClientType = "share"     // 分享页面
 )
 
 // Client WebSocket客户端
@@ -19,6 +20,7 @@ type Client struct {
 	ID             string          // 客户端唯一ID
 	Type           ClientType      // 客户端类型
 	ActivationCode string          // 激活码（Windows客户端使用）
+	ShareCode      string          // 分享码（分享页面使用）
 	GroupID        uint            // 分组ID
 	UserID         uint            // 用户ID（前端看板使用）
 	Conn           *websocket.Conn // WebSocket连接

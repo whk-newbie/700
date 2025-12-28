@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"fmt"
 	"strings"
 
 	"line-management/internal/services"
 	"line-management/internal/utils"
 	"line-management/pkg/logger"
+	"line-management/pkg/redis"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +33,33 @@ func AuthRequired() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
+		// 检查是否是分享 token (格式: share_xxx_timestamp)
+		if strings.HasPrefix(tokenString, "share_") {
+			// 验证分享 token
+			rdb := redis.GetClient()
+			shareKey := fmt.Sprintf("share_token:%s", tokenString)
+			
+			// 从 Redis 获取分享信息
+			shareData, err := rdb.HGetAll(c, shareKey).Result()
+			if err != nil || len(shareData) == 0 {
+				logger.Warnf("分享Token无效或已过期: %s", tokenString)
+				utils.ErrorWithErrorCode(c, 2003, "分享链接已过期，请重新验证", "share_token_expired")
+				c.Abort()
+				return
+			}
+
+			// 将分享信息存储到上下文
+			c.Set("is_share", true)
+			c.Set("share_token", tokenString)
+			c.Set("share_code", shareData["share_code"])
+			c.Set("group_id", shareData["group_id"])
+			c.Set("activation_code", shareData["activation_code"])
+
+			c.Next()
+			return
+		}
+
+		// 普通 JWT token 验证逻辑
 		// 解析Token
 		claims, err := utils.ParseToken(tokenString)
 		if err != nil {

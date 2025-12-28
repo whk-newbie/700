@@ -23,10 +23,16 @@ service.interceptors.request.use(
     // 显示进度条
     NProgress.start()
 
-    // 从store获取token
-    const authStore = useAuthStore()
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`
+    // 优先使用分享 token（如果存在）
+    const shareToken = localStorage.getItem('share_token')
+    if (shareToken) {
+      config.headers.Authorization = `Bearer ${shareToken}`
+    } else {
+      // 否则使用普通 token
+      const authStore = useAuthStore()
+      if (authStore.token) {
+        config.headers.Authorization = `Bearer ${authStore.token}`
+      }
     }
 
     return config

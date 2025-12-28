@@ -58,3 +58,12 @@ func HandleDashboardWebSocket(c *gin.Context) {
 	}
 }
 
+// HandleShareWebSocket 分享页面WebSocket连接（不需要认证，使用分享码）
+func HandleShareWebSocket(c *gin.Context) {
+	if err := websocket.HandleShareConnection(c, wsManager); err != nil {
+		logger.Errorf("处理分享页面WebSocket连接失败: %v", err)
+		utils.Error(c, 500, "WebSocket连接失败: "+err.Error())
+		return
+	}
+}
+

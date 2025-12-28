@@ -15,6 +15,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/workShareDetail',
+    name: 'WorkShareDetail',
+    component: () => import('@/views/WorkShareDetail.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     component: () => import('@/views/admin/Layout.vue'),
     redirect: '/dashboard',

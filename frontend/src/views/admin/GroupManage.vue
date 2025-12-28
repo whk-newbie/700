@@ -157,6 +157,9 @@
             <el-button type="primary" link size="small" @click="handleEdit(row)">
               编辑
             </el-button>
+            <el-button type="success" link size="small" @click="handleShare(row)">
+              分享
+            </el-button>
             <el-button type="danger" link size="small" @click="handleDelete(row)">
               删除
             </el-button>
@@ -319,6 +322,7 @@ import {
   batchDeleteGroups,
   batchUpdateGroups
 } from '@/api/group'
+import { createGroupShare, getGroupShare, deleteGroupShare } from '@/api/share'
 import { formatDateTime } from '@/utils/format'
 import { useAuthStore } from '@/store/auth'
 import { useWebSocketStore } from '@/store/websocket'
@@ -587,6 +591,91 @@ const handleBatchUpdateSubmit = async () => {
     console.error('批量更新失败:', error)
   } finally {
     submitting.value = false
+  }
+}
+
+// 分享功能
+const handleShare = async (row) => {
+  try {
+    // 先尝试获取现有分享
+    let shareCode = ''
+    let password = ''
+    try {
+      const getRes = await getGroupShare(row.id)
+      if (getRes.code === 1000 && getRes.data?.share_code) {
+        shareCode = getRes.data.share_code
+        password = getRes.data.password
+      }
+    } catch (err) {
+      // 如果不存在，则创建新的分享
+      const createRes = await createGroupShare(row.id)
+      if (createRes.code === 1000 && createRes.data?.share_code) {
+        shareCode = createRes.data.share_code
+        password = createRes.data.password
+      }
+    }
+
+    if (!shareCode) {
+      ElMessage.error('获取分享链接失败')
+      return
+    }
+
+    // 前端拼接完整 URL（自动使用当前域名）
+    const shareUrl = `${window.location.origin}/workShareDetail?code=${shareCode}`
+
+    // 显示分享链接和密码对话框
+    await ElMessageBox.alert(
+      `<div style="word-break: break-all;">
+        <p style="margin-bottom: 10px;"><strong>分享链接：</strong></p>
+        <p style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; margin-bottom: 15px;">
+          ${shareUrl}
+        </p>
+        <p style="margin-bottom: 10px;"><strong>访问密码：</strong></p>
+        <p style="background: #fff3cd; padding: 10px; border-radius: 4px; font-family: monospace; color: #856404; font-size: 16px; font-weight: bold;">
+          ${password}
+        </p>
+        <p style="margin-top: 10px; color: #909399; font-size: 12px;">
+          提示：默认密码与分享码相同
+        </p>
+      </div>`,
+      '分享分组',
+      {
+        confirmButtonText: '复制全部信息',
+        dangerouslyUseHTMLString: true,
+        callback: () => {
+          // 复制链接和密码
+          const copyText = `分享链接：${shareUrl}\n访问密码：${password}`
+          handleCopyShareLink(copyText)
+        }
+      }
+    )
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('分享失败:', error)
+    }
+  }
+}
+
+// 复制分享链接
+const handleCopyShareLink = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('信息已复制到剪贴板')
+  } catch (error) {
+    // 降级方案
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      ElMessage.success('信息已复制到剪贴板')
+    } catch (err) {
+      ElMessage.error('复制失败，请手动复制')
+    }
+    document.body.removeChild(textarea)
   }
 }
 
